@@ -1,0 +1,60 @@
+/* Base styles */
+body {
+  padding-top: 1rem;
+  background-color: #f8f9fa;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+header h1 {
+  font-weight: 700;
+}
+
+/* Card styling */
+.card {
+  border: none;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Search bar styling */
+.card .form-select:disabled {
+  background-color: #e9ecef;
+}
+
+.project-thumb {
+  width: 100%;
+  height: 140px;
+  border-radius: 0.25rem;
+  background-color: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Global safety */
+/* html, body { overflow-x: hidden; } */
+
+/* If you used 100vw anywhere, prefer 100% instead */
+.full-width { width: 100%; }
+
+/* Banner styles */
+.banner {
+  width: 100%;
+  overflow: hidden;          /* clips any tiny overflow */
+  border-radius: 16px;
+}
+.banner img {
+  display: block;            /* removes inline gap */
+  width: 100%;               /* no wider than container */
+  max-width: 100%;
+  height: auto;
+  object-fit: cover;
+  /* optional: */
+  max-height: 280px;
+  display: block;
+}

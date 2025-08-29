@@ -1,0 +1,165 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #007bff, #6610f2);
+  background-size: 200% auto;
+
+  /* Standard + prefixes */
+  background-clip: text;
+  -webkit-background-clip: text;
+  -moz-background-clip: text;
+
+  /* Required for Safari */
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+
+  transition: background-position 0.8s ease-in-out;
+}
+
+.text-gradient:hover {
+  background-position: right center; /* slide gradient */
+}
+
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* Mobile-first navigation: single row, scrollable if overflow */
+.mobile-nav {
+  -webkit-overflow-scrolling: touch;
+}
+.mobile-nav::-webkit-scrollbar { display: none; }
+
+/* Compact filters: tighter spacing, smaller inputs on mobile */
+.filters-compact { padding: 8px !important; }
+.filters-compact { overflow: visible !important; position: relative; z-index: 3; }
+.compact-inputs .form-label { margin-bottom: 4px; font-size: 13px; }
+.compact-inputs .form-select,
+.compact-inputs .form-control,
+.compact-inputs select,
+.compact-inputs input,
+.compact-inputs textarea {
+  padding: 6px 8px;
+  font-size: 14px;
+}
+
+/* Responsive grid for filters */
+.filters-grid { gap: 10px; }
+@media (max-width: 480px) {
+  .filters-grid { grid-template-columns: 1fr !important; }
+}
+
+/* Single-line compact selects like New Projects */
+.filters-row .compact-select {
+  height: 36px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  min-width: 120px;
+  max-width: 220px;
+}
+
+/* Chip-style selects */
+.chips-row { gap: 8px; }
+.chip-select {
+  border-radius: 999px !important;
+  background: #f8fafc !important;
+  border: 1px solid #e5e7eb !important;
+  height: 34px !important;
+  padding: 4px 12px !important;
+}
+.chip-select:disabled { opacity: .65; }
+.chip-select.active {
+  background: #eef2ff !important;
+  border-color: #6e0be0 !important;
+}
+
+/* Clickable chip buttons */
+.chips-row {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: visible;         /* prevent vertical scroll inside the chip row */
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;       /* hide scrollbar in Firefox */
+}
+.chips-row::-webkit-scrollbar { display: none; }  /* hide scrollbar in WebKit */
+.chips-row .chip-wrap { margin-right: 8px; }
+.chips-row .chip-wrap:last-child { margin-right: 0; }
+.chip-wrap { position: relative; }
+.chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  color: #111827;
+  white-space: nowrap;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.chip-btn:disabled { opacity: .6; }
+.chip-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 9999;
+  min-width: 180px;
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+.chip-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  background: #fff;
+  border: 0;
+  color: #111827;
+}
+.chip-menu-item:hover { background: #f8fafc; }
+/* Reduce global top padding under the header */
+body { padding-top: 0 !important; }
+.filters-sticky { position: sticky; top: 56px; z-index: 4; }
