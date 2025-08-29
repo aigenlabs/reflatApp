@@ -1,0 +1,20 @@
+{
+    "project":{
+        "builder_id": "aparna",
+        "project_id": "towers",
+        "project_name": "Aparna Towers",
+        "project_city": "Hyderabad",
+        "project_location": "Nallagandla",
+        "project_website": "https://www.aparnaconstructions.com/project/apartments/aparna-sarovar-towers/",
+        "unit_sizes": "2878 - 3700 Sq Ft",
+        "configuration": "3 & 4 BHK",
+        "total_acres": "5",
+        "total_towers": "3",
+        "total_units": "585",
+        "units_perfloor": "4",
+        "total_floors": "50",
+        "desnsity_per_acre": "117",
+        "brochure_file": "towers_brochure.pdf",
+        "logo_file": "towers_logo.webp"
+        }
+}

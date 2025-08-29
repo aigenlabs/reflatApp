@@ -1,0 +1,20 @@
+{
+    "project":{
+        "builder_id": "aparna",
+        "project_id": "newlands",
+        "project_name": "Aparna newlands",
+        "brochure_file": "newlands_brochure.pdf",
+        "logo_file": "newlands_logo.webp",
+        "project_city": "Hyderabad",
+        "project_location": "Tellapur",
+        "project_website": "https://www.aparnaconstructions.com/project/apartments/aparna-newlands",
+        "unit_sizes": "1475 - 1991 SFT",
+        "configuration": "2.5, 3 BHK",
+        "total_acres": "14.7",
+        "total_towers": "8",
+        "total_units": "1976",
+        "units_perfloor": "8",
+        "total_floors": "G+42",
+        "desnsity_per_acre": "135"
+        }
+}

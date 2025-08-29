@@ -1,0 +1,21 @@
+{
+    "project":{
+        "builder_id": "myhome",
+        "project_id": "grava",
+        "project_name": "MyHome Grava",
+        "project_city": "Hyderabad",
+        "project_location": "Neopolis",
+        "project_website": "https://www.myhomeconstructions.com/my-home-grava/",
+        "unit_sizes": "4365 - 8640 SFt",
+        "configuration": "4 BHK",
+        "total_acres": "17.52",
+        "total_towers": "7",
+        "total_units": "1289",
+        "units_perfloor": "4",
+        "total_floors": "T1-G+54; T2-7:G+49",
+        "desnsity_per_acre": "74",
+        "brochure_file": "grava_brochure.pdf",
+        "logo_file": "grava_logo.webp",
+        "video_file":"https://www.myhomeconstructions.com/my-home-grava/assets/video/Testimonia3.mp4"
+        }
+}

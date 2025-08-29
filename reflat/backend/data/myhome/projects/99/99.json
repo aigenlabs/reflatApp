@@ -1,0 +1,21 @@
+{
+    "project":{
+        "builder_id": "myhome",
+        "project_id": "99",
+        "project_name": "MyHome 99",
+        "project_city": "Hyderabad",
+        "project_location": "Kokapet",
+        "project_website": "https://www.myhomeconstructions.com/my-home-99/",
+        "unit_sizes": "9299 - 10399 SFT",
+        "configuration": "4 BHK Ultra Luxury",
+        "total_acres": "1.74",
+        "total_towers": "1",
+        "total_units": "99",
+        "units_perfloor": "2",
+        "total_floors": "G+53",
+        "desnsity_per_acre": "57",
+        "brochure_file": "99_brochure.pdf",
+        "logo_file": "99_logo.webp",
+        "video_file":"https://www.myhomeconstructions.com/my-home-99/assests/videos/1.mp4"
+        }
+}

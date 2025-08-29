@@ -1,0 +1,20 @@
+{
+    "project":{
+        "builder_id": "aparna",
+        "project_id": "zenith",
+        "project_name": "Aparna Sarovar Zenith",
+        "project_city": "Hyderabad",
+        "project_location": "Nallagandla",
+        "project_website": "N/A",
+        "unit_sizes": "1275 - 2780 SFT",
+        "configuration": "2, 2.5, 3 & 4 BHK",
+        "total_acres": "25",
+        "total_towers": "13",
+        "total_units": "2475",
+        "units_perfloor": "8",
+        "total_floors": "G+24",
+        "desnsity_per_acre": "99",
+        "brochure_file": "zenith_brochure.pdf",
+        "logo_file": "zenith_logo.webp"
+        }
+}

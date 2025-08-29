@@ -1,0 +1,39 @@
+{
+  "updatedAt": "2025-08-28T00:00:00Z",
+  "cities": [
+    {
+      "name": "Hyderabad",
+      "localities": [
+        {
+          "name": "Nallagandla",
+          "properties": [
+            {
+              "builderId": "aparna",
+              "builderName": "Aparna Constructions",
+              "projectDetails": [
+                {"id":"zenith","name":"Aparna Zenith", "modes": ["rent", "resale"], "active": true}
+              ]
+              
+            }
+          ]
+        },
+        {
+          "name": "Tellapur",
+          "properties": [
+            {
+              "builderId": "aparna",
+              "builderName": "Aparna Constructions",
+              "projectDetails": [{"id":"Newlands","name":"Aparna NewLands", "modes": ["rent", "resale"], "active": true}]
+            },
+            {
+              "builderId": "myhome",
+              "builderName": "MyHome Constructions",
+              "projectDetails": [{"id":"Sayuk","name":"Myhome Sayuk", "modes": ["rent", "resale"], "active": true}]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+

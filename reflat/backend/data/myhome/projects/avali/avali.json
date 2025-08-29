@@ -1,0 +1,21 @@
+{
+    "project":{
+        "builder_id": "myhome",
+        "project_id": "avali",
+        "project_name": "MyHome Avali",
+        "project_city": "Hyderabad",
+        "project_location": "Tellapur",
+        "project_website": "https://www.myhomeconstructions.com/my-home-avali/",
+        "unit_sizes": "3000 - 3612 SFT",
+        "configuration": "3 & 4 BHK",
+        "total_acres": "8.37",
+        "total_towers": "4",
+        "total_units": "744",
+        "units_perfloor": "4",
+        "total_floors": "G+46",
+        "desnsity_per_acre": "89",
+        "brochure_file": "avali_brochure.pdf",
+        "logo_file": "avali_logo.webp",
+        "video_file":"https://www.myhomeconstructions.com/my-home-avali/assests/video/Testimonia3.mp4"
+        }
+}

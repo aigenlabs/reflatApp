@@ -1,0 +1,16 @@
+{
+  "name": "reflat-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "install:web": "npm --prefix reflat/frontend/reflat-ui ci",
+    "install:functions": "npm --prefix reflat/backend/firebasefunctions ci",
+    "start:web": "npm --prefix reflat/frontend/reflat-ui start",
+    "build:web": "npm --prefix reflat/frontend/reflat-ui run build",
+    "build:functions": "npm --prefix reflat/backend/firebasefunctions run build",
+    "deploy:hosting": "npm run build:web && firebase deploy --only hosting",
+    "deploy:functions": "npm run build:functions && firebase deploy --only functions",
+    "deploy:all": "npm run build:web && npm run build:functions && firebase deploy"
+  }
+}
+

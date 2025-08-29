@@ -1,0 +1,14 @@
+{
+  "builders": [
+    {
+      "builder_id": "myhome",
+      "builder_name": "MyHome Constructions",
+      "details": "myhome/myhome.json"
+    },
+    {
+      "builder_id": "aparna",
+      "builder_name": "Aparna Constructions",
+      "details": "aparna/aparna.json"
+    }
+  ]
+}

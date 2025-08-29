@@ -1,0 +1,14 @@
+{
+  "hosting": {
+    "public": "reflat/frontend/reflat-ui/build",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      { "source": "**", "destination": "/index.html" }
+    ]
+  }
+}
+

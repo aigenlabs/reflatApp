@@ -1,0 +1,21 @@
+{
+    "project":{
+        "builder_id": "myhome",
+        "project_id": "tridasa",
+        "project_name": "MyHome Tridasa",
+        "project_city": "Hyderabad",
+        "project_location": "Kollur",
+        "project_website": "https://www.myhomeconstructions.com/my-home-tridasa/",
+        "unit_sizes": "1253, 1505, 1840 SFT",
+        "configuration": "2, 2.5 & 3 BHK",
+        "total_acres": "22.56",
+        "total_towers": "9",
+        "total_units": "2682",
+        "units_perfloor": "10",
+        "total_floors": "G+29",
+        "desnsity_per_acre": "119",
+        "brochure_file": "tridasa_brochure.pdf",
+        "logo_file": "tridasa_logo.webp",
+        "video_file":"https://youtu.be/jr3uEVeLUDk"
+        }
+}

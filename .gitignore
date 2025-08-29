@@ -1,0 +1,43 @@
+# Root ignore: keep only backend/ and frontend/ while excluding heavy/generated/secrets
+
+# Ignore everything by default at repo root, then un-ignore selected dirs/files
+/*
+!.gitignore
+!README.md
+!firebase.json
+!package.json
+!reflat/
+
+# Global ignores inside allowed folders
+**/.DS_Store
+**/Thumbs.db
+**/*.log
+**/.env
+**/.env.*
+**/.cache/
+**/coverage/
+**/dist/
+**/build/
+**/.next/
+**/.vercel/
+**/.firebase/
+**/.pytest_cache/
+**/__pycache__/
+**/*.pyc
+
+# Node-related
+**/node_modules/
+**/pnpm-lock.yaml
+**/yarn.lock
+
+# Firebase Functions (TypeScript): ignore compiled output and local logs
+reflat/backend/firebasefunctions/lib/
+reflat/backend/firebasefunctions/node_modules/
+reflat/backend/firebasefunctions/firestore-debug.log
+reflat/backend/firebasefunctions/*.local
+
+# Firebase emulators/debug logs
+reflat/backend/firebase-debug.log
+
+# Secrets & credentials (ensure not committed)
+reflat/backend/serviceAccountKey.json

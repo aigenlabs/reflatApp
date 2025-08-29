@@ -1,0 +1,60 @@
+{
+  "builder_id": "myhome",
+  "projects": [
+    {
+      "builder_id": "myhome",
+      "project_id": "akrida",
+      "project_name": "MyHome Akrida",
+      "project_city": "Hyderabad",
+      "project_location": "Tellapur",
+      "unit_sizes": "1399/1622/1926/2012/2262/2347 Sq Ft",
+      "configuration": "2, 2.5 & 3 BHK",
+      "total_acres": "25",
+      "total_towers": "12",
+      "total_units": "3780",
+      "units_perfloor": "8",
+      "total_floors": "39",
+      "desnsity_per_acre": "151",
+      "brochure_file": "myhome_akrida.pdf",
+      "logo_file": "akrida.png",
+      "project_website": "https://www.myhomeconstructions.com/my-home-akrida/"
+    },
+    {
+      "builder_id": "myhome",
+      "project_id": "sayuk",
+      "project_name": "MyHome Sayuk",
+      "project_city": "Hyderabad",
+      "project_location": "Tellapur",
+      "unit_sizes": "1355/1573/1926/2012/2262 Sq Ft",
+      "configuration": "2, 2.5 & 3 BHK",
+      "total_acres": "25.37",
+      "total_towers": "12",
+      "total_units": "3780",
+      "units_perfloor": "8",
+      "total_floors": "G+39",
+      "desnsity_per_acre": "149",
+      "brochure_file": "myhome_sayuk.pdf",
+      "logo_file": "sayuk.png",
+      "project_website": "https://myhomesayuk.co.in/"
+    },
+    {
+      "builder_id": "myhome",
+      "project_id": "vipina",
+      "project_name": "MyHome Vipina",
+      "project_city": "Hyderabad",
+      "project_location": "Kollur",
+      "unit_sizes": "1325/1655/2095/2180 Sq Ft",
+      "configuration": "2, 2.5 & 3 BHK",
+      "total_acres": "20.61",
+      "total_towers": "8",
+      "total_units": "3720",
+      "units_perfloor": "8",
+      "total_floors": "G+46",
+      "desnsity_per_acre": "180",
+      "brochure_file": "myhome_vipina.pdf",
+      "logo_file": "vipina.webp",
+      "project_website": "https://www.myhomeconstructions.com/my-home-vipina/"
+
+    }
+  ]
+}
