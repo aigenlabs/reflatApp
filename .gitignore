@@ -3,6 +3,7 @@
 # Ignore everything by default at repo root, then un-ignore selected dirs/files
 /*
 !.gitignore
+!.gitattributes
 !README.md
 !firebase.json
 !package.json
@@ -24,6 +25,7 @@
 **/.pytest_cache/
 **/__pycache__/
 **/*.pyc
+**/*.pdf
 
 # Node-related
 **/node_modules/
