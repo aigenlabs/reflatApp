@@ -1,6 +1,7 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import * as admin from "firebase-admin";
+import * as logger from "firebase-functions/logger";
 import cors from "cors";
 import { postApiHandler } from "./post_api";
 
@@ -22,6 +23,7 @@ interface ProjectLocation {
 const corsHandler = cors({
   origin: [
     "https://reflat.web.app",
+    "https://reflat-staging.web.app",
     "http://localhost:3000",
   ],
   methods: ["GET", "POST", "OPTIONS"],
@@ -40,6 +42,8 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
 
       const urlPath = req.path;
       const method = req.method.toUpperCase();
+      logger.info("api request", { method, path: urlPath, query: req.query ? Object.keys(req.query) : [] });
+      if (method === "HEAD") { res.status(204).send(""); return; }
       if (method === "POST") {
         await postApiHandler(req, res);
         return;
@@ -172,6 +176,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
           projectsByBuilder,
         } as const;
 
+        logger.info("serviceable response", { cities: result.cities.length });
         res.json(result);
         return;
       }
@@ -196,6 +201,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
         try {
           const snap = await base.orderBy("createdAt", "desc").limit(limitQ).get();
           const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          logger.info("listings response", { count: items.length, ordered: true });
           res.json({ items, ordered: true });
           return;
         } catch (e: any) {
@@ -205,6 +211,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
           if (!needsIndex) throw e;
           const snap2 = await base.limit(limitQ).get();
           const items2 = snap2.docs.map((d) => ({ id: d.id, ...d.data() }));
+          logger.warn("listings response without order", { count: items2.length });
           res.json({ items: items2, ordered: false, note: "Returned without createdAt ordering due to missing index." });
           return;
         }
@@ -230,6 +237,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
           res.status(404).json({ error: "Project not found" });
           return;
         }
+        logger.info("project_data response", { builderId, projectId });
         res.json(snap.data());
         return;
       }
@@ -258,6 +266,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
           ...doc.data(),
         }));
 
+        logger.info("builders response", { count: builders.length });
         res.json(builders);
         return;
       }
@@ -292,6 +301,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
           return;
         }
 
+        logger.info("location_project_data response", { city, location, hasProjects: !!project });
         res.json(project);
         return;
       }
@@ -368,75 +378,38 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
     builder_ids: Array.from(builderSet),
   };
 
+  logger.info("locations response", { cities: result.cities.length, locations: result.locations.length });
   res.json(result);
   return;
 }
 
    // -----------------------------
       // GET /api/serviceable_projects
-      // Returns concise structure keyed by city -> locality -> [{ id, name }]
-      // Stored at Firestore doc: config/serviceable_projects
+      // Returns full nested structure with cities -> localities -> properties -> projectDetails
+      // Source of truth: serviceable_projects/index (collection/doc)
       // -----------------------------
       if (parts[0] === "serviceable_projects") {
-        // Optional mode filter: ?mode=rent|resale
-        const modeQ = (req.query?.mode as string | undefined)?.toLowerCase();
-        const filterMode = modeQ === "rent" || modeQ === "resale" ? modeQ : undefined;
-
-        // Prefer explicit compact doc if present
-        const compactRef = db.collection("config").doc("serviceable_projects");
-        const compactSnap = await compactRef.get();
-        if (compactSnap.exists) {
-          const data = compactSnap.data() as any;
-          if (!filterMode) { res.json(data); return; }
-          // If mode filter requested and the compact doc has plain arrays, we cannot filter reliably; just return as-is
-          res.json(data);
+        // Return the index doc as-is (exact shape)
+        const indexRef = db.collection("serviceable_projects").doc("index");
+        const indexSnap = await indexRef.get();
+        if (!indexSnap.exists) {
+          res.status(404).json({ error: "serviceable_projects/index not found" });
           return;
         }
+        const doc = indexSnap.data() as any;
+        logger.info("serviceable_projects response (source=index)", {
+          cities: Array.isArray(doc?.cities) ? doc.cities.length : 0,
+        });
+        res.json(doc);
+        return;
+      }
 
-        // Fallback: derive compact map from nested config/serviceable
-        const svcRef = db.collection("config").doc("serviceable");
-        const svcSnap = await svcRef.get();
-        if (!svcSnap.exists) { res.status(404).json({ error: "No serviceable config found" }); return; }
-        const svc = svcSnap.data() as any;
-
-        const result: Record<string, Record<string, Array<{ id: string; name: string }>>> = {};
-        const cities = Array.isArray(svc?.cities) ? svc.cities : [];
-        for (const c of cities) {
-          const city = c?.name; if (!city) continue;
-          result[city] = result[city] || {};
-          const locs = Array.isArray(c?.localities) ? c.localities : [];
-          for (const l of locs) {
-            const locality = l?.name; if (!locality) continue;
-            const props = Array.isArray(l?.properties) ? l.properties : [];
-            const out: Array<{ id: string; name: string }> = [];
-            for (const p of props) {
-              const details = Array.isArray(p?.projectDetails) ? p.projectDetails : [];
-              if (details.length) {
-                for (const d of details) {
-                  if (d?.active === false) continue;
-                  const modes: string[] = Array.isArray(d?.modes) ? d.modes : ["rent", "resale"];
-                  if (filterMode && !modes.includes(filterMode)) continue;
-                  const id = String(d?.id || "");
-                  const name = String(d?.name || id || "");
-                  if (!id) continue;
-                  // Deduplicate by id
-                  if (!out.some((x) => x.id === id)) out.push({ id, name });
-                }
-              } else {
-                // Back-compat flattened entry
-                if (p?.active === false) continue;
-                const modes: string[] = Array.isArray(p?.modes) ? p.modes : ["rent", "resale"];
-                if (filterMode && !modes.includes(filterMode)) continue;
-                const id = String(p?.projectId || "");
-                const name = String(p?.projectName || id || "");
-                if (!id) continue;
-                if (!out.some((x) => x.id === id)) out.push({ id, name });
-              }
-            }
-            result[city][locality] = out;
-          }
-        }
-        res.json(result);
+      // -----------------------------
+      // GET /api/health
+      // Simple health check endpoint for monitoring
+      // -----------------------------
+      if (parts[0] === "health") {
+        res.json({ ok: true, now: Date.now() });
         return;
       }
       // -----------------------------
@@ -444,7 +417,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
       // -----------------------------
       res.status(404).json({ error: "Endpoint not found", path: urlPath });
     } catch (err: unknown) {
-      console.error("API error:", err);
+      logger.error("API error", { err });
       if (err instanceof Error) {
         res.status(500).json({ error: err.message });
       } else {

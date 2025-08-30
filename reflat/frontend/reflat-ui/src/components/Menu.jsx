@@ -1,6 +1,6 @@
 // src/components/Menu.jsx
 import React, { Suspense, lazy } from "react";
-import { NavLink, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Routes, Route, Navigate } from "react-router-dom";
 
 // Keep your page imports/lazy here since routes live in this file
 const NewProjects = lazy(() => import("../pages/NewProjects"));
@@ -26,8 +26,6 @@ const activeStyle = {
 
 // ===== New: just the nav bar (no routes) =====
 export function MenuBar() {
-  const nav = useNavigate();
-  const loc = useLocation();
   return (
     <nav className="mobile-nav" style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px", background: "transparent", borderBottom: 0 }}>
       {/* Scrollable links */}

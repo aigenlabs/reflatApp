@@ -1,0 +1,75 @@
+name: Deploy to Staging (Hosting + Functions)
+
+on:
+  push:
+    branches: [ "staging" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Set your Firebase project id for staging here or override at dispatch time
+  FIREBASE_PROJECT_ID: reflat-staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Cache frontend deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            reflat/frontend/reflat-ui/node_modules
+          key: ${{ runner.os }}-npm-ui-${{ hashFiles('reflat/frontend/reflat-ui/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-ui-
+
+      - name: Cache functions deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            reflat/backend/firebasefunctions/node_modules
+          key: ${{ runner.os }}-npm-fx-${{ hashFiles('reflat/backend/firebasefunctions/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-fx-
+
+      - name: Install frontend deps
+        run: npm --prefix reflat/frontend/reflat-ui ci
+
+      - name: Install functions deps
+        run: npm --prefix reflat/backend/firebasefunctions ci
+
+      - name: Build frontend
+        run: npm --prefix reflat/frontend/reflat-ui run build
+
+      - name: Build functions
+        run: npm --prefix reflat/backend/firebasefunctions run build
+
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@latest
+
+      - name: Deploy Hosting + Functions to Staging
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          if [ -z "${FIREBASE_TOKEN}" ]; then
+            echo "FIREBASE_TOKEN secret is not set. Add it in repo Settings > Secrets and variables > Actions." >&2
+            exit 1
+          fi
+          firebase deploy --only hosting,functions \
+            --project "$FIREBASE_PROJECT_ID" \
+            --non-interactive --force \
+            --token "$FIREBASE_TOKEN"
+

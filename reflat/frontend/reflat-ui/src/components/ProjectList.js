@@ -4,7 +4,7 @@ import ProjectCard from "./ProjectCard";
 import ProjectSkeleton from "./ProjectSkeleton";
 import { clearAppCache } from "./clearAppCache";
 
-import {FIREBASE_FUNCTIONS_URL, FIREBASE_STORAGE_URL} from "./constants";
+import { FIREBASE_FUNCTIONS_URL, FIREBASE_STORAGE_URL } from "./constants";
 
 export default function PrjList() {
   const [loading, setLoading] = useState(false);
@@ -54,7 +54,7 @@ export default function PrjList() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${FIREBASE_FUNCTIONS_URL}/locations/`);
+        const res = await fetch(`${FIREBASE_FUNCTIONS_URL}/locations`);
         if (!res.ok) throw new Error("Failed to fetch locations");
         const data = await res.json();
         // derive builderIds only from loaded projects later, not here

@@ -1,4 +1,14 @@
 {
+  "functions": {
+    "source": "reflat/backend/firebasefunctions"
+  },
+  "firestore": {
+    "rules": "reflat/backend/firebasefunctions/firestore.rules",
+    "indexes": "reflat/backend/firebasefunctions/firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "reflat/backend/firebasefunctions/storage.rules"
+  },
   "hosting": {
     "public": "reflat/frontend/reflat-ui/build",
     "ignore": [
@@ -7,8 +17,8 @@
       "**/node_modules/**"
     ],
     "rewrites": [
+      { "source": "/api{,/**}", "function": "api" },
       { "source": "**", "destination": "/index.html" }
     ]
   }
 }
-

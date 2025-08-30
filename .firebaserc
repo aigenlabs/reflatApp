@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "reflat-staging",
+    "staging": "reflat-staging",
+    "prod": "reflat"
+  }
+}
