@@ -92,7 +92,6 @@ export default function SearchBar({
 
   // Shared styles
   const chip = sharedChip;
-  const chipLabel = { color: "#6c757d" };
   const chipValue = { fontWeight: 600 };
 
   return (

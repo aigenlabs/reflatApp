@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Wand2, Check, Loader2, RotateCcw, SlidersHorizontal, XCircle, Plus, Minus } from "lucide-react";
 import { EXTRACT_URL, FIREBASE_FUNCTIONS_URL } from "./constants";
-import { chipbarNoScroll as sharedChipbarNoScroll, chip as sharedChip, chipDisabled as sharedChipDisabled, chipPrimary as sharedChipPrimary, chipDanger as sharedChipDanger } from "./chipbarStyles";
+import { chipbarNoScroll as sharedChipbarNoScroll, chip as sharedChip, chipPrimary as sharedChipPrimary } from "./chipbarStyles";
 import IntakeListings from "./IntakeListings";
 
 /**
@@ -17,7 +17,7 @@ export default function ListingIntake({
   submitUrl = `${FIREBASE_FUNCTIONS_URL}/listings`,
 }) {
   const [message, setMessage] = useState("");
-  const [extracted, setExtracted] = useState(null); // raw returned object
+  // extracted state removed (was unused)
   const [form, setForm] = useState(null);           // editable copy
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -223,7 +223,6 @@ export default function ListingIntake({
         const name = svcMap?.[preCity]?.[preLocality]?.find((p) => String(p.id) === String(preProjectId))?.name || "";
         listing.projectName = name;
       } catch {}
-      setExtracted(listing);
       setForm(listing);
     } catch (e) {
       console.error(e);
@@ -235,7 +234,6 @@ export default function ListingIntake({
 
   const handleReset = () => {
     setMessage("");
-    setExtracted(null);
     setForm(null);
     setError("");
     setSuccess("");
@@ -270,7 +268,7 @@ export default function ListingIntake({
       const payload = JSON.stringify({ city: form.city || "", locality: form.locality || "", projectId: form.projectId || "" });
       localStorage.setItem(STORAGE_KEY, payload);
     } catch {}
-  }, [form?.city, form?.locality, form?.projectId, STORAGE_KEY]);
+  }, [form, STORAGE_KEY]);
 
   const validate = () => {
     const errs = [];
@@ -312,7 +310,6 @@ export default function ListingIntake({
       setShowIntake(false);
       setAddRequireFilters(false);
       setAddFiltersReady(false);
-      setExtracted(null);
       setForm(null);
       setMessage("");
     } catch (e) {
@@ -505,7 +502,6 @@ export default function ListingIntake({
               }
               // Start add flow and force user to pick fresh filters
               setMessage("");
-              setExtracted(null);
               setForm(null);
               setError("");
               setSuccess("");
@@ -902,17 +898,7 @@ function FormGrid({ form, onChange, isRent, svcMap }) {
     gap: 12,
   };
 
-  const cityOptions = useMemo(() => (svcMap ? Object.keys(svcMap) : []), [svcMap]);
-  const localityOptions = useMemo(() => {
-    if (!svcMap || !form?.city) return [];
-    const locs = svcMap[form.city] || {};
-    return Object.keys(locs);
-  }, [svcMap, form?.city]);
-  const projectOptions = useMemo(() => {
-    if (!svcMap || !form?.city || !form?.locality) return [];
-    const arr = (svcMap?.[form.city]?.[form.locality]) || [];
-    return arr;
-  }, [svcMap, form?.city, form?.locality]);
+  // removed unused option memoizations
 
 
   return (
