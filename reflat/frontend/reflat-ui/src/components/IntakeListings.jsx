@@ -1,11 +1,60 @@
 import React from "react";
-import { ExternalLink, Phone, MessageCircle } from "lucide-react";
+import { ExternalLink, Phone, MessageCircle, ArrowUpDown } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export default function IntakeListings({ items = [], loading = false, error = "", mode = "", svcMap = null }) {
+export default function IntakeListings({ items = [], loading = false, error = "", mode = "", svcMap = null, sortKey = 'default', setSortKey }) {
   return (
     <div className="card" style={{ padding: 12, marginTop: 8 }}>
-      <h5 style={{ margin: 0, marginBottom: 8 }}>{mode === 'rent' ? 'Listings for Rent' : mode === 'resale' ? 'Listings for Resale' : 'Listings'}</h5>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+        <h5 style={{ margin: 0 }}>{mode === 'rent' ? 'Listings for Rent' : mode === 'resale' ? 'Listings for Resale' : 'Listings'}</h5>
+        {/* Sort controls (compact) */}
+        {setSortKey && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            {(() => {
+              const options = [
+                { key: 'default', label: 'Sort: Default', badge: '•' },
+                { key: 'amount_desc', label: mode === 'rent' ? 'Sort: Rent High→Low' : 'Sort: Price High→Low', badge: mode === 'rent' ? 'R↓' : 'P↓' },
+                { key: 'amount_asc', label: mode === 'rent' ? 'Sort: Rent Low→High' : 'Sort: Price Low→High', badge: mode === 'rent' ? 'R↑' : 'P↑' },
+                { key: 'bhk_desc', label: 'Sort: BHK High→Low', badge: 'BHK' },
+                { key: 'size_desc', label: 'Sort: Size High→Low', badge: 'SZ' },
+              ];
+              const idx = Math.max(0, options.findIndex(o => o.key === sortKey));
+              const cur = options[idx] || options[0];
+              const cycle = () => {
+                const next = options[(idx + 1) % options.length];
+                setSortKey(next.key);
+              };
+              return (
+                <button
+                  type="button"
+                  onClick={cycle}
+                  aria-label={cur.label}
+                  title={cur.label}
+                  style={{ width: 32, height: 32, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', position: 'relative' }}
+                >
+                  <ArrowUpDown size={16} />
+                  <span style={{ position: 'absolute', top: -5, right: -6, background: '#0f172a', color: '#fff', borderRadius: 999, padding: '0 4px', fontSize: 10, lineHeight: '14px', height: 14, display: 'inline-flex', alignItems: 'center' }}>
+                    {cur.badge}
+                  </span>
+                </button>
+              );
+            })()}
+            <select
+              aria-label="Sort listings"
+              title="Sort"
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value)}
+              style={{ padding: '6px 8px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', fontSize: 12 }}
+            >
+              <option value="default">Sort</option>
+              <option value="amount_desc">{mode === 'rent' ? 'Rent High→Low' : 'Price High→Low'}</option>
+              <option value="amount_asc">{mode === 'rent' ? 'Rent Low→High' : 'Price Low→High'}</option>
+              <option value="bhk_desc">BHK High→Low</option>
+              <option value="size_desc">Size High→Low</option>
+            </select>
+          </div>
+        )}
+      </div>
       {loading && <div className="text-muted">Loading…</div>}
       {error && <div className="alert alert-warning" role="alert">{error}</div>}
       {!loading && !error && items.length === 0 && (

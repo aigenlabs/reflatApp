@@ -6,8 +6,10 @@
 !.gitattributes
 !README.md
 !firebase.json
+!.firebaserc
 !package.json
 !reflat/
+!.github/
 
 # Global ignores inside allowed folders
 **/.DS_Store
@@ -39,7 +41,7 @@ reflat/backend/firebasefunctions/node_modules/
 reflat/backend/firebasefunctions/firestore-debug.log
 reflat/backend/firebasefunctions/*.local
 
-# Firebase emulators/debug logs
+# Firebase debug logs
 reflat/backend/firebase-debug.log
 
 # Secrets & credentials (ensure not committed)

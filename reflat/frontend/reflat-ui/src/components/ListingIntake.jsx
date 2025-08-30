@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Wand2, Check, Loader2, RotateCcw, SlidersHorizontal, XCircle, Plus, Minus, ArrowUpDown } from "lucide-react";
+import { Wand2, Check, Loader2, RotateCcw, SlidersHorizontal, XCircle, Plus, Minus } from "lucide-react";
 import { EXTRACT_URL, FIREBASE_FUNCTIONS_URL } from "./constants";
 import { chipbarNoScroll as sharedChipbarNoScroll, chip as sharedChip, chipDisabled as sharedChipDisabled, chipPrimary as sharedChipPrimary, chipDanger as sharedChipDanger } from "./chipbarStyles";
 import IntakeListings from "./IntakeListings";
@@ -57,6 +57,76 @@ export default function ListingIntake({
   // Load serviceable city/locality/project options
   useEffect(() => {
     let cancelled = false;
+    const normalizeSvcMap = (raw, mode) => {
+      if (!raw || typeof raw !== 'object') return {};
+
+      // Case A: Nested index doc shape (serviceable_projects/index):
+      // { updatedAt, cities: [ { name, localities: [ { name, properties: [ { builderId, builderName, projectDetails: [ { id, name, modes, active } ] } ] } ] } ] }
+      if (Array.isArray(raw.cities)) {
+        const out = {};
+        const filterByMode = (modes) => {
+          if (!mode) return true;
+          const arr = Array.isArray(modes) ? modes : ['rent','resale'];
+          return arr.includes(mode);
+        };
+        for (const c of raw.cities) {
+          const city = c?.name; if (!city) continue;
+          out[city] = out[city] || {};
+          const locs = Array.isArray(c?.localities) ? c.localities : [];
+          for (const l of locs) {
+            const locality = l?.name; if (!locality) continue;
+            const props = Array.isArray(l?.properties) ? l.properties : [];
+            const acc = [];
+            for (const p of props) {
+              const details = Array.isArray(p?.projectDetails) ? p.projectDetails : [];
+              for (const d of details) {
+                if (d?.active === false) continue;
+                if (!filterByMode(d?.modes)) continue;
+                const id = String(d?.id || ''); if (!id) continue;
+                const name = String(d?.name || id);
+                if (!acc.some(x => x.id === id)) acc.push({ id, name });
+              }
+            }
+            out[city][locality] = acc;
+          }
+        }
+        return out;
+      }
+
+      // Case B: Compact map shape (future): city -> locality -> array or { rent, resale }
+      const unionById = (arrays) => {
+        const byId = new Map();
+        for (const arr of arrays) {
+          for (const p of Array.isArray(arr) ? arr : []) {
+            const id = p && p.id ? String(p.id) : '';
+            if (!id) continue;
+            if (!byId.has(id)) byId.set(id, { id, name: String(p.name || id) });
+          }
+        }
+        return Array.from(byId.values());
+      };
+      const out = {};
+      for (const city of Object.keys(raw)) {
+        const locs = raw[city] || {};
+        if (!locs || typeof locs !== 'object') continue;
+        out[city] = {};
+        for (const loc of Object.keys(locs)) {
+          const v = locs[loc];
+          if (Array.isArray(v)) {
+            out[city][loc] = v;
+          } else if (v && typeof v === 'object') {
+            const rent = Array.isArray(v.rent) ? v.rent : [];
+            const resale = Array.isArray(v.resale) ? v.resale : [];
+            if (mode === 'rent') out[city][loc] = rent;
+            else if (mode === 'resale') out[city][loc] = resale;
+            else out[city][loc] = unionById([rent, resale]);
+          } else {
+            out[city][loc] = [];
+          }
+        }
+      }
+      return out;
+    };
     const load = async () => {
       setSvcError("");
       setSvcLoading(true);
@@ -65,7 +135,8 @@ export default function ListingIntake({
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Failed to load options (${res.status})`);
         const data = await res.json();
-        if (!cancelled) setSvcMap(data || {});
+        const normalized = normalizeSvcMap(data, selectedMode);
+        if (!cancelled) setSvcMap(normalized);
       } catch (e) {
         if (!cancelled) setSvcError("Failed to load city/locality/project options.");
         console.error(e);
@@ -405,50 +476,6 @@ export default function ListingIntake({
           >
             <SlidersHorizontal size={16} />
           </button>
-          {/* Sort (icon cycle) */}
-          {(() => {
-            const options = [
-              { key: 'default', label: 'Sort: Default', badge: '•' },
-              { key: 'amount_desc', label: selectedMode === 'rent' ? 'Sort: Rent High→Low' : 'Sort: Price High→Low', badge: selectedMode === 'rent' ? 'R↓' : 'P↓' },
-              { key: 'amount_asc', label: selectedMode === 'rent' ? 'Sort: Rent Low→High' : 'Sort: Price Low→High', badge: selectedMode === 'rent' ? 'R↑' : 'P↑' },
-              { key: 'bhk_desc', label: 'Sort: BHK High→Low', badge: 'BHK' },
-              { key: 'size_desc', label: 'Sort: Size High→Low', badge: 'SZ' },
-            ];
-            const idx = Math.max(0, options.findIndex(o => o.key === sortKey));
-            const cur = options[idx] || options[0];
-            const cycle = () => {
-              const next = options[(idx + 1) % options.length];
-              setSortKey(next.key);
-            };
-            return (
-              <button
-                type="button"
-                onClick={cycle}
-                aria-label={cur.label}
-                title={cur.label}
-                style={{ ...chipStyle, padding: '6px 8px', position: 'relative' }}
-              >
-                <ArrowUpDown size={16} />
-                <span style={{ position: 'absolute', top: -5, right: -6, background: '#0f172a', color: '#fff', borderRadius: 999, padding: '0 4px', fontSize: 10, lineHeight: '14px', height: 14, display: 'inline-flex', alignItems: 'center' }}>
-                  {cur.badge}
-                </span>
-              </button>
-            );
-          })()}
-          {/* Sort dropdown (explicit selection) */}
-          <select
-            aria-label="Sort listings"
-            title="Sort"
-            value={sortKey}
-            onChange={(e) => setSortKey(e.target.value)}
-            style={{ ...chipStyle, padding: '6px 8px', border: '1px solid #e5e7eb', background: '#fff' }}
-          >
-            <option value="default">Sort</option>
-            <option value="amount_desc">{selectedMode === 'rent' ? 'Rent High→Low' : 'Price High→Low'}</option>
-            <option value="amount_asc">{selectedMode === 'rent' ? 'Rent Low→High' : 'Price Low→High'}</option>
-            <option value="bhk_desc">BHK High→Low</option>
-            <option value="size_desc">Size High→Low</option>
-          </select>
           {/* Summary chip (clickable) */}
           <button
             type="button"
@@ -748,7 +775,15 @@ export default function ListingIntake({
 
       {/* Listings view when collapsed */}
       {!showIntake && (
-        <IntakeListings items={sortedListings(listings, sortKey, selectedMode)} loading={listLoading} error={listError} mode={selectedMode} svcMap={svcMap} />
+        <IntakeListings
+          items={sortedListings(listings, sortKey, selectedMode)}
+          loading={listLoading}
+          error={listError}
+          mode={selectedMode}
+          sortKey={sortKey}
+          setSortKey={setSortKey}
+          svcMap={svcMap}
+        />
       )}
     </div>
   );
