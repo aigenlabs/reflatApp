@@ -46,3 +46,6 @@ reflat/backend/firebase-debug.log
 
 # Secrets & credentials (ensure not committed)
 reflat/backend/serviceAccountKey.json
+
+# Allow committing this specific non-secret env file
+!reflat/frontend/reflat-ui/.env.development
