@@ -33,7 +33,6 @@ export default function SearchBar({
   const [tmpLocation, setTmpLocation] = useState(selectedLocation);
   const [tmpBuilder, setTmpBuilder] = useState(selectedBuilder);
   const [availableBuilders, setAvailableBuilders] = useState([]);
-  const [buildersLoading, setBuildersLoading] = useState(false);
 
   // Sync temp with external changes
   useEffect(() => setTmpCity(selectedCity), [selectedCity]);
@@ -48,7 +47,6 @@ export default function SearchBar({
         setAvailableBuilders([]);
         return;
       }
-      setBuildersLoading(true);
       try {
         const res = await fetch(`${FIREBASE_FUNCTIONS_URL}/location_project_data/${tmpCity}/${tmpLocation}`);
         if (!res.ok) throw new Error('Failed to fetch builders for location');
@@ -59,8 +57,6 @@ export default function SearchBar({
       } catch (err) {
         console.debug('fetchBuildersForLocation error', err);
         setAvailableBuilders([]);
-      } finally {
-        if (!cancelled) setBuildersLoading(false);
       }
     }
     fetchBuildersForLocation();

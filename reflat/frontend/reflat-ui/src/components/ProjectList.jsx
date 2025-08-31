@@ -16,7 +16,6 @@ export default function PrjList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const containerRef = useRef(null);
-  const [maxCardWidth, setMaxCardWidth] = useState(null);
 
   const [projects, setProjects] = useState([]);
   const [builderIds, setBuilderIds] = useState([]);
@@ -79,8 +78,6 @@ export default function PrjList() {
     // 'loadProjects aborted' messages in development (React Strict Mode / quick state updates).
 
     async function loadProjects() {
-      console.log("QQQ:", selectedCity, selectedLocation, selectedBuilder);
-
       if (!selectedCity || !selectedLocation) {
         setProjects([]);
         return;
@@ -140,7 +137,7 @@ export default function PrjList() {
             return;
           }
 
-          console.log("Loading details for", refsToLoad.length, "projects");
+          // console.log("Loading details for", refsToLoad.length, "projects");
 
           const details = await Promise.all(
             refsToLoad.map((p) =>
