@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { FIREBASE_FUNCTIONS_URL } from "../components/constants";
-import { Phone, MessageCircle, ArrowLeft } from "lucide-react";
+import PhoneIcon from '@mui/icons-material/Phone';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 export default function ListingDetails() {
   const { id } = useParams();
@@ -34,7 +36,7 @@ export default function ListingDetails() {
   return (
     <div className="container px-2 pt-2 pb-2" style={{ maxWidth: 900 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <Link to="/intake" className="btn btn-link p-0" style={{ textDecoration: 'none' }}><ArrowLeft size={18} /> Back</Link>
+        <Link to="/intake" className="btn btn-link p-0" style={{ textDecoration: 'none' }}><ArrowBackIcon fontSize="small" /> Back</Link>
       </div>
       {loading && <div className="text-muted">Loading…</div>}
       {error && <div className="alert alert-danger">{error}</div>}
@@ -71,8 +73,8 @@ export default function ListingDetails() {
             <Field label="Notes" value={data.notes} full />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
-            {telHref && <a href={telHref} className="btn btn-sm btn-outline-secondary" title="Call"><Phone size={16} /> Call</a>}
-            {waHref && <a href={waHref} className="btn btn-sm btn-outline-success" target="_blank" rel="noopener noreferrer" title="WhatsApp"><MessageCircle size={16} /> WhatsApp</a>}
+            {telHref && <a href={telHref} className="btn btn-sm btn-outline-secondary" title="Call"><PhoneIcon fontSize="small" /> Call</a>}
+            {waHref && <a href={waHref} className="btn btn-sm btn-outline-success" target="_blank" rel="noopener noreferrer" title="WhatsApp"><ChatBubbleOutlineIcon fontSize="small" /> WhatsApp</a>}
           </div>
         </div>
       )}

@@ -1,5 +1,8 @@
 import React from "react";
-import { ExternalLink, Phone, MessageCircle, ArrowUpDown } from "lucide-react";
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import PhoneIcon from '@mui/icons-material/Phone';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import SwapVertIcon from '@mui/icons-material/SwapVert';
 import { Link } from "react-router-dom";
 
 export default function IntakeListings({ items = [], loading = false, error = "", mode = "", svcMap = null, sortKey = 'default', setSortKey }) {
@@ -32,7 +35,7 @@ export default function IntakeListings({ items = [], loading = false, error = ""
                   title={cur.label}
                   style={{ width: 32, height: 32, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', position: 'relative' }}
                 >
-                  <ArrowUpDown size={16} />
+                  <SwapVertIcon fontSize="small" />
                   <span style={{ position: 'absolute', top: -5, right: -6, background: '#0f172a', color: '#fff', borderRadius: 999, padding: '0 4px', fontSize: 10, lineHeight: '14px', height: 14, display: 'inline-flex', alignItems: 'center' }}>
                     {cur.badge}
                   </span>
@@ -113,18 +116,18 @@ export default function IntakeListings({ items = [], loading = false, error = ""
                     )}
                     {/* View details */}
                     <Link to={`/listing/${it.id}`} title="View details" aria-label="View details" className="btn btn-sm p-0" style={{ color: '#0f172a' }}>
-                      <ExternalLink size={16} />
+                      <OpenInNewIcon fontSize="small" />
                     </Link>
                     {/* Call */}
                     {telHref && (
                       <a href={telHref} title="Call" aria-label="Call" className="btn btn-sm p-0" style={{ color: '#0f172a' }}>
-                        <Phone size={16} />
+                        <PhoneIcon fontSize="small" />
                       </a>
                     )}
                     {/* WhatsApp */}
                     {waHref && (
                       <a href={waHref} title="WhatsApp" aria-label="WhatsApp" className="btn btn-sm p-0" target="_blank" rel="noopener noreferrer" style={{ color: '#0f172a' }}>
-                        <MessageCircle size={16} />
+                        <ChatBubbleOutlineIcon fontSize="small" />
                       </a>
                     )}
                   </div>

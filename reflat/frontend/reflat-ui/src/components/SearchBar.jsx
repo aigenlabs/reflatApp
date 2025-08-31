@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { XCircle, SlidersHorizontal } from "lucide-react";
+import CloseIcon from '@mui/icons-material/Close';
+import SearchIcon from '@mui/icons-material/Search';
+import { FIREBASE_FUNCTIONS_URL } from './constants';
 import { chipbarScrollable as sharedChipbar, chip as sharedChip, chipPrimary as sharedChipPrimary } from "./chipbarStyles";
 
 /**
@@ -30,11 +32,40 @@ export default function SearchBar({
   const [tmpCity, setTmpCity] = useState(selectedCity);
   const [tmpLocation, setTmpLocation] = useState(selectedLocation);
   const [tmpBuilder, setTmpBuilder] = useState(selectedBuilder);
+  const [availableBuilders, setAvailableBuilders] = useState([]);
+  const [buildersLoading, setBuildersLoading] = useState(false);
 
   // Sync temp with external changes
   useEffect(() => setTmpCity(selectedCity), [selectedCity]);
   useEffect(() => setTmpLocation(selectedLocation), [selectedLocation]);
   useEffect(() => setTmpBuilder(selectedBuilder), [selectedBuilder]);
+
+  // When the temporary locality changes in the drawer, fetch builders for that city+locality
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchBuildersForLocation() {
+      if (!tmpCity || !tmpLocation) {
+        setAvailableBuilders([]);
+        return;
+      }
+      setBuildersLoading(true);
+      try {
+        const res = await fetch(`${FIREBASE_FUNCTIONS_URL}/location_project_data/${tmpCity}/${tmpLocation}`);
+        if (!res.ok) throw new Error('Failed to fetch builders for location');
+        const { projects: locProjects = [] } = await res.json();
+        if (cancelled) return;
+        const opts = Array.from(new Set(locProjects.map((p) => p.builder_id))).sort();
+        setAvailableBuilders(opts);
+      } catch (err) {
+        console.debug('fetchBuildersForLocation error', err);
+        setAvailableBuilders([]);
+      } finally {
+        if (!cancelled) setBuildersLoading(false);
+      }
+    }
+    fetchBuildersForLocation();
+    return () => { cancelled = true; };
+  }, [tmpCity, tmpLocation]);
 
   const drawerRef = useRef(null);
 
@@ -88,7 +119,7 @@ export default function SearchBar({
   const isCityDisabled = cities.length === 0;
   const isLocationDisabled = !tmpCity || locations.length === 0;
   const isBuilderSelectDisabled =
-    builderDisabled || builders.length === 0 || !tmpLocation;
+    builderDisabled || (!availableBuilders.length && builders.length === 0) || !tmpLocation;
 
   // Shared styles
   const chip = sharedChip;
@@ -97,7 +128,14 @@ export default function SearchBar({
   return (
     <>
       {/* Chipbar under header */}
-      <div className="chipbar" role="toolbar" aria-label="Filters" style={{ ...sharedChipbar, justifyContent: 'center' }}>
+      <div className="chipbar" role="toolbar" aria-label="Filters" style={{
+        ...sharedChipbar,
+        display: 'flex',
+        justifyContent: 'center',
+        width: '100%',
+        position: 'relative',
+        margin: '0 auto',
+      }}>
         {/* Filters icon (opens drawer) */}
         <button
           type="button"
@@ -107,19 +145,7 @@ export default function SearchBar({
           title="Filters"
           style={{ ...chip, ...sharedChipPrimary, padding: "6px 8px" }}
         >
-          <SlidersHorizontal size={16} />
-        </button>
-
-        {/* Reset icon */}
-        <button
-          type="button"
-          className="btn p-0"
-          onClick={onReset}
-          aria-label="Reset Filters"
-          title="Reset"
-          style={{ ...chip, color: "#d9534f", fontWeight: 700, padding: "6px 8px" }}
-        >
-          <XCircle size={16} />
+          <SearchIcon fontSize="small" />
         </button>
 
         {/* Selected values (summary chips) — read-only but clickable to open drawer */}
@@ -258,7 +284,7 @@ export default function SearchBar({
               }
             >
               <option value="">All Builders</option>
-              {builders.map((b) => (
+              {(availableBuilders.length > 0 ? availableBuilders : builders).map((b) => (
                 <option key={b} value={b}>
                   {b.toUpperCase()}
                 </option>
@@ -292,8 +318,11 @@ export default function SearchBar({
               className="btn btn-link btn-sm text-muted ms-auto p-0"
               onClick={clearAll}
               title="Reset filters"
+              aria-label="Reset Filters"
+              style={{ color: '#d9534f', fontWeight: 700, padding: '6px 8px', display: 'inline-flex', alignItems: 'center' }}
             >
-              ↺ Reset
+              <CloseIcon fontSize="small" style={{ marginRight: 8, color: '#d9534f' }} />
+              <span style={{ color: '#d9534f' }}>Reset</span>
             </button>
           </div>
         </div>

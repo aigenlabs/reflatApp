@@ -1,5 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Wand2, Check, Loader2, RotateCcw, SlidersHorizontal, XCircle, Plus, Minus } from "lucide-react";
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import TuneIcon from '@mui/icons-material/Tune';
+import CircularProgress from '@mui/material/CircularProgress';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import { EXTRACT_URL, FIREBASE_FUNCTIONS_URL } from "./constants";
 import { chipbarNoScroll as sharedChipbarNoScroll, chip as sharedChip, chipPrimary as sharedChipPrimary } from "./chipbarStyles";
 import IntakeListings from "./IntakeListings";
@@ -471,7 +478,7 @@ export default function ListingIntake({
             title="Filters"
             style={{ ...chipStyle, ...sharedChipPrimary, padding: '6px 8px' }}
           >
-            <SlidersHorizontal size={16} />
+            <TuneIcon fontSize="small" />
           </button>
           {/* Summary chip (clickable) */}
           <button
@@ -530,7 +537,7 @@ export default function ListingIntake({
               flex: '0 0 auto',
             }}
           >
-            {showIntake ? <Minus size={18} /> : <Plus size={18} />}
+            {showIntake ? <RemoveIcon fontSize="small" /> : <AddIcon fontSize="small" />}
           </button>
         </div>
       </div>
@@ -595,7 +602,7 @@ export default function ListingIntake({
               color: "#fff",
             }}
           >
-            {loading ? <Loader2 size={16} className="spin" /> : <Wand2 size={16} />}
+            {loading ? <CircularProgress size={16} /> : <AutoFixHighIcon fontSize="small" />}
             {loading ? "Extracting…" : "Extract Details"}
           </button>
 
@@ -605,7 +612,7 @@ export default function ListingIntake({
             className="btn btn-outline-secondary"
             style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10 }}
           >
-            <RotateCcw size={16} />
+            <RefreshIcon fontSize="small" />
             Reset
           </button>
         </div>
@@ -714,7 +721,7 @@ export default function ListingIntake({
                 Cancel
               </button>
               <button className="btn btn-link btn-sm text-muted ms-auto p-0" onClick={() => { handleFilterReset(); }} title="Reset filters" style={{ marginLeft: 'auto', textDecoration: 'none' }}>
-                <XCircle size={14} style={{ marginRight: 4 }} /> Reset
+                <CloseIcon fontSize="small" style={{ marginRight: 4 }} /> Reset
               </button>
             </div>
           </div>
@@ -762,7 +769,7 @@ export default function ListingIntake({
                 border: "1px solid #16a34a",
               }}
             >
-              {submitting ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
+              {submitting ? <CircularProgress size={16} /> : <CheckIcon fontSize="small" />}
               {submitting ? "Submitting…" : "Submit Listing"}
             </button>
           </div>
