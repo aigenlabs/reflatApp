@@ -1,0 +1,21 @@
+# Ignore media and large files used by seeding
+/tools/seed/**/media/
+/data/media/
+
+# Ignore node_modules in subfolders
+**/node_modules/
+
+# Keep JSON manifests under tools/seed
+!tools/seed/**/project.json
+!tools/seed/**/sample_*.json
+
+# Typical ignores
+.env
+.env.local
+.DS_Store
+
+# Keep seed env files out of repo
+tools/seed/.env
+
+# Ignore backend data folder used for local seeding and datasets
+backend/data/

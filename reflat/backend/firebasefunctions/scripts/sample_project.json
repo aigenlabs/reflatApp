@@ -1,0 +1,61 @@
+{
+  "project": {
+    "id": "sampleProject",
+    "project_name": "Sample Residences",
+    "name": "Sample Residences",
+    "builderId": "sampleBuilder",
+    "builderName": "Sample Builders Pvt Ltd",
+    "project_location": "Kondapur",
+    "project_city": "Hyderabad",
+    "project_city_normalized": "Hyderabad",
+    "project_location_normalized": "Kondapur",
+    "address": "123 Sample Road, Kondapur",
+    "geo": { "lat": 17.4467, "lng": 78.3910 },
+    "configuration": "2,3 BHK",
+    "unit_sizes": "900-1500 sqft",
+    "configurations": [
+      { "type": "2BHK", "min_sqft": 900, "max_sqft": 1100, "units": 120 },
+      { "type": "3BHK", "min_sqft": 1200, "max_sqft": 1500, "units": 80 }
+    ],
+    "total_acres": 12.5,
+    "total_towers": 6,
+    "total_units": 800,
+    "total_floors": 18,
+    "units_per_floor": 8,
+    "density_per_acre": 64,
+    "possession_date": "2026-06",
+    "rera_number": "RERA-HYD-12345",
+    "status": "in-progress",
+    "pricing": [ { "unit_type": "2BHK", "price_min": 4500000, "price_max": 6500000 } ],
+    "sales_contacts": [ { "name": "Sales Office", "phone": "+91-90000-00000", "email": "sales@samplebuilders.com" } ],
+    "amenities": ["Clubhouse", "Gym", "Swimming Pool", "Kids Play Area"],
+    "tags": ["gated", "near-metro"],
+    "createdAt": 1693526400000,
+    "updatedAt": 1693526400000
+  },
+  "files": {
+    "banner": "banner.jpg",
+    "brochure": "brochure.pdf",
+    "builder_logo": "builder_logo.png",
+    "project_logo": "project_logo.png",
+    "youtube_id": "dQw4w9WgXcQ",
+    "website": "https://example.com/sample-residences"
+  },
+  "photos": [
+    { "id": "p1", "file": "exterior1.jpg", "caption": "Exterior View", "type": "exterior", "createdAt": 1693526400000 },
+    { "id": "p2", "file": "lobby.jpg", "caption": "Lobby", "type": "interior", "createdAt": 1693526401000 }
+  ],
+  "layouts": [
+    { "id": "l1", "file": "typical_floor.jpg", "caption": "Typical Floor Layout" }
+  ],
+  "floor_plans": [
+    { "id": "f1", "file": "2bhk_plan.jpg", "bedrooms": 2, "sqft": 950 },
+    { "id": "f2", "file": "3bhk_plan.jpg", "bedrooms": 3, "sqft": 1300 }
+  ],
+  "videos": [
+    { "id": "v1", "youtube_id": "dQw4w9WgXcQ", "title": "Project Walkthrough" }
+  ],
+  "documents": [
+    { "id": "d1", "file": "approval.pdf", "type": "approvals" }
+  ]
+}

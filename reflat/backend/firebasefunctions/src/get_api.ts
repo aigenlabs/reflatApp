@@ -243,6 +243,127 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
       }
 
       // -----------------------------
+      // GET /api/project_details/:builderId/:projectId
+      // Returns a normalized payload containing project doc and related assets
+      // - project: original project document
+      // - files: common file names (banner, brochure, logos)
+      // - photos, layouts, videos, floor_plans: arrays from subcollections (if present)
+      // The frontend will use FIREBASE_STORAGE_URL to construct full URLs for files.
+      // -----------------------------
+      if (parts[0] === "project_details" && parts.length >= 3) {
+        const builderId = parts[1];
+        const projectId = parts[2];
+
+        // --- Step 1: Fetch main project document from Firestore ---
+        const projRef = db
+          .collection("builders")
+          .doc(builderId)
+          .collection("projects")
+          .doc(projectId);
+
+        const snap = await projRef.get();
+        if (!snap.exists) {
+          res.status(404).json({ error: "Project not found" });
+          return;
+        }
+        const projectData = snap.data() as any || {};
+
+        // --- Step 2: Attempt to fetch file manifest from GCS ---
+        let manifest: any = null;
+        try {
+          const bucket = admin.storage().bucket(); // Default bucket
+          const manifestPath = `${builderId}/${projectId}/uploaded_manifest.json`;
+          const file = bucket.file(manifestPath);
+          const [exists] = await file.exists();
+          if (exists) {
+            logger.info(`Found manifest for ${builderId}/${projectId}, downloading...`);
+            const [contents] = await file.download();
+            manifest = JSON.parse(contents.toString("utf8"));
+          } else {
+            logger.warn(`Manifest not found at ${manifestPath}. Falling back to Firestore subcollections.`);
+          }
+        } catch (e: any) {
+          logger.error(`Error fetching manifest for ${builderId}/${projectId}: ${e.message}`, e);
+          // Fallback to old method if manifest is corrupt or inaccessible
+        }
+
+        let photos: any[] = [];
+        let layouts: any[] = [];
+        let videos: any[] = [];
+        let floor_plans: any[] = [];
+        let files: Record<string, string | null> = {};
+
+        if (manifest && manifest.files) {
+          // --- Step 3a: Populate from GCS Manifest ---
+          logger.info(`Populating project details from manifest for ${builderId}/${projectId}`);
+          const manifestFiles = manifest.files || {};
+          photos = manifestFiles.photos || [];
+          layouts = manifestFiles.layouts || [];
+          floor_plans = manifestFiles.floor_plans || [];
+          videos = manifestFiles.videos || []; // Assuming videos might be in manifest
+
+          const logos = manifestFiles.logos || [];
+          const builderLogo = logos.find((l: any) => l.path.includes("builder"));
+          const projectLogo = logos.find((l: any) => !l.path.includes("builder"));
+
+          files = {
+            banner: manifestFiles.banners?.[0]?.path || null,
+            brochure: manifestFiles.brochures?.[0]?.path || null,
+            builder_logo: builderLogo?.path || null,
+            project_logo: projectLogo?.path || logos[0]?.path || null, // Fallback to first logo
+            youtube_id: projectData?.youtube_id || projectData?.youtube || null,
+            website: projectData?.project_website || projectData?.website || null,
+          };
+        } else {
+          // --- Step 3b: Fallback to Firestore Subcollections ---
+          logger.warn(`Falling back to Firestore subcollections for ${builderId}/${projectId}`);
+          // Helper to read a subcollection (if present)
+          async function readSubcollection(name: string) {
+            try {
+              const s = await projRef.collection(name).orderBy("createdAt", "desc").get();
+              return s.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+            } catch (e) {
+              try {
+                const s = await projRef.collection(name).get();
+                return s.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+              } catch (err) {
+                return [];
+              }
+            }
+          }
+
+          [photos, layouts, videos, floor_plans] = await Promise.all([
+            readSubcollection("photos"),
+            readSubcollection("layouts"),
+            readSubcollection("videos"),
+            readSubcollection("floor_plans"),
+          ]);
+
+          files = {
+            banner: projectData?.banner_file || null,
+            brochure: projectData?.brochure_file || null,
+            builder_logo: projectData?.builder_logo_file || projectData?.logo_file || null,
+            project_logo: projectData?.project_logo_file || projectData?.project_logo || null,
+            youtube_id: projectData?.youtube_id || projectData?.youtube || null,
+            website: projectData?.project_website || projectData?.website || null,
+          };
+        }
+
+        const result = {
+          project: projectData,
+          files,
+          photos,
+          layouts,
+          videos,
+          floor_plans,
+        };
+
+        logger.info("project_details response", { builderId, projectId, source: manifest ? 'manifest' : 'firestore', photos: photos.length, layouts: layouts.length });
+        res.json(result);
+        return;
+      }
+
+      // -----------------------------
       // GET /api/listing/:id
       // Fetch a single listing by id
       // -----------------------------
@@ -413,6 +534,52 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
         return;
       }
       // -----------------------------
+      // GET /api/signed_url?folder=&builderId=&projectId=&file=
+      // Returns a signed read URL for a storage file (expires in 1 hour)
+      // Example: /api/signed_url?folder=photos&builderId=sampleBuilder&projectId=sampleProject&file=exterior1.jpg
+      // -----------------------------
+      if (parts[0] === "signed_url") {
+        const folderQ = (req.query?.folder as string | undefined) || undefined;
+        const builderIdQ = (req.query?.builderId as string | undefined) || undefined;
+        const projectIdQ = (req.query?.projectId as string | undefined) || undefined;
+        const fileQ = (req.query?.file as string | undefined) || undefined;
+
+        if (!folderQ || !builderIdQ || !projectIdQ || !fileQ) {
+          res.status(400).json({ error: "Missing required query parameters: folder,builderId,projectId,file" });
+          return;
+        }
+
+        try {
+          // Corrected path structure to match upload script: <builderId>/<projectId>/<folder>/<file>
+          const filePath = `${builderIdQ}/${projectIdQ}/${folderQ}/${fileQ}`;
+          const bucket = admin.storage().bucket();
+          const fileRef = bucket.file(filePath);
+
+          // Check if the file exists before trying to sign a URL for it
+          const [exists] = await fileRef.exists();
+          if (!exists) {
+            logger.error("signed_url error: file not found", { path: filePath });
+            res.status(404).json({ error: "File not found in storage", path: filePath });
+            return;
+          }
+
+          // Signed URL valid for 1 hour
+          const [url] = await fileRef.getSignedUrl({
+            action: "read",
+            expires: Date.now() + 60 * 60 * 1000,
+          });
+
+          logger.info("signed_url generated", { file: filePath });
+          res.json({ url });
+          return;
+        } catch (err: any) {
+          logger.error("signed_url error", { err });
+          res.status(500).json({ error: String(err?.message || err) });
+          return;
+        }
+      }
+
+      // -----------------------------
       // Fallback for unknown endpoints
       // -----------------------------
       res.status(404).json({ error: "Endpoint not found", path: urlPath });
@@ -426,4 +593,4 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
     }
   });
 });
-   
+

@@ -1,0 +1,2 @@
+# Ignore service account credentials
+*-firebase-adminsdk.json

@@ -4,6 +4,7 @@ import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 import cors from "cors";
 import OpenAI from "openai";
+import * as path from 'path';
 
 
 const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
@@ -668,6 +669,104 @@ export async function postApiHandler(req: any, res: any): Promise<void> {
       return;
     } catch (e: any) {
       res.status(500).json({ error: e?.message || "Extraction failed" });
+      return;
+    }
+  }
+
+  // POST /api/create_upload_url
+  if (parts[0] === 'create_upload_url') {
+    // Allow trusted frontends or admin key to request signed upload URLs
+    if (!isTrustedOrigin() && !isAdminAuthorized()) { res.status(401).json({ error: 'Unauthorized' }); return; }
+
+    const body = req.body || {};
+    const builderId = String(body.builderId || '').trim();
+    const projectId = String(body.projectId || '').trim();
+    const assetType = String(body.assetType || body.folder || '').trim();
+    const filenameRaw = String(body.filename || '').trim();
+    const contentType = String(body.contentType || 'application/octet-stream').trim();
+    const expiresMinutes = Number(body.expiresMinutes || 15);
+
+    if (!builderId || !projectId || !assetType || !filenameRaw) {
+      res.status(400).json({ error: 'Missing required fields: builderId, projectId, assetType, filename' });
+      return;
+    }
+
+    // simple normalize: remove path traversal and replace spaces
+    const normalize = (name: string) => name.replace(/\\+/g, '/').split('/').map(s => s.trim().replace(/\s+/g, '_')).join('/');
+    const filename = normalize(path.basename(filenameRaw));
+    const dest = `${assetType}/${builderId}/${projectId}/${filename}`;
+
+    try {
+      const bucket = admin.storage().bucket();
+      const fileRef = bucket.file(dest);
+      const expiresAt = Date.now() + Math.max(1, expiresMinutes) * 60 * 1000; // ms
+
+      const [uploadUrl] = await fileRef.getSignedUrl({
+        version: 'v4',
+        action: 'write',
+        expires: expiresAt,
+        // require content type when using PUT from browsers; some clients may omit; include as header allowance
+        // Note: client should set Content-Type when PUT-ing to this URL
+        contentType,
+      } as any);
+
+      const firebaseUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(dest)}?alt=media`;
+
+      res.json({ uploadUrl, storagePath: dest, firebaseUrl, expiresAt });
+      return;
+    } catch (err: any) {
+      console.error('create_upload_url error', err);
+      res.status(500).json({ error: String(err?.message || err) });
+      return;
+    }
+  }
+
+  // POST /api/notify_upload
+  if (parts[0] === 'notify_upload') {
+    // Allow trusted frontends or admin key to post upload notifications
+    if (!isTrustedOrigin() && !isAdminAuthorized()) { res.status(401).json({ error: 'Unauthorized' }); return; }
+
+    const body = req.body || {};
+    const storagePath = String(body.storagePath || '').trim();
+    const firebaseUrl = String(body.firebaseUrl || '').trim();
+    const size = body.size ? Number(body.size) : null;
+    const sha = String(body.sha || '').trim();
+    const caption = body.caption ? String(body.caption) : '';
+
+    if (!storagePath) { res.status(400).json({ error: 'Missing storagePath' }); return; }
+
+    const comps = storagePath.split('/').filter(Boolean);
+    if (comps.length < 4) { res.status(400).json({ error: 'storagePath must be in format <assetType>/<builderId>/<projectId>/<filename>' }); return; }
+    const assetType = comps[0];
+    const builderId = comps[1];
+    const projectId = comps[2];
+    const filePathParts = comps.slice(3);
+    const filename = filePathParts.join('/');
+
+    try {
+      const projectRef = db.collection('builders').doc(builderId).collection('projects').doc(projectId);
+      const collRef = projectRef.collection(assetType);
+      const docRef = collRef.doc();
+      const now = admin.firestore.FieldValue.serverTimestamp();
+      const firebaseUrlResolved = firebaseUrl || `https://firebasestorage.googleapis.com/v0/b/${admin.storage().bucket().name}/o/${encodeURIComponent(storagePath)}?alt=media`;
+
+      const payload: any = {
+        file: filename,
+        storagePath,
+        firebaseUrl: firebaseUrlResolved,
+        size: size || null,
+        sha: sha || null,
+        caption: caption || '',
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      await docRef.set(payload, { merge: true });
+      res.json({ ok: true, id: docRef.id });
+      return;
+    } catch (err: any) {
+      console.error('notify_upload error', err);
+      res.status(500).json({ error: String(err?.message || err) });
       return;
     }
   }

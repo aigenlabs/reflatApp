@@ -6,6 +6,7 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import LanguageIcon from "@mui/icons-material/Language";
+import { useNavigate } from 'react-router-dom';
 
 /**
  * ProjectCard
@@ -36,7 +37,10 @@ export default function ProjectCard({ project }) {
     builderName,
     website,
     logo,
+    projectId,
   } = project || {};
+
+  const navigate = useNavigate();
 
   const brochureUrl = brochure || null;
   const imgUrl = logo || null;
@@ -88,7 +92,11 @@ export default function ProjectCard({ project }) {
   return (
     <Card
       elevation={0}
+      onClick={() => {
+        if (builderId && projectId) navigate(`/project/${encodeURIComponent(builderId)}/${encodeURIComponent(projectId)}`);
+      }}
       sx={{
+        cursor: 'pointer',
         // fixed height so all cards render identical sizes
         height: '320px',
         minHeight: '250px',
@@ -358,6 +366,7 @@ export default function ProjectCard({ project }) {
                       minWidth: 32,
                       color: 'primary.main',
                     }}
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <i className="fa-solid fa-file-pdf" aria-hidden="true" style={{ fontSize: 16, color: 'inherit' }} />
                   </IconButton>
@@ -380,6 +389,7 @@ export default function ProjectCard({ project }) {
                         minWidth: 32,
                         color: 'primary.main',
                       }}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <LanguageIcon fontSize="small" sx={{ color: 'primary.main' }} />
                     </IconButton>
@@ -399,6 +409,7 @@ export default function ProjectCard({ project }) {
                     minWidth: 32,
                     color: 'primary.main',
                   }}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <i className="fa-solid fa-file-pdf" aria-hidden="true" style={{ fontSize: 16, color: 'inherit', opacity: 0.5 }} />
                 </IconButton>

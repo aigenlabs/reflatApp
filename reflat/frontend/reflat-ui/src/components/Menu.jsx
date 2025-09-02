@@ -9,6 +9,7 @@ const Resale      = lazy(() => import("../pages/Resale"));
 const Intake      = lazy(() => import("../pages/Intake"));
 const ListingDetails = lazy(() => import("../pages/ListingDetails"));
 const AdminServiceable = lazy(() => import("../pages/AdminServiceable"));
+const ProjectDetailView = lazy(() => import("../pages/ProjectDetailView"));
 
 const linkBase = {
   padding: "10px 14px",
@@ -52,6 +53,7 @@ export function AppRoutes() {
           <Route path="/rent" element={<Rent />} />
           <Route path="/resale" element={<Resale />} />
           <Route path="/listing/:id" element={<ListingDetails />} />
+          <Route path="/project/:builderId/:projectId" element={<ProjectDetailView />} />
           {/* Admin route intentionally not linked in navbar */}
           <Route path="/admin/serviceable" element={<AdminServiceable />} />
           <Route path="*" element={<div>Not Found</div>} />

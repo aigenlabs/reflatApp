@@ -19,10 +19,23 @@
     "deploy:staging:functions": "FIREBASE_PROJECT=reflat-staging node scripts/deployFunctions.js",
     "deploy:prod": "FIREBASE_PROJECT=reflat node scripts/deployAll.js",
     "deploy:prod:hosting": "FIREBASE_PROJECT=reflat node scripts/deployHosting.js",
-    "deploy:prod:functions": "FIREBASE_PROJECT=reflat node scripts/deployFunctions.js"
+    "deploy:prod:functions": "FIREBASE_PROJECT=reflat node scripts/deployFunctions.js",
+    "upload:direct": "dotenv -f tools/seed/.env -- node tools/seed/upload_project_media.js",
+    "upload:direct:staging": "npm run upload:direct -- --env=staging",
+    "upload:direct:prod": "npm run upload:direct -- --env=prod",
+    "pipeline:staging": "cross-env SEED_ENV=staging node tools/seed/run_pipeline.js",
+    "pipeline:prod": "cross-env SEED_ENV=prod node tools/seed/run_pipeline.js",
+    "upload:signed": "cd tools/seed && dotenv -- ./upload_via_signed_url.js",
+    "upload:signed:dry": "cd tools/seed && dotenv -- ./upload_via_signed_url.js --dry-run"
   },
   "dependencies": {
     "@mui/icons-material": "^7.3.1",
     "@mui/material": "^7.3.1"
+  },
+  "devDependencies": {
+    "@google-cloud/storage": "^7.0.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.3.1",
+    "dotenv-cli": "^10.0.0"
   }
 }
