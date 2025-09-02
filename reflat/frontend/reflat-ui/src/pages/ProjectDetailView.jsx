@@ -32,12 +32,25 @@ export default function ProjectDetailView() {
   useEffect(() => {
     let alive = true;
     (async () => {
-      setLoading(true); setError('');
+      setLoading(true);
+      setError('');
       try {
-        const resp = await fetch(`${FIREBASE_FUNCTIONS_URL}/project_details/${builderId}/${projectId}`);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const json = await resp.json();
-        if (alive) setData(json);
+        // Attempt to fetch local data first
+        const localResp = await fetch(`/data/${builderId}/${projectId}/${projectId}-details.json`);
+        if (localResp.ok) {
+          const json = await localResp.json();
+          if (alive) {
+            const newData = { ...json, _isLocal: true };
+            // Set the data and the local flag in a single update
+            setData(newData);
+          }
+        } else {
+          // Fallback to Firebase function
+          const fbResp = await fetch(`${FIREBASE_FUNCTIONS_URL}/project_details/${builderId}/${projectId}`);
+          if (!fbResp.ok) throw new Error(`HTTP ${fbResp.status}`);
+          const json = await fbResp.json();
+          if (alive) setData(json);
+        }
       } catch (e) {
         if (alive) setError(String(e?.message || e));
       } finally {
@@ -49,7 +62,7 @@ export default function ProjectDetailView() {
 
   // Fetch signed URLs for main files (banner, brochure, logos) and a small set of assets
   useEffect(() => {
-    if (!data) return;
+    if (!data || data._isLocal) return;
     let alive = true;
     const toFetch = [];
 
@@ -69,6 +82,7 @@ export default function ProjectDetailView() {
     (data.photos || []).forEach((p, i) => addIf(`photo_${i}`, 'photos', p));
     (data.layouts || []).forEach((l, i) => addIf(`layout_${i}`, 'layouts', l));
     (data.floor_plans || []).forEach((f, i) => addIf(`floor_${i}`, 'floor_plans', f));
+    (data.amenities || []).forEach((a, i) => addIf(`amenity_${i}`, 'amenities', a));
 
     if (toFetch.length === 0) return;
 
@@ -101,9 +115,24 @@ export default function ProjectDetailView() {
   function resolveFileUrl(item, folder, fallbackName) {
     // item may be a string filename or an object with url/file/file_name/name
     if (!item) return null;
-    // prefer previously-fetched signed URL
+
     const rawFilename = typeof item === 'string' ? item : (item.file || item.file_name || item.filename || item.name || item.path || fallbackName);
-    
+
+    if (typeof rawFilename === 'string' && rawFilename.startsWith('http')) {
+      return rawFilename;
+    }
+
+    // For local data, construct the path to the image
+    if (data?._isLocal) {
+      // Handle paths like '../media/logos/myhome_logo.png'
+      if (rawFilename.startsWith('../')) {
+        // This assumes it goes up one level from the project folder to the builder folder
+        return `/data/${builderId}/${rawFilename.substring(3)}`;
+      }
+      // Handle normal paths like 'media/amenities/outdoor_gym.png'
+      return `/data/${builderId}/${projectId}/${rawFilename}`;
+    }
+
     // Normalize the filename to match how it's stored in GCS by the upload script.
     const filename = normalizeFilenameForUrl(rawFilename);
 
@@ -116,13 +145,13 @@ export default function ProjectDetailView() {
       `photo_${(data?.photos || []).findIndex((p) => (normalizeFilenameForUrl(p.file || p.path || p) === filename))}`,
       `layout_${(data?.layouts || []).findIndex((l) => (normalizeFilenameForUrl(l.file || l.path || l) === filename))}`,
       `floor_${(data?.floor_plans || []).findIndex((f) => (normalizeFilenameForUrl(f.file || f.path || f) === filename))}`,
+      `amenity_${(data?.amenities || []).findIndex((a) => (normalizeFilenameForUrl(a.file || a.path || a) === filename))}`,
     ].filter(Boolean);
 
     for (const k of keyCandidates) {
       if (k && signedUrls[k]) return signedUrls[k];
     }
 
-    if (typeof item === 'string' && item.startsWith('http')) return item;
     // fallback to direct storage public URL
     if (filename) {
       // The path must match the structure used in the upload script: <builderId>/<projectId>/<folder>/<filename>
@@ -134,29 +163,25 @@ export default function ProjectDetailView() {
     return null;
   }
 
-  function getYouTubeId() {
-    // prefer files.youtube_id then project.youtube_id then videos array
-    if (!data) return null;
-    const youtubeId = data.files?.youtube_id || data.project?.youtube_id || data.project?.youtube || data.files?.youtube || null;
-    if (youtubeId) return youtubeId;
-    const videos = Array.isArray(data.videos) ? data.videos : [];
-    for (const v of videos) {
-      if (!v) continue;
-      if (v.youtube_id) return v.youtube_id;
-      if (v.url && typeof v.url === 'string' && v.url.includes('youtube')) {
-        const m = v.url.match(/(?:v=|embed\/|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
-        if (m) return m[1];
-      }
+  function getYouTubeId(videoUrl) {
+    if (!videoUrl) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = videoUrl.match(regExp);
+    if (match && match[2].length === 11) {
+      return match[2];
     }
     return null;
   }
 
   return (
     <Box sx={{ maxWidth: 1100, mx: 'auto', p: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}>
         <Button component={Link} to="/new-projects" startIcon={<ArrowBackIcon />}>
           Back
         </Button>
+        {data?.files?.builder_logo && (
+          <Box component="img" src={resolveFileUrl(data.files.builder_logo, 'logos', 'builder_logo')} alt="builder logo" sx={{ height: 40, objectFit: 'contain' }} />
+        )}
       </Box>
 
       {loading && <Typography color="text.secondary">Loading…</Typography>}
@@ -164,11 +189,17 @@ export default function ProjectDetailView() {
 
       {!loading && !error && data && (
         <Box>
-          {/* Project Title */}
-          <Typography variant="h4" component="h1" sx={{ mb: 1, fontWeight: 'bold' }}>
-            {data.project?.project_name || data.project?.name || 'Untitled'}
-          </Typography>
-          <Typography color="text.secondary" sx={{ mb: 2 }}>
+          {/* Project Title & Logo */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+            {data.files?.project_logo && (
+              <Box component="img" src={resolveFileUrl(data.files.project_logo, 'logos', 'project_logo')} alt="project logo" sx={{ width: 60, height: 60, objectFit: 'contain', borderRadius: 1, p: 0.5, border: '1px solid #eee' }} />
+            )}
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
+              {data.project?.project_name || data.project?.name || 'Untitled'}
+            </Typography>
+          </Box>
+
+          <Typography color="text.secondary" sx={{ mb: 2, pl: '76px' /* Align with title, accounting for logo width + gap */ }}>
             {(data.project?.project_location || data.project?.location || '')}{data.project?.project_city ? `, ${data.project?.project_city}` : ''}
           </Typography>
 
@@ -182,15 +213,7 @@ export default function ProjectDetailView() {
             <Typography variant="h5" sx={{ mb: 2, borderBottom: 1, borderColor: 'divider', pb: 1 }}>Project Details</Typography>
             <Grid container spacing={3}>
               <Grid item xs={12} md={4}>
-                {/* Logos and Actions */}
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-                  {data.files?.builder_logo && (
-                    <Box component="img" src={resolveFileUrl(data.files.builder_logo, 'logos', 'builder_logo')} alt="builder logo" sx={{ width: 80, height: 80, objectFit: 'contain', borderRadius: 1, p: 0.5, border: '1px solid #eee' }} />
-                  )}
-                  {data.files?.project_logo && (
-                    <Box component="img" src={resolveFileUrl(data.files.project_logo, 'logos', 'project_logo')} alt="project logo" sx={{ width: 80, height: 80, objectFit: 'contain', borderRadius: 1, p: 0.5, border: '1px solid #eee' }} />
-                  )}
-                </Box>
+                {/* Actions */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start' }}>
                   {data.files?.brochure && (
                     <Button component="a" href={resolveFileUrl(data.files.brochure, 'brochures')} startIcon={<i className="fa-solid fa-file-pdf" />}>
@@ -209,13 +232,63 @@ export default function ProjectDetailView() {
                   <Field label="Total Units" value={data.project?.total_units || data.project?.totalUnits} />
                   <Field label="Floors" value={data.project?.total_floors || data.project?.totalFloors} />
                   <Field label="Units / Floor" value={data.project?.units_perfloor || data.project?.unitsPerFloor} />
-                  <Field label="Density/acre" value={data.project?.desnsity_per_acre || data.project?.density_per_acre || data.project?.densityPerAcre} />
+                  <Field label="Density/acre" value={data.project?.project_density} />
                   {data.project?.possession_date && <Field label="Possession" value={data.project.possession_date} />}
                   {data.project?.rera_number && <Field label="RERA" value={data.project.rera_number} />}
                 </Grid>
               </Grid>
             </Grid>
           </Box>
+
+          {/* Amenities */}
+          {Array.isArray(data.amenities) && data.amenities.length > 0 && (
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h5" sx={{ mb: 2, borderBottom: 1, borderColor: 'divider', pb: 1 }}>Amenities</Typography>
+              <Box sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+                gap: '16px',
+              }}>
+                {data.amenities.map((amenity) => {
+                  const src = resolveFileUrl(amenity, 'amenities');
+                  return (
+                    <React.Fragment key={amenity.name}>
+                      {src ? (
+                        <Box
+                          sx={{ textAlign: 'center', cursor: 'pointer' }}
+                          onClick={() => handleOpenModal(src)}
+                        >
+                          <Box
+                            component="img"
+                            src={src}
+                            alt={amenity.name}
+                            sx={{
+                              width: 64,
+                              height: 64,
+                              objectFit: 'contain',
+                              borderRadius: '50%',
+                              border: '1px solid #eee',
+                              p: 1,
+                              mb: 1,
+                            }}
+                          />
+                          <Typography
+                            variant="caption"
+                            display="block"
+                            title={amenity.name}
+                          >
+                            {amenity.name}
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <Box sx={{ width: 64, height: 64, bgcolor: 'grey.100', borderRadius: '50%' }} />
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
 
           {/* Site Plan (Layouts) */}
           {Array.isArray(data.layouts) && data.layouts.length > 0 && (
@@ -225,7 +298,7 @@ export default function ProjectDetailView() {
                 {data.layouts.map((l) => {
                   const src = resolveFileUrl(l, 'layouts');
                   return (
-                    <Grid key={l.id || l.path || (l.file || l.file_name || Math.random())} item xs={6} sm={4} md={3}>
+                    <Grid item key={l.id || l.path || (l.file || l.file_name || Math.random())} xs={6} sm={4} md={3}>
                       {src ? (
                         <Box
                           component="img"
@@ -252,7 +325,7 @@ export default function ProjectDetailView() {
                 {data.floor_plans.map((f) => {
                   const src = resolveFileUrl(f, 'floor_plans');
                   return (
-                    <Grid key={f.id || f.path || (f.file || Math.random())} item xs={6} sm={4} md={3}>
+                    <Grid item key={f.id || f.path || (f.file || Math.random())} xs={6} sm={4} md={3}>
                       {src ? (
                         <Box
                           component="img"
@@ -271,27 +344,51 @@ export default function ProjectDetailView() {
             </Box>
           )}
 
-          {/* Gallery (Video & Photos) */}
-          <Box>
-            <Typography variant="h5" sx={{ mb: 2, borderBottom: 1, borderColor: 'divider', pb: 1 }}>Gallery</Typography>
-            {getYouTubeId() && (
-              <Box sx={{ position: 'relative', width: '100%', pb: '56.25%', mb: 2, borderRadius: 2, overflow: 'hidden' }}>
-                <iframe
-                  title="project-video"
-                  src={`https://www.youtube.com/embed/${getYouTubeId()}?rel=0`}
-                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </Box>
-            )}
-            {Array.isArray(data.photos) && data.photos.length > 0 && (
+          {/* Videos */}
+          {Array.isArray(data.videos) && data.videos.length > 0 && (
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h5" sx={{ mb: 2, borderBottom: 1, borderColor: 'divider', pb: 1 }}>Videos</Typography>
+              <Grid container spacing={2} justifyContent="center">
+                {data.videos.map((videoUrl, index) => {
+                  const videoId = getYouTubeId(videoUrl);
+                  const resolvedUrl = resolveFileUrl(videoUrl, 'videos');
+                  return (
+                    <Grid item xs={12} md={6} key={index}>
+                      {videoId ? (
+                        <Box sx={{ position: 'relative', width: '100%', pb: '56.25%', borderRadius: 2, overflow: 'hidden', bgcolor: 'black' }}>
+                          <iframe
+                            title={`project-video-${index}`}
+                            src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </Box>
+                      ) : (
+                        <video
+                          key={videoUrl}
+                          src={resolvedUrl}
+                          controls
+                          style={{ width: '100%', height: 'auto', borderRadius: '8px', backgroundColor: 'black' }}
+                        />
+                      )}
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </Box>
+          )}
+
+          {/* Photo Gallery */}
+          {Array.isArray(data.photos) && data.photos.length > 0 && (
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h5" sx={{ mb: 2, borderBottom: 1, borderColor: 'divider', pb: 1 }}>Photo Gallery</Typography>
               <Grid container spacing={2}>
                 {data.photos.map((p) => {
                   const src = resolveFileUrl(p, 'photos');
                   return (
-                    <Grid key={p.id || p.path || (p.file || p.file_name || Math.random())} item xs={6} sm={4} md={3}>
+                    <Grid item key={p.id || p.path || (p.file || p.file_name || Math.random())} xs={6} sm={4} md={3}>
                       {src ? (
                         <Box
                           component="img"
@@ -307,8 +404,8 @@ export default function ProjectDetailView() {
                   );
                 })}
               </Grid>
-            )}
-          </Box>
+            </Box>
+          )}
 
           {/* Website Link */}
           {data.files?.website && (
@@ -324,9 +421,7 @@ export default function ProjectDetailView() {
       <Modal
         open={modalOpen}
         onClose={handleCloseModal}
-        aria-labelledby="image-modal-title"
-        aria-describedby="image-modal-description"
-        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+       
       >
         <img
           src={modalImageUrl}

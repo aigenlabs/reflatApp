@@ -29,6 +29,22 @@ async function main() {
   // This seeder no longer writes the main project document, only the file subcollections
   // which serve as a fallback for the frontend.
 
+  // Upload the project details from the JSON file in the tools/data folder
+  const detailsJsonPath = path.resolve(__dirname, `../../../../tools/data/${builderId}/${projectId}/${projectId}-details.json`);
+  if (fs.existsSync(detailsJsonPath)) {
+    try {
+      const detailsRaw = fs.readFileSync(detailsJsonPath, 'utf8');
+      const detailsData = JSON.parse(detailsRaw);
+      await projectRef.set(detailsData, { merge: true });
+      console.log(`Successfully seeded project details for ${projectId} from ${detailsJsonPath}`);
+    } catch (e) {
+      console.error(`Failed to read or parse ${detailsJsonPath}`, e);
+    }
+  } else {
+    console.warn(`Warning: Project details JSON not found at ${detailsJsonPath}. Skipping main document seed.`);
+  }
+
+
   async function writeSubcollection(name: string, items: any[]) {
     if (!Array.isArray(items) || items.length === 0) {
       console.log(`No items to write for subcollection: ${name}`);
@@ -54,6 +70,7 @@ async function main() {
   await writeSubcollection('banners', files.banners || []);
   await writeSubcollection('brochures', files.brochures || []);
   await writeSubcollection('logos', files.logos || []);
+  await writeSubcollection('project_highlights', files.project_highlights || []);
 
   console.log('Seeding complete');
 }
