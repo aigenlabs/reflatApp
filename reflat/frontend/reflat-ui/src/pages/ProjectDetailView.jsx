@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
+import Modal from '@mui/material/Modal';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LanguageIcon from '@mui/icons-material/Language';
 import { FIREBASE_FUNCTIONS_URL, FIREBASE_STORAGE_URL } from '../components/constants';
@@ -15,6 +16,18 @@ export default function ProjectDetailView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [signedUrls, setSignedUrls] = useState({});
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalImageUrl, setModalImageUrl] = useState('');
+
+  const handleOpenModal = (imageUrl) => {
+    setModalImageUrl(imageUrl);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setModalImageUrl('');
+  };
 
   useEffect(() => {
     let alive = true;
@@ -151,89 +164,44 @@ export default function ProjectDetailView() {
 
       {!loading && !error && data && (
         <Box>
+          {/* Project Title */}
+          <Typography variant="h4" component="h1" sx={{ mb: 1, fontWeight: 'bold' }}>
+            {data.project?.project_name || data.project?.name || 'Untitled'}
+          </Typography>
+          <Typography color="text.secondary" sx={{ mb: 2 }}>
+            {(data.project?.project_location || data.project?.location || '')}{data.project?.project_city ? `, ${data.project?.project_city}` : ''}
+          </Typography>
+
           {/* Banner image */}
-          {data.files?.banner ? (
-            <Box component="img" src={resolveFileUrl(data.files.banner, 'banners', data.files.banner)} alt="banner" sx={{ width: '100%', height: 300, objectFit: 'cover', borderRadius: 1, mb: 2 }} />
-          ) : null}
+          {data.files?.banner && (
+            <Box component="img" src={resolveFileUrl(data.files.banner, 'banners')} alt="banner" sx={{ width: '100%', height: 'auto', maxHeight: 400, objectFit: 'cover', borderRadius: 2, mb: 4 }} />
+          )}
 
-          {/* Top: left gallery/video / right details */}
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={7}>
-              {/* YouTube video */}
-              {getYouTubeId() ? (
-                <Box sx={{ position: 'relative', width: '100%', pb: '56.25%', mb: 2 }}>
-                  <iframe
-                    title="project-video"
-                    src={`https://www.youtube.com/embed/${getYouTubeId()}?rel=0`}
-                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
+          {/* Project Details Section */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h5" sx={{ mb: 2, borderBottom: 1, borderColor: 'divider', pb: 1 }}>Project Details</Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={4}>
+                {/* Logos and Actions */}
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+                  {data.files?.builder_logo && (
+                    <Box component="img" src={resolveFileUrl(data.files.builder_logo, 'logos', 'builder_logo')} alt="builder logo" sx={{ width: 80, height: 80, objectFit: 'contain', borderRadius: 1, p: 0.5, border: '1px solid #eee' }} />
+                  )}
+                  {data.files?.project_logo && (
+                    <Box component="img" src={resolveFileUrl(data.files.project_logo, 'logos', 'project_logo')} alt="project logo" sx={{ width: 80, height: 80, objectFit: 'contain', borderRadius: 1, p: 0.5, border: '1px solid #eee' }} />
+                  )}
                 </Box>
-              ) : null}
-
-              {/* Layout images */}
-              {Array.isArray(data.layouts) && data.layouts.length > 0 && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="h6" sx={{ mb: 1 }}>Layouts</Typography>
-                  <Grid container spacing={1}>
-                    {data.layouts.map((l) => {
-                      const src = resolveFileUrl(l, 'layouts', l.path || l.file || l.file_name || l.filename);
-                      return (
-                        <Grid key={l.id || l.path || (l.file || l.file_name || Math.random())} item xs={6} sm={4} md={3}>
-                          {src ? (
-                            <Box component="img" src={src} alt={l.caption || 'layout'} sx={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 1 }} />
-                          ) : (
-                            <Box sx={{ width: '100%', height: 120, bgcolor: 'grey.100', borderRadius: 1 }} />
-                          )}
-                        </Grid>
-                      );
-                    })}
-                  </Grid>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start' }}>
+                  {data.files?.brochure && (
+                    <Button component="a" href={resolveFileUrl(data.files.brochure, 'brochures')} startIcon={<i className="fa-solid fa-file-pdf" />}>
+                      Brochure
+                    </Button>
+                  )}
                 </Box>
-              )}
-
-              {/* Photos gallery */}
-              {Array.isArray(data.photos) && data.photos.length > 0 && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="h6" sx={{ mb: 1 }}>Photos</Typography>
-                  <Grid container spacing={1}>
-                    {data.photos.map((p) => {
-                      const src = resolveFileUrl(p, 'photos', p.path || p.file || p.file_name || p.filename);
-                      return (
-                        <Grid key={p.id || p.path || (p.file || p.file_name || Math.random())} item xs={6} sm={4} md={3}>
-                          {src ? (
-                            <a href={src} target="_blank" rel="noopener noreferrer"><Box component="img" src={src} alt={p.caption || 'photo'} sx={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 1 }} /></a>
-                          ) : (
-                            <Box sx={{ width: '100%', height: 120, bgcolor: 'grey.100', borderRadius: 1 }} />
-                          )}
-                        </Grid>
-                      );
-                    })}
-                  </Grid>
-                </Box>
-              )}
-            </Grid>
-
-            <Grid item xs={12} md={5}>
-              {/* Logos and basic info */}
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 1 }}>
-                {data.files?.builder_logo ? (
-                  <Box component="img" src={resolveFileUrl(data.files.builder_logo, 'logos', data.files.builder_logo)} alt="builder" sx={{ width: 72, height: 72, objectFit: 'contain', borderRadius: 1 }} />
-                ) : null}
-                {data.files?.project_logo ? (
-                  <Box component="img" src={resolveFileUrl(data.files.project_logo, 'logos', data.files.project_logo)} alt="project" sx={{ width: 72, height: 72, objectFit: 'contain', borderRadius: 1 }} />
-                ) : null}
-                <Box>
-                  <Typography variant="h5">{data.project?.project_name || data.project?.name || 'Untitled'}</Typography>
-                  <Typography color="text.secondary">{(data.project?.project_location || data.project?.location || '')}{data.project?.project_city ? `, ${data.project?.project_city}` : ''}</Typography>
-                </Box>
-              </Box>
-
-              {/* Property details grid */}
-              <Box sx={{ mt: 1 }}>
-                <Grid container spacing={1}>
+              </Grid>
+              <Grid item xs={12} md={8}>
+                {/* Property details grid */}
+                <Grid container spacing={2}>
                   <Field label="Configuration" value={data.project?.configuration || data.project?.config} />
                   <Field label="Unit Sizes" value={data.project?.unit_sizes || data.project?.unitSizes} />
                   <Field label="Total Acres" value={data.project?.total_acres || data.project?.totalAcres} />
@@ -245,38 +213,29 @@ export default function ProjectDetailView() {
                   {data.project?.possession_date && <Field label="Possession" value={data.project.possession_date} />}
                   {data.project?.rera_number && <Field label="RERA" value={data.project.rera_number} />}
                 </Grid>
-              </Box>
-
-              {/* Actions */}
-              <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                {data.files?.brochure ? (
-                  <Button component="a" href={resolveFileUrl(data.files.brochure, 'brochures', data.files.brochure)} target="_blank" rel="noopener noreferrer" startIcon={<i className="fa-solid fa-file-pdf" />}>
-                    Brochure
-                  </Button>
-                ) : null}
-
-                {data.files?.website ? (
-                  <IconButton component="a" href={data.files.website} target="_blank" rel="noopener noreferrer" aria-label="website">
-                    <LanguageIcon />
-                  </IconButton>
-                ) : null}
-              </Box>
+              </Grid>
             </Grid>
-          </Grid>
+          </Box>
 
-          {/* Floor plans if present */}
-          {Array.isArray(data.floor_plans) && data.floor_plans.length > 0 && (
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="h6" sx={{ mb: 1 }}>Floor Plans</Typography>
-              <Grid container spacing={1}>
-                {data.floor_plans.map((f) => {
-                  const src = resolveFileUrl(f, 'floor_plans', f.path || f.file || f.file_name || f.filename);
+          {/* Site Plan (Layouts) */}
+          {Array.isArray(data.layouts) && data.layouts.length > 0 && (
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h5" sx={{ mb: 2, borderBottom: 1, borderColor: 'divider', pb: 1 }}>Site Plan</Typography>
+              <Grid container spacing={2}>
+                {data.layouts.map((l) => {
+                  const src = resolveFileUrl(l, 'layouts');
                   return (
-                    <Grid key={f.id || f.path || (f.file || Math.random())} item xs={6} sm={4} md={3}>
+                    <Grid key={l.id || l.path || (l.file || l.file_name || Math.random())} item xs={6} sm={4} md={3}>
                       {src ? (
-                        <a href={src} target="_blank" rel="noopener noreferrer"><Box component="img" src={src} alt={f.caption || 'floor plan'} sx={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 1 }} /></a>
+                        <Box
+                          component="img"
+                          src={src}
+                          alt={l.caption || 'layout'}
+                          sx={{ width: '100%', height: 'auto', objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd', cursor: 'pointer' }}
+                          onClick={() => handleOpenModal(src)}
+                        />
                       ) : (
-                        <Box sx={{ width: '100%', height: 160, bgcolor: 'grey.100', borderRadius: 1 }} />
+                        <Box sx={{ width: '100%', pt: '100%', bgcolor: 'grey.100', borderRadius: 1 }} />
                       )}
                     </Grid>
                   );
@@ -284,18 +243,115 @@ export default function ProjectDetailView() {
               </Grid>
             </Box>
           )}
+
+          {/* Floor Plans */}
+          {Array.isArray(data.floor_plans) && data.floor_plans.length > 0 && (
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h5" sx={{ mb: 2, borderBottom: 1, borderColor: 'divider', pb: 1 }}>Floor Plans</Typography>
+              <Grid container spacing={2}>
+                {data.floor_plans.map((f) => {
+                  const src = resolveFileUrl(f, 'floor_plans');
+                  return (
+                    <Grid key={f.id || f.path || (f.file || Math.random())} item xs={6} sm={4} md={3}>
+                      {src ? (
+                        <Box
+                          component="img"
+                          src={src}
+                          alt={f.caption || 'floor plan'}
+                          sx={{ width: '100%', height: 'auto', objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd', cursor: 'pointer' }}
+                          onClick={() => handleOpenModal(src)}
+                        />
+                      ) : (
+                        <Box sx={{ width: '100%', pt: '100%', bgcolor: 'grey.100', borderRadius: 1 }} />
+                      )}
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </Box>
+          )}
+
+          {/* Gallery (Video & Photos) */}
+          <Box>
+            <Typography variant="h5" sx={{ mb: 2, borderBottom: 1, borderColor: 'divider', pb: 1 }}>Gallery</Typography>
+            {getYouTubeId() && (
+              <Box sx={{ position: 'relative', width: '100%', pb: '56.25%', mb: 2, borderRadius: 2, overflow: 'hidden' }}>
+                <iframe
+                  title="project-video"
+                  src={`https://www.youtube.com/embed/${getYouTubeId()}?rel=0`}
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </Box>
+            )}
+            {Array.isArray(data.photos) && data.photos.length > 0 && (
+              <Grid container spacing={2}>
+                {data.photos.map((p) => {
+                  const src = resolveFileUrl(p, 'photos');
+                  return (
+                    <Grid key={p.id || p.path || (p.file || p.file_name || Math.random())} item xs={6} sm={4} md={3}>
+                      {src ? (
+                        <Box
+                          component="img"
+                          src={src}
+                          alt={p.caption || 'photo'}
+                          sx={{ width: '100%', height: 'auto', objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd', cursor: 'pointer' }}
+                          onClick={() => handleOpenModal(src)}
+                        />
+                      ) : (
+                        <Box sx={{ width: '100%', pt: '100%', bgcolor: 'grey.100', borderRadius: 1 }} />
+                      )}
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            )}
+          </Box>
+
+          {/* Website Link */}
+          {data.files?.website && (
+            <Box sx={{ mt: 4, textAlign: 'center' }}>
+              <Button component="a" href={data.files.website} target="_blank" rel="noopener noreferrer" startIcon={<LanguageIcon />} variant="outlined">
+                Visit Project Website
+              </Button>
+            </Box>
+          )}
         </Box>
       )}
+
+      <Modal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        aria-labelledby="image-modal-title"
+        aria-describedby="image-modal-description"
+        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <img
+          src={modalImageUrl}
+          alt="enlarged view"
+          style={{
+            display: 'block',
+            maxWidth: '95vw',
+            maxHeight: '95vh',
+            objectFit: 'contain',
+            outline: 'none',
+            boxShadow: '0px 11px 15px -7px rgba(0,0,0,0.2), 0px 24px 38px 3px rgba(0,0,0,0.14), 0px 9px 46px 8px rgba(0,0,0,0.12)',
+          }}
+        />
+      </Modal>
     </Box>
   );
 }
 
 function Field({ label, value }) {
+  if (!value) return null;
   return (
-    <Grid item xs={12} sm={6} md={6}>
+    <Grid item xs={12} sm={6}>
       <Box>
-        <Typography variant="caption" color="text.secondary">{label}</Typography>
-        <Typography variant="body1" sx={{ fontWeight: 600 }}>{value || '—'}</Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase' }}>{label}</Typography>
+        <Typography variant="body1" sx={{ fontWeight: 500 }}>{value}</Typography>
       </Box>
     </Grid>
   );
