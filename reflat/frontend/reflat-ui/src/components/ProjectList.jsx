@@ -6,7 +6,7 @@ import SearchBar from "./SearchBar";
 import ProjectCard from "./ProjectCard";
 import ProjectSkeleton from "./ProjectSkeleton";
 import { clearAppCache } from "./clearAppCache";
-import { FIREBASE_FUNCTIONS_URL, FIREBASE_STORAGE_URL } from "./constants";
+import { FIREBASE_FUNCTIONS_URL } from "./constants";
 
 // simple in-memory cache to avoid re-fetching the same data repeatedly
 const projectsCache = new Map(); // key -> projects array
@@ -98,103 +98,102 @@ export default function PrjList() {
       // if a request for the same key is already in flight, await it instead of issuing another
       if (pendingRequests.has(key)) {
         try {
-          await pendingRequests.get(key);
-          if (projectsCache.has(key)) setProjects(projectsCache.get(key));
-        } catch (err) {
-          console.error('Error awaiting pending request', err);
-          setError('Unable to fetch projects');
-          setProjects([]);
-        } finally {
+          const data = await pendingRequests.get(key);
+          projectsCache.set(key, data);
+          setProjects(data);
           setLoading(false);
-        }
-        return;
-      }
-
-      const requestPromise = (async () => {
-        try {
-          const res = await fetch(
-            `${FIREBASE_FUNCTIONS_URL}/location_project_data/${selectedCity}/${selectedLocation}`
-          );
-          if (!res.ok) throw new Error("Failed to fetch project list");
-          const { projects: locationProjects = [] } = await res.json();
-
-          const builderOptions = Array.from(
-            new Set(locationProjects.map((p) => p.builder_id))
-          ).sort();
-          setBuilderIds(builderOptions);
-
-          if (selectedBuilder && !builderOptions.includes(selectedBuilder)) {
-            setSelectedBuilder("");
-          }
-
-          const refsToLoad = selectedBuilder
-            ? locationProjects.filter((p) => p.builder_id === selectedBuilder)
-            : locationProjects;
-
-          if (refsToLoad.length === 0) {
-            projectsCache.set(key, []);
-            setProjects([]);
-            return;
-          }
-
-          // console.log("Loading details for", refsToLoad.length, "projects");
-
-          const details = await Promise.all(
-            refsToLoad.map((p) =>
-              fetch(
-                `${FIREBASE_FUNCTIONS_URL}/project_data/${p.builder_id}/${p.project_id}`
-              )
-                .then((r) => (r.ok ? r.json() : null))
-                .catch(() => null)
-            )
-          );
-
-          const valid = details.filter(Boolean);
-
-          const projectsList = valid.map((p) => ({
-            builderId: p.builder_id,
-            builderName: p.builder_id || "",
-            projectId: p.project_id,
-            name: p.project_name || "",
-            city: p.project_city || "",
-            location: p.project_location || "",
-            website: p.project_website || "",
-            unitSizes: p.unit_sizes || "",
-            configuration: p.configuration || "",
-            totalAcres: p.total_acres || "",
-            totalTowers: p.total_towers || "",
-            totalUnits: p.total_units || "",
-            unitsPerFloor: p.units_perfloor || "",
-            totalFloors: p.total_floors || "",
-            densityPerAcre: p.desnsity_per_acre || "",
-            brochure: `${FIREBASE_STORAGE_URL}/brochures/${p.builder_id}/${p.project_id}/${p.brochure_file}?alt=media`,
-            logo: `${FIREBASE_STORAGE_URL}/logos/${p.builder_id}/${p.project_id}/${p.logo_file}`,
-          }));
-
-          // cache the final list so next time we can serve instantly
-          projectsCache.set(key, projectsList);
-          setProjects(projectsList);
+          return;
         } catch (err) {
-          console.error(err);
-          setError('Unable to fetch projects');
-          setProjects([]);
-        } finally {
-          setLoading(false);
+          // if the pending request fails, remove it from the map and fall through to retry
           pendingRequests.delete(key);
         }
+      }
+
+      // Build URL with query params (avoid new URL for relative paths)
+      let url = `${FIREBASE_FUNCTIONS_URL}/location_project_data?city=${encodeURIComponent(selectedCity)}&location=${encodeURIComponent(selectedLocation)}`;
+      if (selectedBuilder) {
+        url += `&builder=${encodeURIComponent(selectedBuilder)}`;
+      }
+      const request = (async () => {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch projects");
+        // Now expecting a list of full project details
+        const projectsList = await res.json();
+        if (!Array.isArray(projectsList)) throw new Error("Invalid projects response");
+        // Normalize keys for ProjectCard (include all expected fields)
+        const normalized = projectsList.map((p) => ({
+          ...p,
+          builderId: p.builderId || p.builder_id || '',
+          builderName: p.builderName || p.builder_name || '',
+          projectId: p.projectId || p.project_id || p.id || '',
+          name: p.name || p.project_name || '',
+          city: p.city || '',
+          location: p.location || '',
+          unitSizes: p.unitSizes || p.unit_sizes || '',
+          configuration: p.configuration || '',
+          totalAcres: p.totalAcres || p.total_acres || '',
+          totalTowers: p.totalTowers || p.total_towers || '',
+          totalUnits: p.totalUnits || p.total_units || '',
+          unitsPerFloor: p.unitsPerFloor || p.units_per_floor || '',
+          totalFloors: p.totalFloors || p.total_floors || '',
+          densityPerAcre: p.densityPerAcre || p.density_per_acre || '',
+          brochure: p.brochure || '',
+          website: p.website || '',
+          logo: p.logo || p.project_logo || '',
+        }));
+        // Optionally, extract builderIds for the filter dropdown
+        const builderOptions = Array.from(
+          new Set(normalized.map((p) => p.builderId))
+        ).sort();
+        setBuilderIds(builderOptions);
+        if (selectedBuilder && !builderOptions.includes(selectedBuilder)) {
+          setSelectedBuilder("");
+        }
+        projectsCache.set(key, normalized);
+        return normalized;
       })();
 
-      pendingRequests.set(key, requestPromise);
+      pendingRequests.set(key, request);
+
+      try {
+        const data = await request;
+        projectsCache.set(key, data);
+        setProjects(data);
+        console.log(`Loaded ${data.length} projects for ${key}`);
+      } catch (err) {
+        console.error("Error fetching projects:", err);
+        setError("Unable to fetch projects");
+      } finally {
+        pendingRequests.delete(key);
+        setLoading(false);
+      }
     }
 
     loadProjects();
-
-    // no cleanup abort - allow in-flight requests to finish and be cached
-    return () => {};
   }, [selectedCity, selectedLocation, selectedBuilder]);
 
-  const isBuilderDisabled =
-    !(selectedCity && selectedLocation && builderIds.length > 0);
+  // fetch builder IDs for the current city/location
+  useEffect(() => {
+    async function fetchBuilderIds() {
+      if (!selectedCity || !selectedLocation) {
+        setBuilderIds([]);
+        return;
+      }
+      try {
+        const url = `${FIREBASE_FUNCTIONS_URL}/builders?city=${encodeURIComponent(selectedCity)}&location=${encodeURIComponent(selectedLocation)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch builder IDs");
+        const data = await res.json();
+        setBuilderIds(data || []);
+      } catch (err) {
+        console.error("Error fetching builder IDs:", err);
+        // non-critical, don't show an error to the user
+      }
+    }
+    fetchBuilderIds();
+  }, [selectedCity, selectedLocation]);
+
+  const isBuilderDisabled = loading || builderIds.length === 0 || !selectedCity || !selectedLocation;
 
   return (
     <Box
@@ -279,21 +278,32 @@ export default function PrjList() {
           {!loading && !error && (
             <Grid container spacing={2} alignItems="stretch" ref={containerRef} justifyContent="center">
                {projects.length > 0 ? (
-                 projects.map((p, idx) => (
-                   <Grid
-                     item
-                     xs={12}
-                     sm={6}
-                     lg={4}
-                     key={`${p.builderId}-${p.projectId}`}
-                     sx={{ display: "flex", alignItems: "stretch", height: "100%", minWidth: 0 }}
-                   >
-                     <Box 
-                     sx={{ display: "flex", flex: 1, minWidth: 0, flexDirection: "column" }}>
-                       <ProjectCard project={p} />
-                     </Box>
-                   </Grid>
-                 ))
+                 projects
+                   .filter((p) =>
+                     (!selectedBuilder ||
+                       ((p.builderId || p.builder_id || '').toLowerCase() === selectedBuilder.toLowerCase())
+                     ) &&
+                     (p && (p.builderId || p.builder_id) && (p.projectId || p.project_id))
+                   )
+                   .map((p, idx) => {
+                     const builder = p.builderId || p.builder_id;
+                     const project = p.projectId || p.project_id;
+                     return (
+                       <Grid
+                         item
+                         xs={12}
+                         sm={6}
+                         lg={4}
+                         key={`${builder}-${project}`}
+                         sx={{ display: "flex", alignItems: "stretch", height: "100%", minWidth: 0 }}
+                       >
+                         <Box 
+                         sx={{ display: "flex", flex: 1, minWidth: 0, flexDirection: "column" }}>
+                           <ProjectCard project={p} />
+                         </Box>
+                       </Grid>
+                     );
+                   })
                ) : selectedLocation === "" ? (
                 <Grid item xs={12} display="flex" alignItems="center">
                   <Box flexGrow={1} display="flex" justifyContent="center">

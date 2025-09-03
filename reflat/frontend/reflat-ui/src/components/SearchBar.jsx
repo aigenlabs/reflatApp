@@ -50,10 +50,20 @@ export default function SearchBar({
       try {
         const res = await fetch(`${FIREBASE_FUNCTIONS_URL}/location_project_data/${tmpCity}/${tmpLocation}`);
         if (!res.ok) throw new Error('Failed to fetch builders for location');
-        const { projects: locProjects = [] } = await res.json();
+        const { projects: locProjects } = await res.json();
         if (cancelled) return;
-        const opts = Array.from(new Set(locProjects.map((p) => p.builder_id))).sort();
-        setAvailableBuilders(opts);
+        
+        // Sanitize the data from the API to prevent runtime errors.
+        const builderIds = (Array.isArray(locProjects) ? locProjects : [])
+          .map(p => p?.builder_id) // 1. Safely get builder_id
+          .filter(id => id)        // 2. Filter out falsy values (null, undefined, '')
+          .map(String);            // 3. Convert all to strings
+
+        // 4. Get unique values and sort them.
+        const uniqueSortedIds = [...new Set(builderIds)].sort();
+        
+        setAvailableBuilders(uniqueSortedIds);
+
       } catch (err) {
         console.debug('fetchBuildersForLocation error', err);
         setAvailableBuilders([]);
@@ -263,38 +273,26 @@ export default function SearchBar({
           </div>
 
           {/* Builder */}
-          <div className="mb-3">
-            <label htmlFor="builderSelect" className="form-label mb-1">
-              Builder
-            </label>
+          <div className="form-group" style={{ marginBottom: 16 }}>
+            <label htmlFor="builder-select" style={{ display: 'block', marginBottom: 4, fontSize: 14, color: '#555' }}>Builder</label>
             <select
-              id="builderSelect"
-              className="form-select form-select-sm"
+              id="builder-select"
               value={tmpBuilder}
               onChange={(e) => setTmpBuilder(e.target.value)}
               disabled={isBuilderSelectDisabled}
-              title={
-                isBuilderSelectDisabled
-                  ? "Select city & locality to see available builders"
-                  : ""
-              }
+              style={selectStyle(isBuilderSelectDisabled)}
             >
               <option value="">All Builders</option>
-              {(availableBuilders.length > 0 ? availableBuilders : builders).map((b) => (
+              {availableBuilders.map((b) => (
                 <option key={b} value={b}>
                   {b.toUpperCase()}
                 </option>
               ))}
             </select>
-            {isBuilderSelectDisabled && (
-              <small className="text-muted">
-                Select city & locality to enable builder filter.
-              </small>
-            )}
           </div>
 
           {/* Actions */}
-          <div className="d-flex gap-2">
+          <div className="actions" style={{ display: "flex", gap: 8, marginTop: 24 }}>
             <button
               type="button"
               className="drawer-apply btn btn-primary btn-sm"
@@ -340,4 +338,16 @@ export default function SearchBar({
       </div>
     </>
   );
+}
+
+function selectStyle(disabled) {
+  return {
+    width: '100%',
+    padding: '8px',
+    borderRadius: '4px',
+    border: '1px solid #ccc',
+    backgroundColor: disabled ? '#f2f2f2' : '#fff',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    appearance: 'none',
+  };
 }

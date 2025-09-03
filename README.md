@@ -66,3 +66,44 @@ Prod/Staging Deploy Checklist
 - Deploy:
   - Staging: `npm run deploy:staging` (or `deploy:staging:hosting` / `deploy:staging:functions`)
   - Prod: `npm run deploy:prod` (or hosting/functions variants)
+
+## Deployment Scripts (Build + Deploy)
+
+All deploy scripts now build the relevant code before deploying. Use these commands:
+
+### Staging
+- **Deploy all (frontend + backend):**
+  ```sh
+  npm run deploy:staging
+  ```
+  Builds both frontend and backend, then deploys hosting and functions to staging.
+
+- **Deploy all functions:**
+  ```sh
+  npm run deploy:staging:functions
+  ```
+  Builds backend functions, then deploys all functions to staging.
+
+- **Deploy a single function:**
+  ```sh
+  npm run deploy:staging:function functionName
+  ```
+  Builds backend functions, then deploys only the specified function to staging.
+
+### Production
+- **Deploy all (frontend + backend):**
+  ```sh
+  npm run deploy:prod
+  ```
+- **Deploy all functions:**
+  ```sh
+  npm run deploy:prod:functions
+  ```
+- **Deploy a single function:**
+  ```sh
+  npm run deploy:prod:function functionName
+  ```
+
+> All these scripts ensure the latest code is built before deployment. No need to run build manually.
+
+---

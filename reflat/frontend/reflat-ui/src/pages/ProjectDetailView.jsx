@@ -9,14 +9,18 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LanguageIcon from '@mui/icons-material/Language';
 import { FIREBASE_FUNCTIONS_URL, FIREBASE_STORAGE_URL } from '../components/constants';
 
+
 export default function ProjectDetailView() {
   const { builderId, projectId } = useParams();
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [signedUrls, setSignedUrls] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
   const [modalImageUrl, setModalImageUrl] = useState('');
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState("");
 
   const handleOpenModal = (imageUrl) => {
     setModalImageUrl(imageUrl);
@@ -28,6 +32,15 @@ export default function ProjectDetailView() {
     setModalImageUrl('');
   };
 
+  const handleOpenPdfModal = (url) => {
+    setPdfUrl(url);
+    setPdfModalOpen(true);
+  };
+  const handleClosePdfModal = () => {
+    setPdfModalOpen(false);
+    setPdfUrl("");
+  };
+
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -36,17 +49,24 @@ export default function ProjectDetailView() {
       try {
         // Attempt to fetch local data first
         const localResp = await fetch(`/data/${builderId}/${projectId}/${projectId}-details.json`);
-        if (localResp.ok) {
+        const contentType = localResp.headers.get('content-type');
+        if (
+          localResp.ok &&
+          contentType?.includes('application/json')
+        ) {
           const json = await localResp.json();
           if (alive) {
             const newData = { ...json, _isLocal: true };
-            // Set the data and the local flag in a single update
             setData(newData);
           }
         } else {
           // Fallback to Firebase function
           const fbResp = await fetch(`${FIREBASE_FUNCTIONS_URL}/project_details/${builderId}/${projectId}`);
-          if (!fbResp.ok) throw new Error(`HTTP ${fbResp.status}`);
+          if (!fbResp.ok) {
+            // Try to read the response text for debugging
+            const text = await fbResp.text();
+            throw new Error(`HTTP ${fbResp.status}: ${text.substring(0, 200)}`);
+          }
           const json = await fbResp.json();
           if (alive) setData(json);
         }
@@ -175,11 +195,14 @@ export default function ProjectDetailView() {
   return (
     <Box sx={{ maxWidth: 1100, mx: 'auto', p: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}>
-        <Button component={Link} to="/new-projects" startIcon={<ArrowBackIcon />}>
-          Back
-        </Button>
+        <Button component={Link} to="/new-projects" startIcon={<ArrowBackIcon />}>Back</Button>
         {data?.files?.builder_logo && (
-          <Box component="img" src={resolveFileUrl(data.files.builder_logo, 'logos', 'builder_logo')} alt="builder logo" sx={{ height: 40, objectFit: 'contain' }} />
+          <Box
+            component="img"
+            src={signedUrls.builder_logo || resolveFileUrl(data.files.builder_logo, 'logos', 'builder_logo')}
+            alt="builder logo"
+            sx={{ height: { xs: 32, sm: 40 }, maxWidth: 120, objectFit: 'contain', display: 'block' }}
+          />
         )}
       </Box>
 
@@ -215,7 +238,10 @@ export default function ProjectDetailView() {
                 {/* Actions */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start' }}>
                   {data.files?.brochure && (
-                    <Button component="a" href={resolveFileUrl(data.files.brochure, 'brochures')} startIcon={<i className="fa-solid fa-file-pdf" />}>
+                    <Button
+                      onClick={() => handleOpenPdfModal(signedUrls.brochure || resolveFileUrl(data.files.brochure, 'brochures'))}
+                      startIcon={<i className="fa-solid fa-file-pdf" />}
+                    >
                       Brochure
                     </Button>
                   )}
@@ -365,12 +391,15 @@ export default function ProjectDetailView() {
                           />
                         </Box>
                       ) : (
-                        <video
-                          key={videoUrl}
-                          src={resolvedUrl}
-                          controls
-                          style={{ width: '100%', height: 'auto', borderRadius: '8px', backgroundColor: 'black' }}
-                        />
+                        <Box sx={{ width: '100%', borderRadius: 2, overflow: 'hidden', bgcolor: 'black' }}>
+                          <video
+                            src={resolvedUrl}
+                            controls
+                            style={{ width: '100%', height: 'auto', maxHeight: 320, backgroundColor: 'black', display: 'block' }}
+                          >
+                            Sorry, your browser doesn't support embedded videos.
+                          </video>
+                        </Box>
                       )}
                     </Grid>
                   );
@@ -434,6 +463,23 @@ export default function ProjectDetailView() {
             boxShadow: '0px 11px 15px -7px rgba(0,0,0,0.2), 0px 24px 38px 3px rgba(0,0,0,0.14), 0px 9px 46px 8px rgba(0,0,0,0.12)',
           }}
         />
+      </Modal>
+
+      <Modal
+        open={pdfModalOpen}
+        onClose={handleClosePdfModal}
+        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Box sx={{ position: 'relative', width: '100vw', maxWidth: 600, height: '90vh', bgcolor: 'background.paper', borderRadius: { xs: 0, sm: 2 }, boxShadow: 24, p: 0 }}>
+          <Button onClick={handleClosePdfModal} sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}>Close</Button>
+          <iframe
+            src={pdfUrl}
+            title="Brochure PDF"
+            width="100%"
+            height="100%"
+            style={{ border: 'none', minHeight: '80vh' }}
+          />
+        </Box>
       </Modal>
     </Box>
   );

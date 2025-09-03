@@ -27,6 +27,7 @@
     "test:extract": "node scripts/test_extract_cf.js",
     "test:listings": "node scripts/test_listings.js"
   },
+  "proxy": "https://reflat-ui-staging.web.app",
   "eslintConfig": {
     "extends": [
       "react-app",

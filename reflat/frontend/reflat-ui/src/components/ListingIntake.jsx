@@ -7,7 +7,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import TuneIcon from '@mui/icons-material/Tune';
 import CircularProgress from '@mui/material/CircularProgress';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import { EXTRACT_URL, FIREBASE_FUNCTIONS_URL } from "./constants";
+import { FIREBASE_FUNCTIONS_URL, EXTRACT_URL } from "./constants";
 import { chipbarNoScroll as sharedChipbarNoScroll, chip as sharedChip, chipPrimary as sharedChipPrimary } from "./chipbarStyles";
 import IntakeListings from "./IntakeListings";
 
@@ -65,71 +65,27 @@ export default function ListingIntake({
   useEffect(() => {
     let cancelled = false;
     const normalizeSvcMap = (raw, mode) => {
-      if (!raw || typeof raw !== 'object') return {};
-
-      // Case A: Nested index doc shape (serviceable_projects/index):
-      // { updatedAt, cities: [ { name, localities: [ { name, properties: [ { builderId, builderName, projectDetails: [ { id, name, modes, active } ] } ] } ] } ] }
-      if (Array.isArray(raw.cities)) {
-        const out = {};
-        const filterByMode = (modes) => {
-          if (!mode) return true;
-          const arr = Array.isArray(modes) ? modes : ['rent','resale'];
-          return arr.includes(mode);
-        };
-        for (const c of raw.cities) {
-          const city = c?.name; if (!city) continue;
-          out[city] = out[city] || {};
-          const locs = Array.isArray(c?.localities) ? c.localities : [];
-          for (const l of locs) {
-            const locality = l?.name; if (!locality) continue;
-            const props = Array.isArray(l?.properties) ? l.properties : [];
-            const acc = [];
-            for (const p of props) {
-              const details = Array.isArray(p?.projectDetails) ? p.projectDetails : [];
-              for (const d of details) {
-                if (d?.active === false) continue;
-                if (!filterByMode(d?.modes)) continue;
-                const id = String(d?.id || ''); if (!id) continue;
-                const name = String(d?.name || id);
-                if (!acc.some(x => x.id === id)) acc.push({ id, name });
-              }
-            }
-            out[city][locality] = acc;
-          }
-        }
-        return out;
-      }
-
-      // Case B: Compact map shape (future): city -> locality -> array or { rent, resale }
-      const unionById = (arrays) => {
-        const byId = new Map();
-        for (const arr of arrays) {
-          for (const p of Array.isArray(arr) ? arr : []) {
-            const id = p && p.id ? String(p.id) : '';
-            if (!id) continue;
-            if (!byId.has(id)) byId.set(id, { id, name: String(p.name || id) });
-          }
-        }
-        return Array.from(byId.values());
-      };
+      if (!raw || typeof raw !== 'object' || !Array.isArray(raw.cities) || !raw.cities.length) return {};
       const out = {};
-      for (const city of Object.keys(raw)) {
-        const locs = raw[city] || {};
-        if (!locs || typeof locs !== 'object') continue;
+      for (const c of raw.cities) {
+        if (!c || typeof c !== 'object' || !c.name || !Array.isArray(c.localities)) continue;
+        const city = c.name;
         out[city] = {};
-        for (const loc of Object.keys(locs)) {
-          const v = locs[loc];
-          if (Array.isArray(v)) {
-            out[city][loc] = v;
-          } else if (v && typeof v === 'object') {
-            const rent = Array.isArray(v.rent) ? v.rent : [];
-            const resale = Array.isArray(v.resale) ? v.resale : [];
-            if (mode === 'rent') out[city][loc] = rent;
-            else if (mode === 'resale') out[city][loc] = resale;
-            else out[city][loc] = unionById([rent, resale]);
-          } else {
-            out[city][loc] = [];
+        for (const l of c.localities) {
+          if (!l || typeof l !== 'object' || !l.name || !Array.isArray(l.properties)) continue;
+          const locality = l.name;
+          const acc = [];
+          for (const prop of l.properties) {
+            if (!prop || !Array.isArray(prop.projectDetails)) continue;
+            for (const d of prop.projectDetails) {
+              if (!d || d.active === false) continue;
+              if (mode && Array.isArray(d.modes) && !d.modes.includes(mode)) continue;
+              const id = String(d.id || '');
+              if (!id || acc.some(x => x.id === id)) continue;
+              acc.push({ id, name: String(d.name || id) });
+            }
           }
+          out[city][locality] = acc;
         }
       }
       return out;
@@ -138,11 +94,13 @@ export default function ListingIntake({
       setSvcError("");
       setSvcLoading(true);
       try {
-        const url = `${FIREBASE_FUNCTIONS_URL}/serviceable_projects${selectedMode ? `?mode=${encodeURIComponent(selectedMode)}` : ""}`;
+        const url = `${FIREBASE_FUNCTIONS_URL}/serviceable${selectedMode ? `?mode=${encodeURIComponent(selectedMode)}` : ""}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Failed to load options (${res.status})`);
         const data = await res.json();
+        console.log('Serviceable raw data:', data); // DEBUG
         const normalized = normalizeSvcMap(data, selectedMode);
+        console.log('Serviceable normalized:', normalized); // DEBUG
         if (!cancelled) setSvcMap(normalized);
       } catch (e) {
         if (!cancelled) setSvcError("Failed to load city/locality/project options.");

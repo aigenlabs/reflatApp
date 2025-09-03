@@ -3,5 +3,15 @@
     "default": "reflat-staging",
     "staging": "reflat-staging",
     "prod": "reflat"
-  }
+  },
+  "targets": {
+    "reflat-staging": {
+      "hosting": {
+        "reflat-ui-staging": [
+          "reflat-ui-staging"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

@@ -4,8 +4,6 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
-import IconButton from "@mui/material/IconButton";
-import LanguageIcon from "@mui/icons-material/Language";
 import { useNavigate } from 'react-router-dom';
 
 /**
@@ -99,7 +97,7 @@ export default function ProjectCard({ project }) {
         cursor: 'pointer',
         // fixed height so all cards render identical sizes
         height: '320px',
-        minHeight: '250px',
+        minHeight: '200px',
         maxHeight: '320px',
         bgcolor: "background.paper",
         borderRadius: 2,
@@ -347,73 +345,7 @@ export default function ProjectCard({ project }) {
                 flexShrink: 0, // don't let actions force parent to grow
               }}
             >
-              {brochureUrl ? (
-                <>
-                  <IconButton
-                    component="a"
-                    href={brochureUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Open brochure"
-                    aria-label="Open brochure"
-                    size="small"
-                    sx={{
-                      border: 1,
-                      borderColor: 'divider',
-                      width: 32,
-                      height: 32,
-                      p: 0,
-                      minWidth: 32,
-                      color: 'primary.main',
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <i className="fa-solid fa-file-pdf" aria-hidden="true" style={{ fontSize: 16, color: 'inherit' }} />
-                  </IconButton>
-
-                  {website && (
-                    <IconButton
-                      component="a"
-                      href={website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Open website"
-                      aria-label="Open website"
-                      size="small"
-                      sx={{
-                        border: 1,
-                        borderColor: 'divider',
-                        width: 32,
-                        height: 32,
-                        p: 0,
-                        minWidth: 32,
-                        color: 'primary.main',
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <LanguageIcon fontSize="small" sx={{ color: 'primary.main' }} />
-                    </IconButton>
-                  )}
-                </>
-              ) : (
-                <IconButton
-                  size="small"
-                  disabled
-                  aria-label="No brochure"
-                  sx={{
-                    border: 1,
-                    borderColor: 'divider',
-                    width: 32,
-                    height: 32,
-                    p: 0,
-                    minWidth: 32,
-                    color: 'primary.main',
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <i className="fa-solid fa-file-pdf" aria-hidden="true" style={{ fontSize: 16, color: 'inherit', opacity: 0.5 }} />
-                </IconButton>
-              )}
+              {/* Removed brochure and website icons; card is now fully clickable */}
             </Box>
           </Box>
         </Box>
