@@ -30,17 +30,14 @@ export default function ProjectCard({ project }) {
     unitsPerFloor,
     totalFloors,
     densityPerAcre,
-    brochure,
     builderId,
     builderName,
-    website,
     logo,
     projectId,
   } = project || {};
 
   const navigate = useNavigate();
 
-  const brochureUrl = brochure || null;
   const imgUrl = logo || null;
 
   // FontAwesome (Free) icon classnames
