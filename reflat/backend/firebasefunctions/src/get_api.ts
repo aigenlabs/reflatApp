@@ -88,8 +88,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
       // }
       // -----------------------------
       if (parts[0] === "serviceable") {
-        const modeQ = (req.query?.mode as string | undefined)?.toLowerCase();
-        const filterMode = modeQ === "rent" || modeQ === "resale" ? modeQ : undefined;
+        // Removed unused modeQ and filterMode variables
 
         // const docRef = db.collection("config").doc("serviceable");
         const docRef = db.collection("serviceable_projects").doc("index");
