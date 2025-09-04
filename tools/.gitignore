@@ -1,0 +1,9 @@
+# Ignore local data files, which can be large and may contain private info
+/data/
+
+# Ignore dependencies for tool scripts
+/seed/node_modules/
+**/node_modules/
+
+# Ignore generated files
+**/uploaded_manifest.json

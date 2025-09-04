@@ -1,0 +1,142 @@
+{
+  "generatedAt": 1756827018291,
+  "files": {
+    "photos": [
+      {
+        "path": "1.jpg",
+        "size": 651962,
+        "sha": "7a56877a8bc2d8d6bd8ff8254ce0201b56252bb65ca76406d29c16aa7b68af65"
+      },
+      {
+        "path": "10.jpg",
+        "size": 77724,
+        "sha": "d41ebd2b9e9a6f31ec23f560302d84985358fa3313f1d396e71f7776513f4365"
+      },
+      {
+        "path": "11.jpg",
+        "size": 72567,
+        "sha": "1c8ab5cadd7d75da8700366f2ee6c41c2d67f4469b3c68cb3684f5bbd614ae1a"
+      },
+      {
+        "path": "12.jpg",
+        "size": 72567,
+        "sha": "1c8ab5cadd7d75da8700366f2ee6c41c2d67f4469b3c68cb3684f5bbd614ae1a"
+      },
+      {
+        "path": "2.jpg",
+        "size": 90758,
+        "sha": "95b2242a4c912f86607853f2c0b3a9380066c69bf09d90b0795ead8ee8dae5c4"
+      },
+      {
+        "path": "3.jpg",
+        "size": 341416,
+        "sha": "02a6a2f815cb198b59e639fa22e204473d2fd89f5f42307f163103d7d875d20a"
+      },
+      {
+        "path": "4.jpg",
+        "size": 340517,
+        "sha": "0a84d92ab51f3d3de0da7642487c983877f8344363b5bdc3c9843468c65ec8a5"
+      },
+      {
+        "path": "5.jpg",
+        "size": 208555,
+        "sha": "b3516df02cab9a990823fde4921da72f9bd86771a4617714b75fff8c99da4513"
+      },
+      {
+        "path": "6.jpg",
+        "size": 119524,
+        "sha": "aa991182ae8ee02887f5b5253f81fa196c2dc9b71e921e92637c34f3bcb21a37"
+      },
+      {
+        "path": "7.jpg",
+        "size": 807001,
+        "sha": "ed08878051fbdbdfca924c840dc4635d9302bbcb7d2472fbfa8f68fcc613c134"
+      },
+      {
+        "path": "8.jpg",
+        "size": 48496,
+        "sha": "90cbc059e129503acf081694eea9fa7750b9fd8ba4b43668efbdd3d2030d29d0"
+      },
+      {
+        "path": "9.jpg",
+        "size": 309052,
+        "sha": "1ebe6005df6ed0f87ed05b89523de4c11246e2cc3bb6a17b2b1a354304294e21"
+      }
+    ],
+    "layouts": [
+      {
+        "path": "layout.png",
+        "size": 4087696,
+        "sha": "8ab63de8a37bbca9bccafffb476f163541d18a0a8904b8a5f5b3a2c646637a9f"
+      }
+    ],
+    "floor_plans": [
+      {
+        "path": "10.webp",
+        "size": 1299938,
+        "sha": "7b5b571375d8b98768fead5a620ad25554a40e81f7e53e09ec6904b4ef5f0d10"
+      },
+      {
+        "path": "11.webp",
+        "size": 1384694,
+        "sha": "9c36ebe269a88b71bbd23c49db83aceae3567336d6b9b50301a8516111564481"
+      },
+      {
+        "path": "12.webp",
+        "size": 1713898,
+        "sha": "a6566f7b4355d2e129d638b7e45900f87eeda2a9b2b12833e702e70ba20e27ef"
+      },
+      {
+        "path": "13.webp",
+        "size": 1657650,
+        "sha": "397e55cb961f5f80788a528135f8b504eb3f956818c179f4df228753015fe4df"
+      },
+      {
+        "path": "14.webp",
+        "size": 1704416,
+        "sha": "bb2139d91a92c4e03dea1dd10c323bc69d73babd85767898a322d8d914a5bd9c"
+      },
+      {
+        "path": "15.webp",
+        "size": 1594814,
+        "sha": "6ef0bfd60ded96736913a9adbacb412655e8815850ca19fb23ce35940b3b7164"
+      },
+      {
+        "path": "16.webp",
+        "size": 1611288,
+        "sha": "297ff0f77aed64146daee372782af5870f73511d60eb03f3188762886e68d941"
+      },
+      {
+        "path": "17.webp",
+        "size": 1778312,
+        "sha": "75164e8bcde6745922c23d461067db1112e9ab3c7b4256ec6b7311f26b6f0896"
+      },
+      {
+        "path": "18.webp",
+        "size": 1908946,
+        "sha": "3bd12c9734aebc20830dc81deffa32347e19841564dd79ce7babbe4c66fa8add"
+      }
+    ],
+    "logos": [
+      {
+        "path": "akrida_logo.png",
+        "size": 7057,
+        "sha": "7d74114d1b66eeedd74190e3bb29ce83d5b6e649217c28c38909f34f6942576e"
+      }
+    ],
+    "brochures": [
+      {
+        "path": "myhome_akrida_e_brochure.pdf",
+        "size": 61720159,
+        "sha": "e2dfdaeb532417a63819384dce20207eb317e197203483598163f054fc253823"
+      }
+    ],
+    "banners": [
+      {
+        "path": "web_banner_1.png",
+        "size": 3791696,
+        "sha": "2718b720b3cadc73321667350db237f66aeaff1d8f59a429be2b62d02340ee49"
+      }
+    ]
+  }
+}

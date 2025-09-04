@@ -1,13 +1,10 @@
-# --- Un-ignore tools/scripts/ so scripts are tracked ---
+# Ignore everything by default at repo root, then un-ignore selected dirs/files
+/*
+# --- Un-ignore only tools/scripts/ and its contents ---
 !tools/
 !tools/scripts/
 !tools/scripts/**
-# --- End tools/scripts/ section ---
-
-# Root ignore: keep only backend/ and frontend/ while excluding heavy/generated/secrets
-
-# Ignore everything by default at repo root, then un-ignore selected dirs/files
-/*
+# --- End tools/scripts section ---
 !.gitignore
 !.gitattributes
 !README.md
