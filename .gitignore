@@ -1,3 +1,9 @@
+# --- Un-ignore tools/scripts/ so scripts are tracked ---
+!tools/
+!tools/scripts/
+!tools/scripts/**
+# --- End tools/scripts/ section ---
+
 # Root ignore: keep only backend/ and frontend/ while excluding heavy/generated/secrets
 
 # Ignore everything by default at repo root, then un-ignore selected dirs/files

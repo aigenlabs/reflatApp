@@ -33,7 +33,11 @@
   },
   "dependencies": {
     "@mui/icons-material": "^7.3.1",
-    "@mui/material": "^7.3.1"
+    "@mui/material": "^7.3.1",
+    "axios": "^1.11.0",
+    "cheerio": "^1.1.2",
+    "firebase-admin": "^13.5.0",
+    "sharp": "^0.34.3"
   },
   "devDependencies": {
     "@google-cloud/storage": "^7.11.0",
