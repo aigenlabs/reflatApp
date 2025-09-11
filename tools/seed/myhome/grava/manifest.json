@@ -1,0 +1,180 @@
+{
+  "generatedAt": 1756982162903,
+  "files": {
+    "amenities": [
+      {
+        "path": "infinity_pool.webp",
+        "sha": "28ec605efc382a2e6e051b555a06df1a742a885fe391f43fe8e5c54f48d8f5db",
+        "size": 2184,
+        "dest": "myhome/grava/amenities/infinity_pool.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/amenities/infinity_pool.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Famenities%2Finfinity_pool.webp?alt=media"
+      }
+    ],
+    "banner": [
+      {
+        "path": "banner.webp",
+        "sha": "b1176a5bc4a93556eb4e6701148ca48f6a5ab143a5e92be72c8df0ca46dce203",
+        "size": 315826,
+        "dest": "myhome/grava/banner/banner.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/banner/banner.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Fbanner%2Fbanner.webp?alt=media"
+      }
+    ],
+    "layouts": [
+      {
+        "path": "site_layout_1.webp",
+        "sha": "f7e134f1d93c07f7ba1664af83c70fa9fc4c8afed9a4e9b09c143d4153f9a466",
+        "size": 276834,
+        "dest": "myhome/grava/layouts/site_layout_1.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/layouts/site_layout_1.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Flayouts%2Fsite_layout_1.webp?alt=media"
+      },
+      {
+        "path": "site_layout_2.webp",
+        "sha": "a331800fe31b1d9a69b9d5783295d7345008e03746ec5b0b42c28e0c5025c56b",
+        "size": 298800,
+        "dest": "myhome/grava/layouts/site_layout_2.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/layouts/site_layout_2.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Flayouts%2Fsite_layout_2.webp?alt=media"
+      }
+    ],
+    "logos": [
+      {
+        "path": "grava_logo.webp",
+        "sha": "af2d32ad8f20ea9e32a3a9e38efb2871e99b22eff0d5b1e75a80ae36d7e9a67d",
+        "size": 3336,
+        "dest": "myhome/grava/logos/grava_logo.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/logos/grava_logo.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Flogos%2Fgrava_logo.webp?alt=media"
+      }
+    ],
+    "photos": [
+      {
+        "path": ".DS_Store",
+        "sha": "c12ec2351664e723fd6b8d5ea8817c13675797229e05f7bdccb285f5a2743265",
+        "size": 6148,
+        "dest": "myhome/grava/photos/.DS_Store",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/photos/.DS_Store",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Fphotos%2F.DS_Store?alt=media"
+      },
+      {
+        "path": "central_parkpng.svg",
+        "sha": "ce6b61389a23b4d6c6ce9ca94ae38fb91a6e5333c0f4a35b836fc73a20709753",
+        "size": 6212695,
+        "dest": "myhome/grava/photos/central_parkpng.svg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/photos/central_parkpng.svg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Fphotos%2Fcentral_parkpng.svg?alt=media"
+      },
+      {
+        "path": "club_house.webp",
+        "sha": "63e7c81cdbfccf86011c417932558de3d71d7ed2a5ce2bfd37a30d2747998fc2",
+        "size": 423118,
+        "dest": "myhome/grava/photos/club_house.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/photos/club_house.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Fphotos%2Fclub_house.webp?alt=media"
+      },
+      {
+        "path": "project_highlights.webp",
+        "sha": "c47fa957c6255bd091a19abb5354051cc3894028ce1d86e3dd0ce35ecdaf3609",
+        "size": 29004,
+        "dest": "myhome/grava/photos/project_highlights.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/photos/project_highlights.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Fphotos%2Fproject_highlights.webp?alt=media"
+      }
+    ],
+    "floor_plans": [
+      {
+        "path": "tower1.svg",
+        "sha": "6fc12cc828e06ba7f46affb236154b89da9d90a8f077a21e5cd0500be97097c1",
+        "size": 5198924,
+        "dest": "myhome/grava/floor_plans/tower1.svg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/floor_plans/tower1.svg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Ffloor_plans%2Ftower1.svg?alt=media"
+      },
+      {
+        "path": "tower2.svg",
+        "sha": "e6008d449cad156f6979dfdaf5edfbb471e7d5a311d869d272844100bef53ffd",
+        "size": 4585890,
+        "dest": "myhome/grava/floor_plans/tower2.svg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/floor_plans/tower2.svg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Ffloor_plans%2Ftower2.svg?alt=media"
+      },
+      {
+        "path": "tower3.svg",
+        "sha": "34bd81b3ced66726ac93350190126004c841503c8d8f41212661e77684146951",
+        "size": 3933926,
+        "dest": "myhome/grava/floor_plans/tower3.svg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/floor_plans/tower3.svg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Ffloor_plans%2Ftower3.svg?alt=media"
+      },
+      {
+        "path": "tower4.svg",
+        "sha": "a848ebf1ff1f86163ab3f1d474da1db3363b92bfaf12a4f11fcc2b95e2259c48",
+        "size": 4017030,
+        "dest": "myhome/grava/floor_plans/tower4.svg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/floor_plans/tower4.svg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Ffloor_plans%2Ftower4.svg?alt=media"
+      }
+    ],
+    "project_status_updates": [
+      {
+        "path": "01.png",
+        "sha": "158484ea223aef20b165db8e26b2f64dafedd12bee50b5cdc41e062ca479ee8a",
+        "size": 773363,
+        "dest": "myhome/grava/project_status_updates/01.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/project_status_updates/01.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Fproject_status_updates%2F01.png?alt=media"
+      },
+      {
+        "path": "02.png",
+        "sha": "4b8c7ac3fb5b619efcc945a1631c6970c67aa8432285c7744bc64343b4f52931",
+        "size": 747744,
+        "dest": "myhome/grava/project_status_updates/02.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/project_status_updates/02.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Fproject_status_updates%2F02.png?alt=media"
+      },
+      {
+        "path": "03.png",
+        "sha": "c8fe9c0681911451fdccc749a778ce7b644d9883015fd3189f2c5801d48592f0",
+        "size": 610509,
+        "dest": "myhome/grava/project_status_updates/03.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/project_status_updates/03.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Fproject_status_updates%2F03.png?alt=media"
+      },
+      {
+        "path": "04.png",
+        "sha": "c5e203f1d723cb291be4f177d8a89faa0b4042e7e2200d91e9326be418f8f9b2",
+        "size": 737274,
+        "dest": "myhome/grava/project_status_updates/04.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/project_status_updates/04.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Fproject_status_updates%2F04.png?alt=media"
+      }
+    ],
+    "brochures": [
+      {
+        "path": "Ebrochure.pdf",
+        "sha": "e37f4816b5ddd6901c3a53bf3d191b2e1653accdaf9226eacbe16bee7b06ab15",
+        "size": 9900563,
+        "dest": "myhome/grava/brochures/Ebrochure.pdf",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/brochures/Ebrochure.pdf",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Fbrochures%2FEbrochure.pdf?alt=media"
+      },
+      {
+        "path": "grava_brochure.pdf",
+        "sha": "e37f4816b5ddd6901c3a53bf3d191b2e1653accdaf9226eacbe16bee7b06ab15",
+        "size": 9900563,
+        "dest": "myhome/grava/brochures/grava_brochure.pdf",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/grava/brochures/grava_brochure.pdf",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fgrava%2Fbrochures%2Fgrava_brochure.pdf?alt=media"
+      }
+    ],
+    "banners": [],
+    "clubhouse": [],
+    "gallery": [],
+    "news": [],
+    "project_status": [],
+    "site_layout": [],
+    "videos": []
+  }
+}

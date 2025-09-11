@@ -14,39 +14,168 @@ const fs = require('fs');
 const path = require('path');
 const mime = require('mime');
 
+// Attempt to load .env from useful locations (tools/scripts/.env, tools/seed/.env, tools/data/.env, repo root .env)
+try {
+  const dotenv = require('dotenv');
+  // Per request: only load from tools/scripts/.env
+  const possibleEnvPaths = [
+    path.join(process.cwd(), 'tools', 'scripts', '.env')
+  ];
+  for (const p of possibleEnvPaths) {
+    try {
+      if (fs.existsSync(p)) {
+        dotenv.config({ path: p });
+        console.log('Loaded environment variables from', p);
+        break;
+      }
+    } catch (e) {
+      // ignore filesystem errors and continue
+    }
+  }
+} catch (e) {
+  console.log('dotenv not installed, skipping .env loading. To enable, npm install dotenv');
+}
+
 async function main() {
-  const argv = process.argv.slice(2);
-  if (argv.length < 2) {
-    console.error('Usage: node upload_project_media.js <builderId> <projectId> [--bucket gs://...] [--public] [--dry-run]');
+  // Robust argument parsing: flags may appear anywhere. Collect positional args and options.
+  const rawArgs = process.argv.slice(2);
+  const opts = {
+    bucket: null,
+    makePublic: false,
+    dryRun: false,
+    env: null,
+    credentials: null,
+    skipLocations: false,
+  };
+  const positional = [];
+  for (let i = 0; i < rawArgs.length; i++) {
+    const a = rawArgs[i];
+    if (a === '--public') { opts.makePublic = true; continue; }
+    if (a === '--dry-run') { opts.dryRun = true; continue; }
+    if (a === '--bucket' && rawArgs[i+1]) { opts.bucket = rawArgs[i+1]; i++; continue; }
+    if (a === '--env' && rawArgs[i+1]) { opts.env = rawArgs[i+1]; i++; continue; }
+    if (a === '--credentials' && rawArgs[i+1]) { opts.credentials = rawArgs[i+1]; i++; continue; }
+    if (a === '--skip-locations' || a === '--no-locations') { opts.skipLocations = true; continue; }
+    if (a.startsWith('--')) { /* unknown flag - ignore */ continue; }
+    positional.push(a);
+  }
+
+  if (positional.length < 2) {
+    console.error('Usage: node upload_project_media.js <builderId> <projectId> [--bucket gs://...] [--public] [--dry-run] [--skip-locations]');
     process.exit(1);
   }
-  const builderId = argv[0];
-  const projectId = argv[1];
-  const opts = {
-    bucket: process.env.GS_BUCKET || process.env.GCLOUD_STORAGE_BUCKET || null,
-    makePublic: argv.includes('--public'),
-    dryRun: argv.includes('--dry-run'),
-    env: null,
-  };
-  // allow --bucket argument
-  const bArgIndex = argv.findIndex(a => a === '--bucket');
-  if (bArgIndex !== -1 && argv[bArgIndex+1]) opts.bucket = argv[bArgIndex+1];
-  // allow --env <name> to select environment-specific buckets (eg. staging, prod)
-  const envArgIndex = argv.findIndex(a => a === '--env');
-  if (envArgIndex !== -1 && argv[envArgIndex+1]) opts.env = argv[envArgIndex+1];
+  const builderId = positional[0];
+  const projectId = positional[1];
+
+  // Read bucket from env if not provided on CLI
+  function stripQuotesAndWs(v) {
+    if (!v && v !== '') return v;
+    let s = String(v).trim();
+    if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+      s = s.slice(1, -1).trim();
+    }
+    return s;
+  }
+
+  function tryLoadEnvFileManual() {
+    // If dotenv wasn't installed or didn't populate needed vars, try a simple manual parse
+    try {
+      const envPath = path.join(process.cwd(), 'tools', 'scripts', '.env');
+      if (!fs.existsSync(envPath)) return;
+      const raw = fs.readFileSync(envPath, 'utf8');
+      raw.split(/\r?\n/).forEach(line => {
+        line = line.trim();
+        if (!line || line.startsWith('#')) return;
+        const eq = line.indexOf('=');
+        if (eq === -1) return;
+        const key = line.slice(0, eq).trim();
+        let val = line.slice(eq + 1).trim();
+        // Remove optional surrounding quotes
+        val = stripQuotesAndWs(val);
+        if (!process.env[key]) process.env[key] = val;
+      });
+      console.log('Manually loaded environment variables from tools/scripts/.env (fallback)');
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // Try manual .env parse as a fallback in case dotenv wasn't available or didn't set values
+  tryLoadEnvFileManual();
+
+  opts.bucket = opts.bucket || stripQuotesAndWs(process.env.GS_BUCKET) || stripQuotesAndWs(process.env.GCLOUD_STORAGE_BUCKET) || null;
 
   // If env provided and no explicit bucket, look for GS_BUCKET_<ENV> or GCLOUD_STORAGE_BUCKET_<ENV>
   if (!opts.bucket && opts.env) {
     const up = opts.env.toUpperCase().replace(/[^A-Z0-9]/g, '_');
-    opts.bucket = process.env[`GS_BUCKET_${up}`] || process.env[`GCLOUD_STORAGE_BUCKET_${up}`] || null;
+    opts.bucket = stripQuotesAndWs(process.env[`GS_BUCKET_${up}`]) || stripQuotesAndWs(process.env[`GCLOUD_STORAGE_BUCKET_${up}`]) || null;
     if (opts.bucket) console.log(`Using bucket from env for ${opts.env}: ${opts.bucket}`);
   }
+
   if (!opts.bucket) {
-    console.error('No bucket specified. Set GS_BUCKET, GS_BUCKET_<ENV> or pass --bucket <bucket-name>');
+    console.error('No bucket specified. Set GS_BUCKET, GS_BUCKET_<ENV> in tools/scripts/.env or pass --bucket <bucket-name>');
     process.exit(1);
   }
+
   // normalize gs:// prefix
   const bucketName = opts.bucket.replace(/^gs:\/\//, '');
+
+  // Allow specifying credentials JSON via --credentials <path> (already parsed into opts.credentials)
+
+  // If an environment label was provided, allow GOOGLE_APPLICATION_CREDENTIALS_<ENV> in .env
+  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS && opts.env) {
+    try {
+      const up = opts.env.toUpperCase().replace(/[^A-Z0-9]/g, '_');
+      const envKey = `GOOGLE_APPLICATION_CREDENTIALS_${up}`;
+      const candidateEnvVal = stripQuotesAndWs(process.env[envKey]);
+      if (candidateEnvVal) {
+        const candidatePath = path.resolve(process.cwd(), candidateEnvVal);
+        if (fs.existsSync(candidatePath) && fs.statSync(candidatePath).isFile()) {
+          process.env.GOOGLE_APPLICATION_CREDENTIALS = candidatePath;
+          console.log(`Using credentials from ${envKey}:`, candidatePath);
+        } else {
+          console.warn(`Credentials path referenced by ${envKey} not found:`, candidatePath);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    const candidates = [];
+    // 1) explicit --credentials path
+    if (opts.credentials) candidates.push(path.resolve(opts.credentials));
+    // Per request: only look for credentials JSON under tools/scripts
+    try {
+      const credsDir = path.join(process.cwd(), 'tools', 'scripts');
+      if (fs.existsSync(credsDir)) {
+        const files = fs.readdirSync(credsDir).filter(f => /adminsdk|firebase.*sdk|serviceaccount|\.json$/i.test(f));
+        for (const f of files) candidates.push(path.join(credsDir, f));
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // Pick the first existing candidate
+    let chosen = null;
+    for (const c of candidates) {
+      if (!c) continue;
+      try {
+        if (fs.existsSync(c) && fs.statSync(c).isFile()) {
+          chosen = c; break;
+        }
+      } catch (e) { /* ignore */ }
+    }
+    if (chosen) {
+      process.env.GOOGLE_APPLICATION_CREDENTIALS = chosen;
+      console.log('Using credentials from', chosen);
+    } else {
+      console.log('No GOOGLE_APPLICATION_CREDENTIALS found; relying on environment or default application credentials.');
+    }
+  } else {
+    console.log('GOOGLE_APPLICATION_CREDENTIALS is set:', process.env.GOOGLE_APPLICATION_CREDENTIALS);
+  }
 
   const storage = new Storage();
   const bucket = storage.bucket(bucketName);
@@ -186,8 +315,15 @@ async function main() {
       const detailsPath = path.join(process.cwd(), 'tools', 'data', builderId, projectId, `${projectId}-details.json`);
       if (fs.existsSync(detailsPath)) {
         const details = JSON.parse(fs.readFileSync(detailsPath, 'utf8'));
-        execSync(`node ${path.resolve(__dirname, 'add_project_to_locations.js')} "${builderId}" "${projectId}" "${details.project_name || details.name}" "${details.city}" "${details.location}"`, { stdio: 'inherit' });
-        execSync(`node ${path.resolve(__dirname, 'upload_locations_to_firestore.js')}`, { stdio: 'inherit' });
+        if (!opts.skipLocations) {
+          execSync(`node ${path.resolve(__dirname, 'add_project_to_locations.js')} "${builderId}" "${projectId}" "${details.project_name || details.name}" "${details.city}" "${details.location}"`, { stdio: 'inherit' });
+          // Pass along SEED_ENV if provided so upload_locations_to_firestore picks correct key
+          const envVars = Object.assign({}, process.env);
+          if (opts.env) envVars.SEED_ENV = opts.env;
+          execSync(`node ${path.resolve(__dirname, 'upload_locations_to_firestore.js')}`, { stdio: 'inherit', env: envVars });
+        } else {
+          console.log('Skipping add/upload of locations (opts.skipLocations=true)');
+        }
       } else {
         console.warn('Project details JSON not found for locations update:', detailsPath);
       }
@@ -371,8 +507,15 @@ async function main() {
     const detailsPath = path.join(process.cwd(), 'tools', 'data', builderId, projectId, `${projectId}-details.json`);
     if (fs.existsSync(detailsPath)) {
       const details = JSON.parse(fs.readFileSync(detailsPath, 'utf8'));
-      execSync(`node ${path.resolve(__dirname, 'add_project_to_locations.js')} "${builderId}" "${projectId}" "${details.project_name || details.name}" "${details.city}" "${details.location}"`, { stdio: 'inherit' });
-      execSync(`node ${path.resolve(__dirname, 'upload_locations_to_firestore.js')}`, { stdio: 'inherit' });
+      if (!opts.skipLocations) {
+        execSync(`node ${path.resolve(__dirname, 'add_project_to_locations.js')} "${builderId}" "${projectId}" "${details.project_name || details.name}" "${details.city}" "${details.location}"`, { stdio: 'inherit' });
+        // Pass along SEED_ENV if provided so upload_locations_to_firestore picks correct key
+        const envVars = Object.assign({}, process.env);
+        if (opts.env) envVars.SEED_ENV = opts.env;
+        execSync(`node ${path.resolve(__dirname, 'upload_locations_to_firestore.js')}`, { stdio: 'inherit', env: envVars });
+      } else {
+        console.log('Skipping add/upload of locations (opts.skipLocations=true)');
+      }
     } else {
       console.warn('Project details JSON not found for locations update:', detailsPath);
     }

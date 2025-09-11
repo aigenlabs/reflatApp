@@ -192,100 +192,181 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
         }
         const projectData = snap.data() as any || {};
 
-        // --- Step 2: Attempt to fetch file manifest from GCS ---
-        let manifest: any = null;
-        try {
-          const bucket = admin.storage().bucket(); // Default bucket
-          const manifestPath = `${builderId}/${projectId}/uploaded_manifest.json`;
-          const file = bucket.file(manifestPath);
-          const [exists] = await file.exists();
-          if (exists) {
-            logger.info(`Found manifest for ${builderId}/${projectId}, downloading...`);
-            const [contents] = await file.download();
-            manifest = JSON.parse(contents.toString("utf8"));
-          } else {
-            logger.warn(`Manifest not found at ${manifestPath}. Falling back to Firestore subcollections.`);
-          }
-        } catch (e: any) {
-          logger.error(`Error fetching manifest for ${builderId}/${projectId}: ${e.message}`, e);
-          // Fallback to old method if manifest is corrupt or inaccessible
-        }
-
+        // --- Step 2: Build files & asset lists from Firestore project document and its subcollections ---
+        // We intentionally do NOT rely on any GCS manifest here — prefer the canonical Firestore data.
         let photos: any[] = [];
         let layouts: any[] = [];
         let videos: any[] = [];
         let floor_plans: any[] = [];
         let files: Record<string, string | null> = {};
 
-        if (manifest && manifest.files) {
-          // --- Step 3a: Populate from GCS Manifest ---
-          logger.info(`Populating project details from manifest for ${builderId}/${projectId}`);
-          const manifestFiles = manifest.files || {};
-          photos = manifestFiles.photos || [];
-          layouts = manifestFiles.layouts || [];
-          floor_plans = manifestFiles.floor_plans || [];
-          videos = manifestFiles.videos || []; // Assuming videos might be in manifest
+        logger.info(`Populating project details from Firestore for ${builderId}/${projectId}`);
 
-          const logos = manifestFiles.logos || [];
-          const builderLogo = logos.find((l: any) => l.path.includes("builder"));
-          const projectLogo = logos.find((l: any) => !l.path.includes("builder"));
-
-          files = {
-            banner: manifestFiles.banners?.[0]?.path || null,
-            brochure: manifestFiles.brochures?.[0]?.path || null,
-            builder_logo: builderLogo?.path || null,
-            project_logo: projectLogo?.path || logos[0]?.path || null, // Fallback to first logo
-            youtube_id: projectData?.youtube_id || projectData?.youtube || null,
-            website: projectData?.project_website || projectData?.website || null,
-          };
-        } else {
-          // --- Step 3b: Fallback to Firestore Subcollections ---
-          logger.warn(`Falling back to Firestore subcollections for ${builderId}/${projectId}`);
-          // Helper to read a subcollection (if present)
-          async function readSubcollection(name: string) {
+        // Helper to read a subcollection (if present)
+        async function readSubcollection(name: string) {
+          try {
+            const s = await projRef.collection(name).orderBy("createdAt", "desc").get();
+            return s.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+          } catch (e) {
             try {
-              const s = await projRef.collection(name).orderBy("createdAt", "desc").get();
+              const s = await projRef.collection(name).get();
               return s.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-            } catch (e) {
-              try {
-                const s = await projRef.collection(name).get();
-                return s.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-              } catch (err) {
-                return [];
-              }
+            } catch (err) {
+              return [];
+            }
+          }
+        }
+
+        [photos, layouts, videos, floor_plans] = await Promise.all([
+          readSubcollection("photos"),
+          readSubcollection("layouts"),
+          readSubcollection("videos"),
+          readSubcollection("floor_plans"),
+        ]);
+
+        // Helper to normalize filenames similar to the frontend/upload logic
+        const normalizeName = (name: string) => {
+          if (!name) return name;
+          return name.replace(/\\+/g, '/').split('/').map(s => String(s || '').trim().replace(/\s+/g, '_')).join('/');
+        };
+        
+        const ensureObjectPath = (folder: string, raw: any) => {
+          if (!raw) return null;
+          let candidate = typeof raw === 'string' ? raw : (raw.path || raw.file || raw.file_name || raw.filename || raw.name);
+          if (!candidate) return null;
+
+          // Try to decode percent-encoded values (repeat a couple times for double-encoding)
+          try {
+            for (let i = 0; i < 3; i++) {
+              const dec = decodeURIComponent(String(candidate));
+              if (dec === candidate) break;
+              candidate = dec;
+            }
+          } catch (e) { /* ignore */ }
+
+          candidate = String(candidate).trim();
+
+          // If candidate is an HTTP(S) URL, only return it unchanged when it's an external URL
+          // (e.g. YouTube, Google Maps). If it is a Google Cloud Storage / Firebase Storage
+          // URL (storage.googleapis.com or firebasestorage.googleapis.com or containing '/o/'),
+          // fall through and extract the object path below so we can normalize and re-sign it.
+          if (/^https?:\/\//i.test(candidate)) {
+            const isStorageUrl = candidate.includes('storage.googleapis.com') || candidate.includes('firebasestorage.googleapis.com') || /\/o\//.test(candidate);
+            if (!isStorageUrl) {
+              return candidate; // external URL we should not touch
+            }
+            // Otherwise fall through to extraction logic below to parse the object path
+          }
+
+          // If candidate is a GS or Firebase/Storage URL, try to extract the object path
+          // gs://bucket/path
+          const gsMatch = candidate.match(/^gs:\/\/[^\/]+\/(.+)$/i);
+          if (gsMatch) {
+            candidate = gsMatch[1];
+          }
+
+          // firebase storage v0 URLs often contain '/o/<encoded-path>' portion
+          const oMatch = candidate.match(/\/o\/([^?]+)/);
+          if (oMatch) {
+            try { candidate = decodeURIComponent(oMatch[1]); } catch (e) { candidate = oMatch[1]; }
+          } else if ((candidate.includes('storage.googleapis.com') || candidate.includes('firebasestorage.googleapis.com'))) {
+            // Try to extract path after hostname
+            const m = candidate.match(/^https?:\/\/[^\/]+\/(.+?)(?:[?#].*)?$/i);
+            if (m) {
+              try { candidate = decodeURIComponent(m[1]); } catch (e) { candidate = m[1]; }
             }
           }
 
-          [photos, layouts, videos, floor_plans] = await Promise.all([
-            readSubcollection("photos"),
-            readSubcollection("layouts"),
-            readSubcollection("videos"),
-            readSubcollection("floor_plans"),
-          ]);
+          const normalized = normalizeName(candidate);
+          const parts = normalized.split('/').filter(Boolean);
 
-          files = {
-            banner: projectData?.banner_file || null,
-            brochure: projectData?.brochure_file || null,
-            builder_logo: projectData?.builder_logo_file || projectData?.logo_file || null,
-            project_logo: projectData?.project_logo_file || projectData?.project_logo || null,
-            youtube_id: projectData?.youtube_id || projectData?.youtube || null,
-            website: projectData?.project_website || projectData?.website || null,
-          };
-        }
-
-        const result = {
-          project: projectData,
-          files,
-          photos,
-          layouts,
-          videos,
-          floor_plans,
+          // If the stored value already includes a builder/project prefix (e.g. 'myhome/akrida/photos/1.jpg'), keep it
+          if (parts.length >= 4 && (parts[0] === builderId || parts[1] === projectId)) {
+            return normalized;
+          }
+          // If the stored value already starts with the folder (e.g. 'banners/mob_banner.png'), strip the leading folder
+          if (parts.length >= 2 && parts[0] === folder) {
+            const filename = parts.slice(1).join('/');
+            return `${builderId}/${projectId}/${folder}/${filename}`;
+          }
+          // Otherwise construct the canonical object path: <builderId>/<projectId>/<folder>/<filename>
+          return `${builderId}/${projectId}/${folder}/${normalized}`;
         };
 
-        logger.info("project_details response", { builderId, projectId, source: manifest ? 'manifest' : 'firestore', photos: photos.length, layouts: layouts.length });
-        res.json(result);
-        return;
-      }
+        // Normalize subcollection entries to include a `path` field that is the object path within the bucket
+        photos = (photos || []).map((p: any) => ({ id: p.id, ...p, path: ensureObjectPath('photos', p.path || p.file || p.file_name || p.filename || p.name || p) }));
+        layouts = (layouts || []).map((p: any) => ({ id: p.id, ...p, path: ensureObjectPath('layouts', p.path || p.file || p.file_name || p.filename || p.name || p) }));
+        floor_plans = (floor_plans || []).map((p: any) => ({ id: p.id, ...p, path: ensureObjectPath('floor_plans', p.path || p.file || p.file_name || p.filename || p.name || p) }));
+        videos = (videos || []).map((p: any) => ({ id: p.id, ...p, path: ensureObjectPath('videos', p.path || p.file || p.file_name || p.filename || p.name || p) }));
+
+        // If project document itself contains these arrays (some scrapers store inline), merge them in when subcollections are empty
+        const ingestArray = (arrKey: string, folder: string) => {
+          const arr = (projectData && Array.isArray(projectData[arrKey])) ? projectData[arrKey] : null;
+          if (!arr || !arr.length) return [];
+          return arr.map((it: any, idx: number) => {
+            const raw = (typeof it === 'string') ? it : (it.path || it.file || it.file_name || it.filename || it.name || it);
+            return { id: it.id || `inline-${arrKey}-${idx}`, ...(typeof it === 'object' ? it : {}), path: ensureObjectPath(folder, raw) };
+          });
+        };
+
+        if ((!photos || photos.length === 0) && Array.isArray(projectData?.photos)) {
+          photos = ingestArray('photos', 'photos');
+        }
+        if ((!layouts || layouts.length === 0) && Array.isArray(projectData?.layouts)) {
+          layouts = ingestArray('layouts', 'layouts');
+        }
+        if ((!floor_plans || floor_plans.length === 0) && Array.isArray(projectData?.floor_plans)) {
+          floor_plans = ingestArray('floor_plans', 'floor_plans');
+        }
+        if ((!videos || videos.length === 0) && Array.isArray(projectData?.videos)) {
+          videos = ingestArray('videos', 'videos');
+        }
+
+        // Amenities may be an array on the project document; normalize similarly and expose top-level `amenities`
+        let amenities: any[] = [];
+        if (Array.isArray(projectData?.amenities)) {
+          amenities = projectData.amenities.map((a: any, idx: number) => ({ id: a.id || `inline-amenity-${idx}`, ...a, path: ensureObjectPath('amenities', a.path || a.file || a.file_name || a.filename || a.name || a) }));
+        }
+
+        // Logos array present on some projects
+        let logos: any[] = [];
+        if (Array.isArray(projectData?.logos) && projectData.logos.length) {
+          logos = projectData.logos.map((l: any, idx: number) => ({ id: l.id || `inline-logo-${idx}`, ...l, path: ensureObjectPath('logos', l.path || l.file || l.file_name || l.filename || l.name || l) }));
+        }
+
+         // Build the common files mapping from fields on the project document. Keep multiple possible field names for compatibility.
+        // Extract banners from projectData (some scrapers provide an array of banner objects)
+        const banners: any[] = Array.isArray(projectData?.banners) ? projectData.banners.map((b: any, idx: number) => {
+          const raw = (typeof b === 'string') ? b : (b.path || b.file || b.file_name || b.filename || b.name || b);
+          return { id: b.id || `inline-banner-${idx}`, ...(typeof b === 'object' ? b : {}), path: ensureObjectPath('banners', raw), filename: (b && (b.filename || b.file_name)) || (typeof raw === 'string' ? raw.split('/').pop() : null) };
+        }) : [];
+
+        // Set files.banner to the first banner path (if any) for backward compatibility, and include brochure/logos as before
+        files = {
+          banner: (banners.length > 0) ? banners[0].path : ensureObjectPath('banners', projectData?.banner_file || projectData?.banner),
+          brochure: ensureObjectPath('brochures', projectData?.brochure_file || projectData?.brochure),
+          builder_logo: ensureObjectPath('logos', projectData?.builder_logo_file || projectData?.logo_file || projectData?.builder_logo || projectData?.logo),
+          project_logo: ensureObjectPath('logos', projectData?.project_logo_file || projectData?.project_logo),
+          youtube_id: projectData?.youtube_id || projectData?.youtube || null,
+          website: projectData?.project_website || projectData?.website || null,
+        };
+
+         const result = {
+           project: projectData,
+           files,
+           banners,
+           photos,
+           layouts,
+           videos,
+           floor_plans,
+           amenities,
+           logos,
+         };
+
+         logger.info("project_details response", { builderId, projectId, source: 'firestore', photos: photos.length, layouts: layouts.length });
+         res.json(result);
+         return;
+       }
 
       // -----------------------------
       // GET /api/listing/:id
@@ -505,33 +586,227 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
           const folder = String(req.query.folder || "").trim();
           const builderId = String(req.query.builderId || "").trim();
           const projectId = String(req.query.projectId || "").trim();
-          const file = String(req.query.file || "").trim();
+          let file = String(req.query.file || "").trim();
           if (!folder || !builderId || !projectId || !file) {
             res.status(400).json({ error: "Missing required query params: folder, builderId, projectId, file" });
             return;
           }
+
+          // Robust decode for percent-encoded values (handle double-encoding)
+          try {
+            for (let i = 0; i < 3; i++) {
+              const dec = decodeURIComponent(file);
+              if (dec === file) break;
+              file = dec;
+            }
+          } catch (e) { /* ignore */ }
+
+          // If caller passed an absolute HTTP(S) URL as `file`, attempt to extract a GCS object path
+          // for storage URLs so we can generate a canonical signed URL. For other external URLs
+          // (YouTube, maps, etc.) return them unchanged.
+          if (/^https?:\/\//i.test(file)) {
+            let extracted: string | null = null;
+            // Try to extract '/o/<encoded-path>' style (firebase storage object URL)
+            const oMatch = String(file).match(/\/o\/([^?]+)/);
+            if (oMatch) {
+              try { extracted = decodeURIComponent(oMatch[1]); } catch (e) { extracted = oMatch[1]; }
+            } else if ((file.includes('storage.googleapis.com') || file.includes('firebasestorage.googleapis.com'))) {
+              // storage.googleapis.com/<bucket>/<object...>
+              const m = String(file).match(/^https?:\/\/[^\/]+\/(.+?)(?:[?#].*)?$/i);
+              if (m) {
+                try { extracted = decodeURIComponent(m[1]); } catch (e) { extracted = m[1]; }
+              }
+            }
+
+            if (extracted) {
+              // If the extracted path includes a leading bucket segment (e.g. '<bucket>/...'),
+              // strip the bucket so downstream normalization produces a builder/project path.
+              const parts = extracted.split('/').filter(Boolean);
+              if (parts.length >= 4 && parts[0] && parts[0].includes('.app')) {
+                // crude bucket-looking segment (e.g. 'reflat-staging.firebasestorage.app'), strip it
+                extracted = parts.slice(1).join('/');
+              }
+              // Use the extracted object path as the file value and continue to probing logic below
+              file = extracted;
+            } else {
+              // Not a storage URL we can parse — return external URL unchanged
+              res.json({ url: file });
+              return;
+            }
+          }
+
           // Normalize path
           const normalize = (name: string) => name.replace(/\\+/g, '/').split('/').map(s => s.trim().replace(/\s+/g, '_')).join('/');
           const filename = normalize(file);
-          const objectPath = `${builderId}/${projectId}/${folder}/${filename}`;
+
+          const partsFile = filename.split('/').filter(Boolean);
+
+          const knownFolders = new Set([
+            'photos','layouts','videos','floor_plans','floorplans','floor-plans','banners','brochures','logos','amenities'
+          ]);
+
           const bucket = admin.storage().bucket();
-          const fileRef = bucket.file(objectPath);
-          // Check if file exists
-          const [exists] = await fileRef.exists();
-          if (!exists) {
-            res.status(404).json({ error: `File not found: ${objectPath}` });
+
+          // Build candidate object paths to try (be permissive to handle various input formats)
+          const candidates: string[] = [];
+
+          // If file already looks like a full object path, try it first
+          if (partsFile.length >= 4 && (partsFile[0] === builderId || partsFile[1] === projectId)) {
+            candidates.push(filename);
+          }
+          // If file starts with a folder (e.g. 'banners/...') or the caller passed same folder, try builder/project + file
+          if (partsFile.length >= 2 && (partsFile[0] === folder || knownFolders.has(partsFile[0]))) {
+            candidates.push(`${builderId}/${projectId}/${filename}`);
+          }
+
+          // Common constructions to try
+          candidates.push(`${builderId}/${projectId}/${folder}/${filename}`); // expected
+          candidates.push(`${projectId}/${builderId}/${folder}/${filename}`); // swapped including builder domain
+          // Try common case where frontend may have passed builder/project swapped: projectId as builder and folder as project
+          candidates.push(`${projectId}/${folder}/${filename}`);
+          // Also try folder as top-level (when folder actually contains the project folder)
+          candidates.push(`${folder}/${filename}`);
+          candidates.push(`${builderId}/${projectId}/${filename}`); // if filename already contains folder segment
+          candidates.push(filename); // raw filename as last resort
+
+          // Deduplicate
+          const uniqueCandidates = Array.from(new Set(candidates));
+
+          let foundPath: string | null = null;
+          const tried: string[] = [];
+          for (const p of uniqueCandidates) {
+            if (!p) continue;
+            tried.push(p);
+            try {
+              const [exists] = await bucket.file(p).exists();
+              if (exists) { foundPath = p; break; }
+            } catch (e) {
+              // ignore and continue trying other candidates
+            }
+          }
+
+          if (!foundPath) {
+            res.status(404).json({ error: `File not found`, tried: tried.slice(0, 10) });
             return;
           }
+
           // Generate signed URL (read, 10 min expiry)
-          const [url] = await fileRef.getSignedUrl({
+          const [url] = await bucket.file(foundPath).getSignedUrl({
             version: 'v4',
             action: 'read',
             expires: Date.now() + 10 * 60 * 1000,
           });
-          res.json({ url });
+          res.json({ url, path: foundPath });
           return;
         } catch (err: any) {
           console.error('getSignedUrl error', err);
+          res.status(500).json({ error: String(err?.message || err) });
+          return;
+        }
+      }
+
+      // New route: proxy an image from GCS through this function to avoid client CORS issues.
+      // GET /api/image?path=<objectPath>
+      if (parts[0] === "image") {
+        if (allowCors(req, res)) return;
+        if (req.method !== "GET") {
+          res.status(405).json({ error: "Method not allowed" });
+          return;
+        }
+        try {
+          let objectPath = String(req.query.path || "").trim();
+          if (!objectPath) {
+            res.status(400).json({ error: "Missing required query param: path" });
+            return;
+          }
+
+          // Robustly decode (handle double-encoding)
+          try {
+            for (let i = 0; i < 3; i++) {
+              const dec = decodeURIComponent(objectPath);
+              if (dec === objectPath) break;
+              objectPath = dec;
+            }
+          } catch (e) { /* ignore */ }
+
+          // If a full URL was provided, strip the scheme/host portion
+          if (/^https?:\/\//i.test(objectPath)) {
+            const m = String(objectPath).match(/^https?:\/\/[^\/]+\/(.+)$/i);
+            if (m) objectPath = m[1];
+            else objectPath = objectPath.replace(/^https?:\/\//i, '');
+          }
+
+          // Normalize slashes and trim
+          objectPath = objectPath.replace(/\\+/g, '/').replace(/\/+/g, '/').replace(/^\/+|\/+$/g, '');
+
+          // If the path starts with a bucket/domain-like segment (contains a dot or 'firebasestorage' or 'storage.googleapis'), strip it
+          const partsForGuess = objectPath.split('/').filter(Boolean);
+          if (partsForGuess.length > 0) {
+            const first = partsForGuess[0] || '';
+            const looksLikeBucket = first.includes('.') || first.includes('firebasestorage') || first.includes('storage.googleapis');
+            if (looksLikeBucket && partsForGuess.length > 1) {
+              objectPath = partsForGuess.slice(1).join('/');
+            }
+          }
+
+          // Also accept object paths that may already include the builder/project prefix or other forms; try a few candidate variants
+          const bucket = admin.storage().bucket();
+          const candidates = [objectPath];
+          // if it still contains a bucket-like prefix, also try stripping until a match is found
+          const segs = objectPath.split('/').filter(Boolean);
+          for (let i = 0; i < Math.min(3, segs.length - 1); i++) {
+            candidates.push(segs.slice(i).join('/'));
+          }
+
+          let fileRef: any = null;
+          let found: string | null = null;
+          for (const cand of Array.from(new Set(candidates))) {
+            if (!cand) continue;
+            try {
+              const f = bucket.file(cand);
+              const [exists] = await f.exists();
+              if (exists) { fileRef = f; found = cand; break; }
+            } catch (e) {
+              // ignore and try next candidate
+            }
+          }
+
+          if (!fileRef || !found) {
+            res.status(404).json({ error: "File not found", tried: candidates.slice(0, 10) });
+            return;
+          }
+
+          // Get metadata to forward Content-Type / Cache-Control if available
+          try {
+            const [meta] = await fileRef.getMetadata();
+            if (meta && meta.contentType) res.set("Content-Type", meta.contentType);
+            // Use object's cacheControl when present; otherwise set a sensible default for performance.
+            // Default: public for 1 hour on client, longer on CDN (s-maxage) and allow stale-while-revalidate.
+            const defaultCache = "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400";
+            if (meta && meta.cacheControl) res.set("Cache-Control", meta.cacheControl);
+            else res.set("Cache-Control", defaultCache);
+          } catch (e) {
+            // ignore metadata errors and continue to stream
+            // If metadata can't be read, still set a safe default cache header
+            res.set("Cache-Control", "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400");
+          }
+
+          // Ensure CORS headers for the proxied response
+          const origin = req.headers.origin || "*";
+          res.set("Access-Control-Allow-Origin", origin);
+          res.set("Vary", "Origin");
+
+          // Stream file to response
+          const readStream = fileRef.createReadStream();
+          readStream.on('error', (streamErr: any) => {
+            console.error('error streaming file', streamErr);
+            if (!res.headersSent) res.status(500).json({ error: 'Error reading file' });
+            else res.end();
+          });
+          readStream.pipe(res);
+          return;
+        } catch (err: any) {
+          console.error('image proxy error', err);
           res.status(500).json({ error: String(err?.message || err) });
           return;
         }

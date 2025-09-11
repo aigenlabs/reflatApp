@@ -5,6 +5,7 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import { useNavigate } from 'react-router-dom';
+import { getCachedImage } from './imageCache';
 
 /**
  * ProjectCard
@@ -18,27 +19,44 @@ import { useNavigate } from 'react-router-dom';
  *  brochure, builderId, builderName, website, logo
  */
 export default function ProjectCard({ project }) {
-  const {
-    name,
-    city,
-    location,
-    unitSizes,
-    configuration,
-    totalAcres,
-    totalTowers,
-    totalUnits,
-    unitsPerFloor,
-    totalFloors,
-    densityPerAcre,
-    builderId,
-    builderName,
-    logo,
-    projectId,
-  } = project || {};
+  // Prefer structured Key_Project_details emitted by the scraper when available
+  const kd = (project && project.Key_Project_details) || {};
+
+  // keep some identifiers from top-level project
+  const { builderId, builderName, logo, projectId } = project || {};
+
+  // Map values from Key_Project_details (snake_case) into the camelCase props UI expects,
+  // falling back to existing top-level fields for backwards compatibility.
+  const name = project?.name || kd.project_name || kd.name;
+  const city = project?.city || kd.project_city || kd.city;
+  const location = project?.location || kd.project_location || kd.location;
+  const unitSizes = project?.unitSizes || kd.unit_sizes || kd.unitSize || kd.unitSize;
+  const configuration = project?.configuration || kd.config || kd.configuration;
+  const totalAcres = project?.totalAcres || kd.total_acres || kd.acres;
+  const totalTowers = project?.totalTowers || kd.total_towers || kd.towers;
+  const totalUnits = project?.totalUnits || kd.total_units || kd.totalFlats || kd.total_flats;
+  const unitsPerFloor = project?.unitsPerFloor || kd.units_per_floor || kd.unitsPerFloor;
+  const totalFloors = project?.totalFloors || kd.total_floors || kd.floors;
+  const densityPerAcre = project?.densityPerAcre || project?.flats_density || kd.flats_density || kd.density_per_acre || kd.density;
+  const reraNumber = project?.reraNumber || kd.rera_number || kd.rera;
 
   const navigate = useNavigate();
 
   const imgUrl = logo || null;
+  const [cachedLogo, setCachedLogo] = React.useState(null);
+  React.useEffect(() => {
+    let alive = true;
+    if (!imgUrl) return;
+    (async () => {
+      try {
+        const v = await getCachedImage(imgUrl);
+        if (alive) setCachedLogo(v);
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => { alive = false; };
+  }, [imgUrl]);
 
   // FontAwesome (Free) icon classnames
   const ICONS = {
@@ -88,6 +106,8 @@ export default function ProjectCard({ project }) {
     <Card
       elevation={0}
       onClick={() => {
+        // safe debug log using available identifiers
+        console.debug('Card clicked', { builderId, projectId, builderName });
         if (builderId && projectId) navigate(`/project/${encodeURIComponent(builderId)}/${encodeURIComponent(projectId)}`);
       }}
       sx={{
@@ -142,9 +162,9 @@ export default function ProjectCard({ project }) {
             {imgUrl ? (
               <Box
                 component="img"
-                src={imgUrl}
-                alt={`${builderName || builderId || ""} logo`}
-                sx={{
+                src={cachedLogo || imgUrl}
+                 alt={`${builderName || builderId || ""} logo`}
+                 sx={{
                   width: 48,
                   height: 48,
                   maxWidth: 48,
@@ -198,6 +218,15 @@ export default function ProjectCard({ project }) {
                     {location}
                     {location && city ? ", " : ""}
                     {city}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Ensure RERA is visible: small caption under location */}
+              {reraNumber && (
+                <Box sx={{ mt: 0.5, minWidth: 0 }}>
+                  <Typography variant="caption" color="text.secondary" title={`RERA: ${reraNumber}`} sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    RERA: {reraNumber}
                   </Typography>
                 </Box>
               )}
@@ -292,7 +321,8 @@ export default function ProjectCard({ project }) {
               </Box>
             )}
 
-   
+            {/* RERA moved to bottom actions to avoid disturbing layout */}
+
           </Box>
 
           {/* Stats grid + Actions grouped */}
@@ -324,7 +354,7 @@ export default function ProjectCard({ project }) {
               <StatItem icon={ICONS.units} label="Units" value={totalUnits} />
               <StatItem
                 icon={ICONS.density}
-                label="Density"
+                label="Flats / acre"
                 value={densityPerAcre}
               />
             </Box>
@@ -343,6 +373,13 @@ export default function ProjectCard({ project }) {
               }}
             >
               {/* Removed brochure and website icons; card is now fully clickable */}
+              {reraNumber && (
+                <Box sx={{ mt: 0.25, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                    RERA: {reraNumber}
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </Box>
         </Box>

@@ -52,6 +52,7 @@ async function reverseGeocode(lat, lng) {
 }
 
 async function main() {
+  console.log('Starting scrape_project.js...');
   const [builderId, projectId, websiteUrl] = process.argv.slice(2);
   if (!builderId || !projectId || !websiteUrl) {
     console.error('Usage: node scrape_project.js <builderId> <projectId> <websiteUrl>');
@@ -132,6 +133,151 @@ async function main() {
   // Merge extra address fields
   Object.assign(details, extraAddress);
 
+  // Try to extract 'Key Highlights' text (or OCR an image) and parse common numeric fields
+  async function extractKeyHighlights() {
+    function parseHighlightsText(text) {
+      const out = {};
+      if (!text || !text.trim()) return out;
+      const t = text.replace(/\s+/g, ' ').trim();
+      const T = t.toUpperCase();
+
+      // RERA number (loose match)
+      const reraMatch = T.match(/RERA[^0-9A-Z]*(?:NO\.?|NUMBER\:?|REGN\s*NO\.?|REGN\s*NUMBER\:)?\s*([A-Z0-9\-\/]+)/i);
+      if (reraMatch) out.rera_number = reraMatch[1].trim();
+
+      // Acres / land area
+      const acresMatch = T.match(/(\d{1,3}(?:[\.,]\d+)?)(?:\s*)(?:ACRES|ACRE|AC)/i) || T.match(/LAND\s*AREA[^0-9A-Z]*(\d{1,3}(?:[\.,]\d+)?)/i);
+      if (acresMatch) out.total_acres = parseFloat((acresMatch[1] || '').toString().replace(/,/g, ''));
+
+      // Towers
+      const towersMatch = T.match(/(\d{1,4})\s*(?:HIGH\s*RISE\s*)?(?:TOWERS|TOWER|BLOCKS|BUILDINGS)/i);
+      if (towersMatch) out.total_towers = parseInt(towersMatch[1], 10);
+
+      // Floors: match G+39 or G+39 FLOORS or 39 FLOORS
+      const gPlusMatch = T.match(/G\+\s*(\d{1,3})/i);
+      if (gPlusMatch) out.total_floors = parseInt(gPlusMatch[1], 10);
+      else {
+        const floorsMatch = T.match(/(\d{1,3})\s*(?:FLOORS|STOREYS|STOREY|STOREYS|FLOOR)/i);
+        if (floorsMatch) out.total_floors = parseInt(floorsMatch[1], 10);
+      }
+
+      // Total units
+      const unitsMatch = T.match(/(\d{1,5})\s*(?:UNITS|FLATS|APARTMENTS|HOUSES|RESIDENCES)/i);
+      if (unitsMatch) {
+        out.total_units = parseInt(unitsMatch[1], 10);
+        out.total_flats = out.total_units; // map flats to units
+      } else {
+        // Sometimes total units may appear without label near other numbers: try to find standalone counts after keywords
+        const standalone = T.match(/TOTAL[^0-9A-Z]*(\d{1,5})/i);
+        if (standalone) {
+          out.total_units = parseInt(standalone[1], 10);
+          out.total_flats = out.total_units;
+        }
+      }
+
+      // Config (BHK types) - find all occurrences like '2 BHK', '3BHK'
+      // Match integers or decimals (e.g. '2 BHK', '2.5 BHK') and preserve the full number
+      const bhkMatches = Array.from(t.matchAll(/(\d+(?:[\.,]\d+)?)\s*-?\s*BHK/gi))
+        .map(m => (m[1].replace(',', '.').trim() + ' BHK'));
+      if (bhkMatches.length) out.config = Array.from(new Set(bhkMatches)).join(', ');
+
+      // Unit sizes (e.g., '1200 SQFT', '85 SQM', '1200-1500 SQFT')
+      const sizeMatches = Array.from(t.matchAll(/(\d{2,5}(?:[.,]\d+)?(?:\s*[-–]\s*\d{2,5}(?:[.,]\d+)?)?\s*(?:SQ\.?FT|SQFT|SQM|M2|M²))/gi)).map(m => m[0].trim());
+      if (sizeMatches.length) out.unit_sizes = Array.from(new Set(sizeMatches)).join('; ');
+
+      return out;
+    }
+
+    // 1) Look for an element containing heading 'KEY HIGHLIGHT(S)'
+    let highlightsText = '';
+    try {
+      const heading = $('*:contains("KEY HIGHLIGHT")').filter(function () {
+        return /KEY\s*HIGHLIGHT/i.test($(this).text());
+      }).first();
+      if (heading && heading.length) {
+        // prefer sibling or parent block text
+        const parent = heading.parent();
+        if (parent && parent.length) highlightsText = parent.text();
+        if (!highlightsText) highlightsText = heading.text();
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // 2) Fallback: find containers or elements with class/id containing 'highlight'
+    if (!highlightsText) {
+      const el = $('[class*="highlight" i], [id*="highlight" i]').filter(function () { return $(this).text().trim().length > 0; }).first();
+      if (el && el.length) highlightsText = el.text();
+    }
+
+    // 3) Fallback: look for images whose src or alt contains 'highlight' or 'key' and attempt OCR
+    if (!highlightsText) {
+      const img = $('img').filter((i, el) => {
+        const src = ($(el).attr('src') || '').toLowerCase();
+        const alt = ($(el).attr('alt') || '').toLowerCase();
+        return src.includes('highlight') || src.includes('key') || alt.includes('highlight') || alt.includes('key');
+      }).first();
+      if (img && img.attr('src')) {
+        const imgUrl = img.attr('src').startsWith('http') ? img.attr('src') : new URL(img.attr('src'), websiteUrl).href;
+        // Try OCR with tesseract.js if installed
+        try {
+          const Tesseract = require('tesseract.js');
+          const { data: { text } } = await Tesseract.recognize(imgUrl, 'eng');
+          highlightsText = text;
+        } catch (e) {
+          console.warn('Tesseract OCR not available or failed, skipping image OCR:', e.message);
+        }
+      }
+    }
+
+    // 4) If we found some text, parse it
+    if (highlightsText && highlightsText.trim()) {
+      const parsed = parseHighlightsText(highlightsText);
+      if (Object.keys(parsed).length) {
+        // normalize numeric fields
+        if (parsed.total_acres) parsed.total_acres = Number(parsed.total_acres);
+        if (parsed.total_towers) parsed.total_towers = Number(parsed.total_towers);
+        if (parsed.total_floors) parsed.total_floors = Number(parsed.total_floors);
+        if (parsed.total_units) parsed.total_units = Number(parsed.total_units);
+        Object.assign(details, parsed);
+      }
+    }
+  }
+
+  // Attempt to extract key highlights (textual or from an image)
+  await extractKeyHighlights();
+
+  // Fallback: if page contains phrases like 'Total No. of Flats' or 'Total units', try to extract from body
+  if ((!details.total_units || details.total_units === '') && ($ && typeof $ === 'function')) {
+    try {
+      const bodyUnits = extractNumber($, html, /(?:total\s*(?:no\.?\s*of\s*)?)?(?:units|flats|apartments)/i, '');
+      if (Number.isFinite(bodyUnits) && bodyUnits > 0) {
+        details.total_units = bodyUnits;
+        details.total_flats = bodyUnits;
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // Best-effort extraction of common project fields so `details` contains
+  // values like total_acres, total_units, total_towers, total_floors, etc.
+  // These use the helper functions defined at the bottom of the file and
+  // act as fallbacks when the fields aren't already present in `details`.
+  try {
+    details.total_acres = extractNumber($, html, /acres?|site\s*area|total\s*area/i, details.total_acres);
+    details.total_units = extractNumber($, html, /(?:total\s*)?(?:units|flats|apartments|homes|residences)/i, details.total_units);
+    details.total_towers = extractNumber($, html, /(?:total\s*)?(?:towers?|blocks|buildings)/i, details.total_towers);
+    details.total_floors = extractNumber($, html, /(?:total\s*)?(?:floors|storeys|levels)/i, details.total_floors);
+    details.config = extractString($, html, /config|bhk|configuration/i, details.config || '');
+    details.unit_sizes = extractString($, html, /unit.?sizes?|area|sq\.?ft|sqm|m2/i, details.unit_sizes || '');
+    details.open_space_percent = extractNumber($, html, /open.?space|open.?area|open.*percent|open.*%/i, details.open_space_percent);
+    details.rera_number = extractString($, html, /rera\s*(?:no|number)?/i, details.rera_number || '');
+  } catch (e) {
+    // Non-fatal: extraction failed for some reason, continue with what we have
+    console.warn('Field extraction fallback failed:', e.message);
+  }
+
   // Add a field for each subfolder, as an array of file objects (path, filename)
   for (const sub of SUBFOLDERS) {
     const subdir = path.join(mediaDir, sub);
@@ -146,37 +292,22 @@ async function main() {
   // Save details as <projectId>-details.json
   const detailsJsonName = `${projectId}-details.json`;
   const detailsJsonPath = path.join(baseDir, detailsJsonName);
-  await fs.writeJson(detailsJsonPath, details, { spaces: 2 });
-  console.log('Saved', detailsJsonName);
+  // await fs.writeJson(detailsJsonPath, details, { spaces: 2 }); // REMOVED: only write new format
+  console.log('Scraped details, proceeding to media and output formatting...');
 
-  // Auto-invoke add_project_to_locations.js
+  // Save output as <projectId>-details.json
+
+  await fs.writeJson(detailsJsonPath, output, { spaces: 2 });
+  console.log('Saved project details JSON.');
+
+  // Auto-invoke add_project_to_locations.js (only update local locations.json)
   try {
     const { execSync } = require('child_process');
-    // Use project_name, city, location from details
-    execSync(`node ${path.resolve(__dirname, 'add_project_to_locations.js')} "${builderId}" "${projectId}" "${details.project_name || details.name}" "${details.city}" "${details.location}"`, { stdio: 'inherit' });
+    execSync(`node ${path.resolve(__dirname, 'add_project_to_locations.js')} "${builderId}" "${projectId}" "${(output.Key_Project_details && (output.Key_Project_details.project_name || output.Key_Project_details.project_name)) || output.project_name || output.Key_Project_details && output.Key_Project_details.project_name || output.project_name || projectId}" "${output.Key_Project_details ? output.Key_Project_details.project_city : (details.city || '')}" "${output.Key_Project_details ? output.Key_Project_details.project_location : (details.location || '')}"`, { stdio: 'inherit' });
+    console.log('Added project to local locations.json via add_project_to_locations.js');
   } catch (e) {
     console.warn('Failed to auto-add project to locations.json:', e.message);
   }
-
-  // --- Scrape and download media files ---
-  // Find all images, PDFs, and videos, categorize by subfolder heuristics
-  const mediaLinks = [];
-  const videoLinks = [];
-  $('img, a[href$=".pdf"], a[href$=".webp"], a[href$=".jpg"], a[href$=".png"], a[href$=".jpeg"], a[href$=".gif"]').each((i, el) => {
-    let url = $(el).attr('src') || $(el).attr('href');
-    if (!url) return;
-    if (!/^https?:/.test(url)) url = new URL(url, websiteUrl).href;
-    mediaLinks.push(url);
-  });
-  // Find video URLs (YouTube, Vimeo, mp4, etc.)
-  $('iframe, video, a[href$=".mp4"], a[href*="youtube.com"], a[href*="youtu.be"], a[href*="vimeo.com"]').each((i, el) => {
-    let url = $(el).attr('src') || $(el).attr('href');
-    if (!url) return;
-    if (!/^https?:/.test(url)) url = new URL(url, websiteUrl).href;
-    videoLinks.push(url);
-  });
-  details.videos = videoLinks;
-  await fs.writeJson(path.join(baseDir, detailsJsonName), details, { spaces: 2 });
 
   // Heuristic: assign to subfolders by filename or URL
   for (const url of mediaLinks) {
@@ -212,6 +343,26 @@ async function main() {
     }
   }
   console.log('Scraping and download complete.');
+
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
+
+// --- helpers for extraction ---
+function extractNumber($, html, regex, fallback) {
+  // Try to find a number near a label matching regex
+  const text = $("body").text() || html;
+  const match = text.match(new RegExp(regex.source + '[^\d]{0,10}(\d+[.,]?\d*)', 'i'));
+  if (match) return parseFloat(match[1].replace(/,/g, ''));
+  if (typeof fallback === 'string' && fallback) return parseFloat(fallback.replace(/,/g, ''));
+  if (typeof fallback === 'number') return fallback;
+  return '';
+}
+function extractString($, html, regex, fallback) {
+  const text = $("body").text() || html;
+  const match = text.match(new RegExp(regex.source + '[^\\w]{0,10}([\\w\\s\-+&,.]+)', 'i'));
+  if (match && match[1]) return match[1].trim();
+  if (typeof fallback === 'string') return fallback;
+  if (typeof fallback === 'number') return fallback.toString();
+  return '';
+}

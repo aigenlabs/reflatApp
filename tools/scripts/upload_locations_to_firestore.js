@@ -65,6 +65,40 @@ async function uploadLocations() {
   }
   await docRef.set({ prj_locations: firestoreData }, { merge: true });
   console.log(`locations.json incrementally merged to Firestore at locations/projects [env: ${detectedEnv}] (field: prj_locations)`);
+
+  // Additionally, write per-builder project documents into Firestore under
+  // collection `builders` -> <builder_id> -> subcollection `projects` -> <project_id>
+  // The script will look for tools/data/<builder_id>/<project_id>/<project_id>-details.json
+  // and write that JSON as the document data (merged with existing). This keeps
+  // Firestore in sync with the local project details files produced by the scraper.
+  try {
+    for (const loc of locations) {
+      if (!loc.projects || !Array.isArray(loc.projects)) continue;
+      for (const p of loc.projects) {
+        try {
+          const builderId = p.builder_id;
+          const projectId = p.project_id;
+          if (!builderId || !projectId) continue;
+          const detailsPath = path.join(__dirname, '../data', builderId, projectId, `${projectId}-details.json`);
+          if (!fs.existsSync(detailsPath)) {
+            console.warn(`Details JSON not found for ${builderId}/${projectId}, skipping Firestore project write: ${detailsPath}`);
+            continue;
+          }
+          const detailsJson = JSON.parse(fs.readFileSync(detailsPath, 'utf8'));
+          // Document path: builders/<builderId>/projects/<projectId>
+          const projDocRef = db.collection('builders').doc(builderId).collection('projects').doc(projectId);
+          // Add a timestamp and small metadata
+          const toWrite = Object.assign({}, detailsJson, { _updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+          await projDocRef.set(toWrite, { merge: true });
+          console.log(`Wrote project details to Firestore: builders/${builderId}/projects/${projectId}`);
+        } catch (projErr) {
+          console.warn('Failed to write project to Firestore for', p, projErr && projErr.message ? projErr.message : projErr);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to sync per-builder project documents to Firestore:', err && err.message ? err.message : err);
+  }
   process.exit(0);
 }
 

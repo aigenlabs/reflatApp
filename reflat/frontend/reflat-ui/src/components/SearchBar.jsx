@@ -24,6 +24,8 @@ export default function SearchBar({
   builderDisabled = true,
   onReset = () => {},
   onFilter, // optional external hook
+  imageCacheEnabled = true,
+  setImageCacheEnabled = () => {},
 }) {
   // Drawer state
   const [open, setOpen] = useState(false);
@@ -167,6 +169,18 @@ export default function SearchBar({
           <span style={chipValue}>
             {(selectedCity || "City —") + " · " + (selectedLocation || "Locality —") + " · " + (selectedBuilder || "All Builders")}
           </span>
+        </button>
+
+        {/* Image cache toggle */}
+        <button
+          type="button"
+          className="btn p-0"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setImageCacheEnabled(!imageCacheEnabled); }}
+          aria-pressed={imageCacheEnabled}
+          title={`Image cache: ${imageCacheEnabled ? 'On' : 'Off'}`}
+          style={{ ...chip, marginLeft: 8, padding: '6px 8px', display: 'inline-flex', alignItems: 'center' }}
+        >
+          <span style={{ fontSize: 12, fontWeight: 600 }}>{imageCacheEnabled ? 'Img Cache: On' : 'Img Cache: Off'}</span>
         </button>
       </div>
 

@@ -7,10 +7,21 @@ import ProjectCard from "./ProjectCard";
 import ProjectSkeleton from "./ProjectSkeleton";
 import { clearAppCache } from "./clearAppCache";
 import { FIREBASE_FUNCTIONS_URL } from "./constants";
+import { enableImageCache, isImageCachingEnabled } from './imageCache';
 
 // simple in-memory cache to avoid re-fetching the same data repeatedly
 const projectsCache = new Map(); // key -> projects array
 const pendingRequests = new Map(); // key -> Promise
+
+// helper: produce a safe slug from a project name (used when projectId is missing)
+function slugify(text) {
+  if (!text) return '';
+  return String(text)
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
 
 export default function PrjList() {
   const [loading, setLoading] = useState(false);
@@ -120,40 +131,54 @@ export default function PrjList() {
         // Now expecting a list of full project details
         const projectsList = await res.json();
         if (!Array.isArray(projectsList)) throw new Error("Invalid projects response");
-        // Normalize keys for ProjectCard (include all expected fields)
-        const normalized = projectsList.map((p) => ({
-          ...p,
-          builderId: p.builderId || p.builder_id || '',
-          builderName: p.builderName || p.builder_name || '',
-          projectId: p.projectId || p.project_id || p.id || '',
-          name: p.name || p.project_name || '',
-          city: p.city || '',
-          location: p.location || '',
-          unitSizes: p.unitSizes || p.unit_sizes || '',
-          configuration: p.configuration || '',
-          totalAcres: p.totalAcres || p.total_acres || '',
-          totalTowers: p.totalTowers || p.total_towers || '',
-          totalUnits: p.totalUnits || p.total_units || '',
-          unitsPerFloor: p.unitsPerFloor || p.units_per_floor || '',
-          totalFloors: p.totalFloors || p.total_floors || '',
-          densityPerAcre: p.densityPerAcre || p.density_per_acre || '',
-          brochure: p.brochure || '',
-          website: p.website || '',
-          logo: p.logo || p.project_logo || '',
-        }));
-        // Optionally, extract builderIds for the filter dropdown
-        const builderOptions = Array.from(
-          new Set(normalized.map((p) => p.builderId))
-        ).sort();
-        setBuilderIds(builderOptions);
-        if (selectedBuilder && !builderOptions.includes(selectedBuilder)) {
-          setSelectedBuilder("");
+        // Normalize keys for ProjectCard (prefer structured Key_Project_details when available)
+        const normalized = projectsList.map((p) => {
+          const kd = p.Key_Project_details || p.project || p || {};
+          return ({
+            ...p,
+            // prefer explicit builderId, but fall back to builder_name from Key_Project_details
+            builderId: p.builderId || p.builder_id || kd.builder_id || kd.builder || kd.builder_name || '',
+            builderName: p.builderName || p.builder_name || kd.builder_name || kd.builder || '',
+            // derive a stable projectId when not provided by using any available id or a slug of the project name
+            projectId:
+              p.projectId || p.project_id || p.id || kd.project_id || kd.projectId || slugify(p.name || p.project_name || kd.project_name || kd.name),
+             name: p.name || p.project_name || kd.project_name || kd.name || '',
+             city: p.city || kd.project_city || kd.city || '',
+             location: p.location || kd.project_location || kd.location || '',
+             unitSizes: p.unitSizes || p.unit_sizes || kd.unit_sizes || kd.unit_sizes || '',
+             configuration: p.configuration || kd.config || kd.configuration || '',
+             totalAcres: p.totalAcres || p.total_acres || kd.total_acres || kd.totalAcres || '',
+             totalTowers: p.totalTowers || p.total_towers || kd.total_towers || kd.totalTowers || '',
+             totalUnits: p.totalUnits || p.total_units || kd.total_units || kd.totalFlats || kd.total_flats || '',
+             unitsPerFloor: p.unitsPerFloor || p.units_per_floor || kd.units_per_floor || kd.unitsPerFloor || '',
+             totalFloors: p.totalFloors || p.total_floors || kd.total_floors || kd.totalFloors || '',
+             densityPerAcre: p.densityPerAcre || p.density_per_acre || kd.flats_density || kd.density_per_acre || kd.density || '',
+             brochure: p.brochure || (kd.brochures && Array.isArray(kd.brochures) ? kd.brochures[0] : kd.brochures) || '',
+             website: p.website || kd.website || '',
+             logo: p.logo || p.project_logo || kd.logo || kd.project_logo || '',
+           });
+         });
+        // Debugging: log API and normalized samples to help trace missing-project rendering issues
+        try {
+          console.debug(`ProjectList: loaded ${projectsList.length} items for key=${key}`);
+          console.debug('ProjectList: sample raw', projectsList.slice(0,3));
+          console.debug('ProjectList: sample normalized', normalized.slice(0,3));
+        } catch (e) {
+          // ignore logging errors
         }
-        projectsCache.set(key, normalized);
-        return normalized;
-      })();
+         // Optionally, extract builderIds for the filter dropdown
+         const builderOptions = Array.from(
+           new Set(normalized.map((p) => p.builderId))
+         ).sort();
+         setBuilderIds(builderOptions);
+         if (selectedBuilder && !builderOptions.includes(selectedBuilder)) {
+           setSelectedBuilder("");
+         }
+         projectsCache.set(key, normalized);
+         return normalized;
+       })();
 
-      pendingRequests.set(key, request);
+       pendingRequests.set(key, request);
 
       try {
         const data = await request;
@@ -195,6 +220,17 @@ export default function PrjList() {
 
   const isBuilderDisabled = loading || builderIds.length === 0 || !selectedCity || !selectedLocation;
 
+  // image cache toggle persisted in localStorage
+  const [imageCacheEnabled, setImageCacheEnabled] = useState(() => {
+    const v = localStorage.getItem('imageCacheEnabled');
+    return v === null ? true : v === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('imageCacheEnabled', imageCacheEnabled ? 'true' : 'false');
+    enableImageCache(imageCacheEnabled);
+  }, [imageCacheEnabled]);
+
   return (
     <Box
       sx={{
@@ -231,6 +267,8 @@ export default function PrjList() {
               selectedLocation={selectedLocation}
               setSelectedLocation={setSelectedLocation}
               builderDisabled={isBuilderDisabled}
+              imageCacheEnabled={imageCacheEnabled}
+              setImageCacheEnabled={setImageCacheEnabled}
               onReset={() => {
                 setSelectedBuilder("");
                 setSelectedLocation("");
@@ -279,13 +317,15 @@ export default function PrjList() {
             <Grid container spacing={2} alignItems="stretch" ref={containerRef} justifyContent="center">
                {projects.length > 0 ? (
                  projects
-                   .filter((p) =>
-                     (!selectedBuilder ||
-                       ((p.builderId || p.builder_id || '').toLowerCase() === selectedBuilder.toLowerCase())
-                     ) &&
-                     (p && (p.builderId || p.builder_id) && (p.projectId || p.project_id))
-                   )
-                   .map((p, idx) => {
+                   .filter((p) => {
+                     // builder filter must match or be empty
+                     const builderOk = !selectedBuilder || ((p.builderId || p.builder_id || '').toLowerCase() === selectedBuilder.toLowerCase());
+                     // show project when it has either project id or a name (newly-added projects may lack builderId)
+                     const hasProjectId = !!(p.projectId || p.project_id || p.id);
+                     const hasName = !!(p.name || p.project_name);
+                     return builderOk && (hasProjectId || hasName);
+                   })
+                    .map((p, idx) => {
                      const builder = p.builderId || p.builder_id;
                      const project = p.projectId || p.project_id;
                      return (

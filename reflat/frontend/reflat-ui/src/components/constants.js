@@ -12,7 +12,18 @@
 
 // Base API for unified router (GET + POST)
 // Use relative /api path; Hosting rewrite routes to Cloud Function per environment
-export const FIREBASE_FUNCTIONS_URL = "/api";
+// During local development we want to call the staging backend directly (no local API proxy).
+// This prevents requests like http://localhost:3000/api/... and instead calls the remote functions.
+let FIREBASE_FUNCTIONS_URL;
+if (process.env.NODE_ENV === 'development') {
+  // Staging API - use the provided Cloud Run service during local development
+  // Ensure we include the /api router prefix used by the backend
+  FIREBASE_FUNCTIONS_URL = 'https://api-tswrm7s7wq-el.a.run.app/api';
+} else {
+  // When hosted (staging/prod) use the relative /api path so Hosting rewrites to the Cloud Function
+  FIREBASE_FUNCTIONS_URL = '/api';
+}
+export { FIREBASE_FUNCTIONS_URL };
 
 // Set Firebase Storage URL based on environment
 let FIREBASE_STORAGE_URL;
