@@ -6,6 +6,7 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import { useNavigate } from 'react-router-dom';
 import { getCachedImage } from './imageCache';
+import { FIREBASE_STORAGE_URL } from './constants';
 
 /**
  * ProjectCard
@@ -20,43 +21,80 @@ import { getCachedImage } from './imageCache';
  */
 export default function ProjectCard({ project }) {
   // Prefer structured Key_Project_details emitted by the scraper when available
-  const kd = (project && project.Key_Project_details) || {};
+  const kd = (project && project.key_project_details) || {};
 
   // keep some identifiers from top-level project
   const { builderId, builderName, logo, projectId } = project || {};
 
   // Map values from Key_Project_details (snake_case) into the camelCase props UI expects,
   // falling back to existing top-level fields for backwards compatibility.
-  const name = project?.name || kd.project_name || kd.name;
-  const city = project?.city || kd.project_city || kd.city;
-  const location = project?.location || kd.project_location || kd.location;
-  const unitSizes = project?.unitSizes || kd.unit_sizes || kd.unitSize || kd.unitSize;
-  const configuration = project?.configuration || kd.config || kd.configuration;
-  const totalAcres = project?.totalAcres || kd.total_acres || kd.acres;
-  const totalTowers = project?.totalTowers || kd.total_towers || kd.towers;
-  const totalUnits = project?.totalUnits || kd.total_units || kd.totalFlats || kd.total_flats;
-  const unitsPerFloor = project?.unitsPerFloor || kd.units_per_floor || kd.unitsPerFloor;
-  const totalFloors = project?.totalFloors || kd.total_floors || kd.floors;
-  const densityPerAcre = project?.densityPerAcre || project?.flats_density || kd.flats_density || kd.density_per_acre || kd.density;
-  const reraNumber = project?.reraNumber || kd.rera_number || kd.rera;
+  const name = kd.project_name;
+  const city = kd.project_city;
+  const location = kd.project_location;
+  const unitSizes = kd.unit_sizes;
+  const configuration = kd.config;
+  const totalAcres = kd.total_acres;
+  const totalTowers = kd.total_towers;
+  const totalUnits = kd.total_units;
+  const unitsPerFloor = kd.units_per_floor;
+  const totalFloors = kd.total_floors;
+  // Prefer explicit flats_per_acre where available; fall back to legacy flats_density or other density fields
+  const densityPerAcre = kd.flats_per_acre;
+  const reraNumber = kd.rera_number;
 
   const navigate = useNavigate();
 
-  const imgUrl = logo || null;
+  // Determine image source: prefer explicit project.logo, then canonical key_project_details fields
+  // const rawLogo = logo || kd.builder_logo || kd.project_logo || project?.builder_logo || project?.project_logo || null;
+  const rawLogo = kd.project_logo || null;
+  // console.log("ProjectCard: rawLogo=", rawLogo);
+  // Build a full storage URL when the logo is a relative storage path like 'logos/...' or includes builder/project
+  const buildStorageUrl = (raw) => {
+    if (!raw) return null;
+    if (typeof raw !== 'string') return null;
+    const s = raw.trim();
+    if (!s) return null;
+    if (s.startsWith('http')) return s;
+    // known media folders
+    const KNOWN = ['logos','photos','banners','layouts','floor_plans','amenities','brochures','news','documents'];
+    const parts = s.split('/').filter(Boolean);
+    let candidatePath = s;
+    if (parts.length >= 4) {
+      // probably already contains builder/project prefix: builder/project/folder/filename
+      candidatePath = parts.join('/');
+    } else if (parts.length >= 2 && KNOWN.includes(parts[0])) {
+      // path like 'logos/filename' -> prefix with builderId/projectId
+      if (builderId && projectId) candidatePath = `${builderId}/${projectId}/${s}`;
+    } else if (parts.length >= 3) {
+      // ensure path is used as-is
+      candidatePath = parts.join('/');
+    } else if (parts.length === 1 && builderId && projectId) {
+      // single filename -> assume logos
+      candidatePath = `${builderId}/${projectId}/logos/${s}`;
+    }
+    if (!FIREBASE_STORAGE_URL) return null;
+    const base = FIREBASE_STORAGE_URL.replace(/\/+$/, '');
+    return `${base}/${candidatePath}`;
+  };
+
+  const storageLogoUrl = buildStorageUrl(rawLogo);
+  // console.log("ProjectCard: storageLogoUrl=", storageLogoUrl);
   const [cachedLogo, setCachedLogo] = React.useState(null);
   React.useEffect(() => {
     let alive = true;
-    if (!imgUrl) return;
+    const toFetch = storageLogoUrl || rawLogo;
+    if (!toFetch) return;
     (async () => {
       try {
-        const v = await getCachedImage(imgUrl);
+        const v = await getCachedImage(toFetch);
         if (alive) setCachedLogo(v);
+        console.log("ProjectCard: cachedLogo=", v);
       } catch (e) {
         // ignore
       }
     })();
     return () => { alive = false; };
-  }, [imgUrl]);
+  }, [storageLogoUrl, rawLogo]);
 
   // FontAwesome (Free) icon classnames
   const ICONS = {
@@ -159,10 +197,14 @@ export default function ProjectCard({ project }) {
             flexWrap="wrap"
             minWidth={0}
           >
-            {imgUrl ? (
+            {/* Render only when we have an object URL from cache (cachedLogo) or when rawLogo is a public HTTP URL.
+            // Do NOT set the <img> src to the constructed storageLogoUrl because that causes the browser
+            // to fetch the private storage.googleapis.com URL directly (403). getCachedImage will fetch
+            // via the signed_url/proxy flow and populate cachedLogo when ready.
+            {cachedLogo ? (
               <Box
                 component="img"
-                src={cachedLogo || imgUrl}
+                src={cachedLogo}
                  alt={`${builderName || builderId || ""} logo`}
                  sx={{
                   width: 48,
@@ -180,6 +222,52 @@ export default function ProjectCard({ project }) {
                 onError={(e) => {
                   e.currentTarget.style.visibility = "hidden";
                 }}
+              />
+            ) : (rawLogo && typeof rawLogo === 'string' && rawLogo.startsWith('http')) ? (
+              // If rawLogo already points to a public HTTP(S) URL (not our private GCS path), render it directly.
+              <Box
+                component="img"
+                src={rawLogo}
+                 alt={`${builderName || builderId || ""} logo`}
+                 sx={{ width: 48, height: 48, maxWidth: 48, maxHeight: 48, objectFit: "contain", borderRadius: 1, bgcolor: "background.default", flexShrink: 0, display: 'block' }}
+                loading="lazy"
+                onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
+              />
+            ) : (
+              <Box sx={{ width: 48, height: 48, flexShrink: 0 }} />
+            ) */}
+
+            {cachedLogo ? (
+              <Box
+                component="img"
+                src={cachedLogo}
+                 alt={`${builderName || builderId || ""} logo`}
+                 sx={{
+                  width: 48,
+                  height: 48,
+                  maxWidth: 48,
+                  maxHeight: 48,
+                  objectFit: "contain",
+                  borderRadius: 1,
+                  bgcolor: "background.default",
+                  flexShrink: 0, // don't let the logo stretch
+                  // ensure image cannot force card width
+                  display: 'block',
+                }}
+                loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.style.visibility = "hidden";
+                }}
+              />
+            ) : (rawLogo && typeof rawLogo === 'string' && rawLogo.startsWith('http')) ? (
+              // If rawLogo already points to a public HTTP(S) URL (not our private GCS path), render it directly.
+              <Box
+                component="img"
+                src={rawLogo}
+                 alt={`${builderName || builderId || ""} logo`}
+                 sx={{ width: 48, height: 48, maxWidth: 48, maxHeight: 48, objectFit: "contain", borderRadius: 1, bgcolor: "background.default", flexShrink: 0, display: 'block' }}
+                loading="lazy"
+                onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
               />
             ) : (
               <Box sx={{ width: 48, height: 48, flexShrink: 0 }} />

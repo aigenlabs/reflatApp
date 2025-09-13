@@ -17,12 +17,22 @@ const path = require('path');
 const { Storage } = require('@google-cloud/storage');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
-// Also load tools/scripts/.env if present (so STORAGE_BUCKET and other vars defined there are available)
+// Load tools/scripts/.env when present. Support multiple candidate locations
 try {
-  const scriptsEnvPath = path.resolve(__dirname, '../scripts/.env');
-  if (fs.existsSync(scriptsEnvPath)) {
-    require('dotenv').config({ path: scriptsEnvPath });
-    console.log('Loaded environment variables from', scriptsEnvPath);
+  const candidates = [
+    path.resolve(__dirname, '.env'), // when run_pipeline lives in tools/scripts
+    path.resolve(__dirname, '../scripts/.env'), // when run_pipeline lives in tools/seed
+    path.resolve(__dirname, '../../scripts/.env'), // alternative
+    path.resolve(__dirname, '../.env'),
+  ];
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) {
+        require('dotenv').config({ path: p });
+        console.log('Loaded environment variables from', p);
+        break;
+      }
+    } catch (e) { /* ignore */ }
   }
 } catch (e) {
   // ignore
@@ -81,7 +91,50 @@ if (opts.env) {
 // Fallback to STORAGE_BUCKET, GS_BUCKET or GCLOUD_STORAGE_BUCKET in env
 if (!opts.bucket) opts.bucket = process.env.STORAGE_BUCKET || process.env.GS_BUCKET || process.env.GCLOUD_STORAGE_BUCKET || null;
 
+// Ensure GOOGLE_APPLICATION_CREDENTIALS is resolved before any Storage() usage (helps avoid ENOENT in Cloud SDK)
+resolveCredsEnv();
+
+// Diagnostic: if bucket still missing, warn now (will cause Storage errors later)
+if (!opts.bucket) {
+  console.warn('Warning: No storage bucket configured. Ensure STORAGE_BUCKET or --bucket is provided. Manifest validation will fail without a bucket.');
+}
+
 const repoRoot = path.resolve(__dirname, '../../'); // resolve from tools/seed
+
+// Ensure GOOGLE_APPLICATION_CREDENTIALS (if set) is an absolute path usable by child processes.
+// If it's a relative path, resolve it first against tools/scripts, then against the repository root.
+function resolveCredsEnv() {
+  try {
+    const credVal = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    if (!credVal) return;
+    const p = require('path');
+    const fs = require('fs');
+    if (p.isAbsolute(credVal)) {
+      // already absolute
+      console.log('GOOGLE_APPLICATION_CREDENTIALS is absolute:', credVal);
+      return;
+    }
+    const tryScripts = p.resolve(path.join(process.cwd(), 'tools', 'scripts', credVal));
+    const tryRepo = p.resolve(process.cwd(), credVal);
+    if (fs.existsSync(tryScripts) && fs.statSync(tryScripts).isFile()) {
+      process.env.GOOGLE_APPLICATION_CREDENTIALS = tryScripts;
+      console.log('Resolved GOOGLE_APPLICATION_CREDENTIALS to tools/scripts relative path:', tryScripts);
+      return;
+    }
+    if (fs.existsSync(tryRepo) && fs.statSync(tryRepo).isFile()) {
+      process.env.GOOGLE_APPLICATION_CREDENTIALS = tryRepo;
+      console.log('Resolved GOOGLE_APPLICATION_CREDENTIALS to repo-root relative path:', tryRepo);
+      return;
+    }
+    // If neither exists, leave as-is but print diagnostics to help user
+    console.warn('GOOGLE_APPLICATION_CREDENTIALS appears to be a relative path and was not found at either tools/scripts or repo root. Value:', credVal);
+    console.warn('Tried:', tryScripts, tryRepo);
+  } catch (e) {
+    // ignore resolution errors
+  }
+}
+resolveCredsEnv();
+
 let seedDir = path.join(repoRoot, 'tools', 'seed', builderId, projectId);
 if (!fs.existsSync(seedDir)) {
   // Try alternate location in tools/data
@@ -113,7 +166,7 @@ function run(cmd, args, cwd) {
 (async () => {
   try {
     // 1) generate manifest
-    const genScript = path.join(repoRoot, 'tools', 'seed', 'generate_manifest.js');
+    const genScript = path.join(repoRoot, 'tools', 'scripts', 'generate_manifest.js');
     if (!fs.existsSync(genScript)) {
       console.error('generate_manifest.js not found at', genScript);
       process.exit(1);

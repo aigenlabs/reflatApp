@@ -48,20 +48,54 @@ async function ensureCachedResponse(url, fetchUrl) {
 function parseStorageUrl(url) {
   try {
     const u = new URL(url);
-    // only handle urls that start with the configured FIREBASE_STORAGE_URL host
-    if (!FIREBASE_STORAGE_URL) return null;
-    // remove protocol from FIREBASE_STORAGE_URL for comparison
-    const base = FIREBASE_STORAGE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    // Normalize configured FIREBASE_STORAGE_URL if present (but do not require it)
+    const cfg = FIREBASE_STORAGE_URL ? FIREBASE_STORAGE_URL.replace(/^https?:\/\//, '').replace(/\/+$/, '') : null;
+    const cfgParts = cfg ? cfg.split('/') : [];
+    const cfgHost = cfgParts.length ? cfgParts[0] : null;
+    const cfgBucket = cfgParts.length > 1 ? cfgParts[1] : null;
+
     const hostAndPath = u.host + u.pathname; // host + path
-    if (!hostAndPath.startsWith(base)) return null;
-    // path after the bucket root
-    const relative = u.pathname.replace(/\/+/, '/');
-    // expected structure: /<builderId>/<projectId>/<folder>/<filename>
-    const parts = relative.split('/').filter(Boolean);
-    if (parts.length < 4) return null;
-    const [builderId, projectId, folder, ...rest] = parts;
-    const filename = rest.join('/');
-    return { builderId, projectId, folder, filename };
+
+    // 1) If FIREBASE_STORAGE_URL is configured and URL starts with that base, use it
+    if (cfg && hostAndPath.startsWith(cfg)) {
+      let relative = u.pathname.replace(/^\/+/, '');
+      const parts = relative.split('/').filter(Boolean);
+      if (cfgBucket && parts.length && parts[0] === cfgBucket) parts.shift();
+      if (parts.length < 4) return null;
+      const [builderId, projectId, folder, ...rest] = parts;
+      const filename = rest.join('/');
+      return { builderId, projectId, folder, filename };
+    }
+
+    // 2) Common GCS host form: https://storage.googleapis.com/<bucket>/...  (bucket in path)
+    if (u.host.endsWith('storage.googleapis.com')) {
+      const parts = u.pathname.replace(/^\/+/, '').split('/').filter(Boolean);
+      if (parts.length >= 5) {
+        // drop the bucket segment
+        parts.shift();
+        if (parts.length < 4) return null;
+        const [builderId, projectId, folder, ...rest] = parts;
+        return { builderId, projectId, folder, filename: rest.join('/') };
+      }
+    }
+
+    // 3) Appspot or custom bucket host form: https://<bucket>.appspot.com/<builder>/<project>/...
+    if (u.host.endsWith('.appspot.com') || (cfgHost && u.host === cfgHost)) {
+      const parts = u.pathname.replace(/^\/+/, '').split('/').filter(Boolean);
+      if (parts.length >= 4) {
+        const [builderId, projectId, folder, ...rest] = parts;
+        return { builderId, projectId, folder, filename: rest.join('/') };
+      }
+    }
+
+    // 4) Fallback: if the path looks like <builder>/<project>/<folder>/<file...> accept it
+    const parts = u.pathname.replace(/^\/+/, '').split('/').filter(Boolean);
+    if (parts.length >= 4) {
+      const [builderId, projectId, folder, ...rest] = parts;
+      return { builderId, projectId, folder, filename: rest.join('/') };
+    }
+
+    return null;
   } catch (e) {
     return null;
   }
@@ -91,39 +125,68 @@ function buildProxyUrlFromParsed(parsed) {
   return `${FIREBASE_FUNCTIONS_URL.replace(/\/$/, '')}/image?path=${encodeURIComponent(objectPath)}`;
 }
 
+async function getSignedUrlForObjectPath(objectPath) {
+  try {
+    if (!FIREBASE_FUNCTIONS_URL) throw new Error('FIREBASE_FUNCTIONS_URL not configured');
+    const parts = String(objectPath || '').split('/').filter(Boolean);
+    if (parts.length < 4) throw new Error('invalid objectPath');
+    const [builderId, projectId, folder, ...rest] = parts;
+    const filename = rest.join('/');
+    const qs = `folder=${encodeURIComponent(folder)}&builderId=${encodeURIComponent(builderId)}&projectId=${encodeURIComponent(projectId)}&file=${encodeURIComponent(filename)}`;
+    const resp = await fetch(`${FIREBASE_FUNCTIONS_URL.replace(/\/+$/, '')}/signed_url?${qs}`);
+    if (!resp.ok) throw new Error(`signed_url failed ${resp.status}`);
+    const j = await resp.json().catch(() => null);
+    if (!j || !j.url) throw new Error('signed_url did not return url');
+    return j.url;
+  } catch (e) {
+    console.debug('getSignedUrlForObjectPath failed', e && e.message);
+    throw e;
+  }
+}
+
 async function getBlobFromResponseOrFetch(url) {
   try {
-    // If the URL appears to be from our storage bucket, prefer using the server-side proxy
-    // so the browser doesn't need to fetch storage.googleapis.com signed URLs directly.
+    // If url is not an absolute http(s) URL, treat it as an objectPath and request the backend proxy
+    if (typeof url === 'string' && !/^https?:\/\//i.test(url)) {
+      if (!FIREBASE_FUNCTIONS_URL) throw new Error('FIREBASE_FUNCTIONS_URL not configured');
+      const proxyBase = FIREBASE_FUNCTIONS_URL.replace(/\/+$/, '');
+      const proxyUrl = `${proxyBase}/image?path=${encodeURIComponent(url)}`;
+      console.debug('imageCache: requesting object via proxy for objectPath', { objectPath: url, proxyUrl });
+      const pr = await fetch(proxyUrl, { mode: 'cors' });
+      if (!pr.ok) throw new Error(`proxy ${proxyUrl} failed ${pr.status}`);
+      const ct = (pr.headers.get && pr.headers.get('content-type')) || '';
+      // Backend should stream binary with an image/* content-type. If it returns JSON, it's the legacy signed-url response.
+      if (ct.includes('application/json')) {
+        console.error('imageCache: backend /image returned JSON (signed-url). Update backend to stream image bytes to avoid direct browser fetch to GCS.');
+        throw new Error('backend /image returned legacy JSON; update backend to stream bytes');
+      }
+      return await pr.blob();
+    }
+
+    // If the URL appears to be a storage.googleapis URL for our configured bucket, route via backend proxy
     const parsed = parseStorageUrl(url);
     if (parsed) {
-      const proxyUrl = buildProxyUrlFromParsed(parsed);
-      // try cache first using the original url as key but fetch via proxy
-      const cachedResp = await ensureCachedResponse(url, proxyUrl);
-      if (cachedResp) return await cachedResp.blob();
-      // fallback: fetch via proxy and return blob
-      const res = await fetch(proxyUrl, { mode: 'cors' });
-      if (!res.ok) throw new Error(`fetch ${proxyUrl} failed ${res.status}`);
-      return await res.blob();
+      const objectPath = `${parsed.builderId}/${parsed.projectId}/${parsed.folder}/${parsed.filename}`;
+      if (!FIREBASE_FUNCTIONS_URL) throw new Error('FIREBASE_FUNCTIONS_URL not configured');
+      const proxyBase = FIREBASE_FUNCTIONS_URL.replace(/\/+$/, '');
+      const proxyUrl = `${proxyBase}/image?path=${encodeURIComponent(objectPath)}`;
+      console.debug('imageCache: requesting object via proxy for storage URL', { objectPath, proxyUrl });
+      const pr = await fetch(proxyUrl, { mode: 'cors' });
+      if (!pr.ok) throw new Error(`proxy ${proxyUrl} failed ${pr.status}`);
+      const ct = (pr.headers.get && pr.headers.get('content-type')) || '';
+      if (ct.includes('application/json')) {
+        console.error('imageCache: backend /image returned JSON (signed-url). Update backend to stream image bytes to avoid direct browser fetch to GCS.');
+        throw new Error('backend /image returned legacy JSON; update backend to stream bytes');
+      }
+      return await pr.blob();
     }
 
-    // Non-storage URL path: preserve existing signed-url flow
-    let fetchUrl = url;
-    try {
-      fetchUrl = await getSignedUrlForStorage(url);
-    } catch (e) {
-      fetchUrl = url;
-    }
-
-    // try cache first (note: cache keys are based on the original URL)
-    const cachedResp = await ensureCachedResponse(url);
-    if (cachedResp) return await cachedResp.blob();
-    // fallback: fetch directly (or via signed URL) and return blob
-    const res = await fetch(fetchUrl, { mode: 'cors' });
+    // Otherwise treat as an external http(s) URL and fetch directly
+    const res = await fetch(url, { mode: 'cors' });
     if (!res.ok) throw new Error(`fetch ${url} failed ${res.status}`);
     return await res.blob();
   } catch (e) {
-    console.debug('imageCache.getBlobFromResponseOrFetch failed', e);
+    console.debug('imageCache.getBlobFromResponseOrFetch failed', e && e.message);
     throw e;
   }
 }
@@ -151,7 +214,21 @@ export async function getCachedImage(url) {
 
     return obj;
   } catch (e) {
-    return url; // fallback to original
+    // If the requested URL is within our configured Firebase storage bucket, do NOT return the
+    // original storage.googleapis.com URL because the browser will attempt an unauthenticated GET
+    // and receive 403. Instead return null so callers render a placeholder and avoid direct fetches.
+    try {
+      if (typeof url === 'string' && FIREBASE_STORAGE_URL) {
+        const storeBase = FIREBASE_STORAGE_URL.replace(/\/+$/, '');
+        if (url.startsWith(storeBase) || url.includes(storeBase)) {
+          console.warn('imageCache: failed to fetch storage URL; returning null to avoid direct browser GET', url, e && e.message);
+          return null;
+        }
+      }
+    } catch (ex) {
+      // ignore
+    }
+    return url; // fallback to original for external URLs
   }
 }
 

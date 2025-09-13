@@ -9,21 +9,30 @@ if (process.argv.length < 6) {
 
 const [builder_id, project_id, project_name_raw, city_raw, location_raw] = process.argv.slice(2);
 
-// Basic validation and normalization
-const project_name = project_name_raw ? String(project_name_raw).trim() : '';
-const city = city_raw ? String(city_raw).trim() : '';
-const location = location_raw ? String(location_raw).trim() : '';
+// Basic validation and normalization. Treat literal 'undefined'/'null' strings as missing values.
+function normalizeVal(v) {
+  if (v === undefined || v === null) return '';
+  const s = String(v).trim();
+  if (!s) return '';
+  const lower = s.toLowerCase();
+  if (lower === 'undefined' || lower === 'null') return '';
+  return s;
+}
+
+const project_name = normalizeVal(project_name_raw);
+const city = normalizeVal(city_raw);
+const location = normalizeVal(location_raw);
 
 if (!builder_id || !project_id) {
   console.error('builder_id and project_id are required');
   process.exit(1);
 }
 if (!project_name) {
-  console.error('project_name is required and must not be empty');
+  console.error('project_name is required and must not be empty (got empty or literal "undefined")');
   process.exit(1);
 }
 if (!city || !location) {
-  console.error('city and location are required and must not be empty');
+  console.error('city and location are required and must not be empty (got empty or literal "undefined")');
   process.exit(1);
 }
 

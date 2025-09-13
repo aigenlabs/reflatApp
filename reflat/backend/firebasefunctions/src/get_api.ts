@@ -4,6 +4,7 @@ import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 import cors from "cors";
 import { postApiHandler } from "./post_api";
+import * as path from 'path';
 
 
 if (!admin.apps.length) {
@@ -232,7 +233,12 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
         
         const ensureObjectPath = (folder: string, raw: any) => {
           if (!raw) return null;
-          let candidate = typeof raw === 'string' ? raw : (raw.path || raw.file || raw.file_name || raw.filename || raw.name);
+          // Only accept explicit string values or explicit file/path-like fields on objects.
+          // Do NOT treat an object's `name` or the whole object as a filename — that converts human-readable
+          // names into pseudo-paths and breaks upstream consumers. If no explicit file/path is present, return null.
+          let candidate: string | null = null;
+          if (typeof raw === 'string') candidate = raw;
+          else if (raw && typeof raw === 'object') candidate = (raw.path || raw.file || raw.file_name || raw.filename) || null;
           if (!candidate) return null;
 
           // Try to decode percent-encoded values (repeat a couple times for double-encoding)
@@ -293,19 +299,21 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
           return `${builderId}/${projectId}/${folder}/${normalized}`;
         };
 
-        // Normalize subcollection entries to include a `path` field that is the object path within the bucket
-        photos = (photos || []).map((p: any) => ({ id: p.id, ...p, path: ensureObjectPath('photos', p.path || p.file || p.file_name || p.filename || p.name || p) }));
-        layouts = (layouts || []).map((p: any) => ({ id: p.id, ...p, path: ensureObjectPath('layouts', p.path || p.file || p.file_name || p.filename || p.name || p) }));
-        floor_plans = (floor_plans || []).map((p: any) => ({ id: p.id, ...p, path: ensureObjectPath('floor_plans', p.path || p.file || p.file_name || p.filename || p.name || p) }));
-        videos = (videos || []).map((p: any) => ({ id: p.id, ...p, path: ensureObjectPath('videos', p.path || p.file || p.file_name || p.filename || p.name || p) }));
+        // Normalize subcollection entries to include a `path` field that is the object path within the bucket.
+        // Only derive `path` from explicit file/path fields; do not fallback to `name` or the whole object.
+        photos = (photos || []).map((p: any) => ({ id: p.id, ...p, path: ensureObjectPath('photos', p.path || p.file || p.file_name || p.filename) }));
+        layouts = (layouts || []).map((p: any) => ({ id: p.id, ...p, path: ensureObjectPath('layouts', p.path || p.file || p.file_name || p.filename) }));
+        floor_plans = (floor_plans || []).map((p: any) => ({ id: p.id, ...p, path: ensureObjectPath('floor_plans', p.path || p.file || p.file_name || p.filename) }));
+        videos = (videos || []).map((p: any) => ({ id: p.id, ...p, path: ensureObjectPath('videos', p.path || p.file || p.file_name || p.filename) }));
 
         // If project document itself contains these arrays (some scrapers store inline), merge them in when subcollections are empty
         const ingestArray = (arrKey: string, folder: string) => {
           const arr = (projectData && Array.isArray(projectData[arrKey])) ? projectData[arrKey] : null;
           if (!arr || !arr.length) return [];
           return arr.map((it: any, idx: number) => {
-            const raw = (typeof it === 'string') ? it : (it.path || it.file || it.file_name || it.filename || it.name || it);
-            return { id: it.id || `inline-${arrKey}-${idx}`, ...(typeof it === 'object' ? it : {}), path: ensureObjectPath(folder, raw) };
+            // When ingesting inline arrays, accept string entries or explicit file/path fields on objects.
+            const raw = (typeof it === 'string') ? it : (it && typeof it === 'object' ? (it.path || it.file || it.file_name || it.filename) : null);
+            return { id: it && it.id ? it.id : `inline-${arrKey}-${idx}`, ...(typeof it === 'object' ? it : {}), path: ensureObjectPath(folder, raw) };
           });
         };
 
@@ -325,20 +333,20 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
         // Amenities may be an array on the project document; normalize similarly and expose top-level `amenities`
         let amenities: any[] = [];
         if (Array.isArray(projectData?.amenities)) {
-          amenities = projectData.amenities.map((a: any, idx: number) => ({ id: a.id || `inline-amenity-${idx}`, ...a, path: ensureObjectPath('amenities', a.path || a.file || a.file_name || a.filename || a.name || a) }));
+          amenities = projectData.amenities.map((a: any, idx: number) => ({ id: a && a.id ? a.id : `inline-amenity-${idx}`, ...a, path: ensureObjectPath('amenities', a && typeof a === 'object' ? (a.path || a.file || a.file_name || a.filename) : (typeof a === 'string' ? a : null)) }));
         }
 
         // Logos array present on some projects
         let logos: any[] = [];
         if (Array.isArray(projectData?.logos) && projectData.logos.length) {
-          logos = projectData.logos.map((l: any, idx: number) => ({ id: l.id || `inline-logo-${idx}`, ...l, path: ensureObjectPath('logos', l.path || l.file || l.file_name || l.filename || l.name || l) }));
+          logos = projectData.logos.map((l: any, idx: number) => ({ id: l && l.id ? l.id : `inline-logo-${idx}`, ...l, path: ensureObjectPath('logos', l && typeof l === 'object' ? (l.path || l.file || l.file_name || l.filename) : (typeof l === 'string' ? l : null)) }));
         }
 
          // Build the common files mapping from fields on the project document. Keep multiple possible field names for compatibility.
         // Extract banners from projectData (some scrapers provide an array of banner objects)
         const banners: any[] = Array.isArray(projectData?.banners) ? projectData.banners.map((b: any, idx: number) => {
-          const raw = (typeof b === 'string') ? b : (b.path || b.file || b.file_name || b.filename || b.name || b);
-          return { id: b.id || `inline-banner-${idx}`, ...(typeof b === 'object' ? b : {}), path: ensureObjectPath('banners', raw), filename: (b && (b.filename || b.file_name)) || (typeof raw === 'string' ? raw.split('/').pop() : null) };
+          const raw = (typeof b === 'string') ? b : (b && typeof b === 'object' ? (b.path || b.file || b.file_name || b.filename) : null);
+          return { id: b && b.id ? b.id : `inline-banner-${idx}`, ...(typeof b === 'object' ? b : {}), path: ensureObjectPath('banners', raw), filename: (b && (b.filename || b.file_name)) || (typeof raw === 'string' ? raw.split('/').pop() : null) };
         }) : [];
 
         // Set files.banner to the first banner path (if any) for backward compatibility, and include brochure/logos as before
@@ -362,6 +370,58 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
            amenities,
            logos,
          };
+
+        // --- normalize response shape to match scraper output ---
+        (function normalizeApiResult() {
+          try {
+            const mediaFolders = ['logos','floor_plans','brochures','banners','photos','layouts','news','amenities','documents'];
+            for (const f of mediaFolders) {
+              if (!Object.prototype.hasOwnProperty.call(result, f) || !Array.isArray((result as any)[f])) {
+                // try to fall back to projectData variants (some older records stored media under different keys)
+                const candidate = projectData && (projectData[f] || projectData[`${f}`] || projectData[`${f}_files`] || projectData[`${f}_file`]);
+                if (Array.isArray(candidate)) {
+                  (result as any)[f] = candidate.slice();
+                } else {
+                  (result as any)[f] = [];
+                }
+              }
+            }
+
+            // Ensure files object exists and contains canonical keys (banner, brochure, builder_logo, project_logo)
+            (result as any).files = (result as any).files || {};
+            (result as any).files.banner = (result as any).files.banner || ensureObjectPath('banners', projectData?.banner_file || projectData?.banner);
+            (result as any).files.brochure = (result as any).files.brochure || ensureObjectPath('brochures', projectData?.brochure_file || projectData?.brochure);
+            (result as any).files.builder_logo = (result as any).files.builder_logo || ensureObjectPath('logos', projectData?.builder_logo_file || projectData?.logo_file || projectData?.builder_logo || projectData?.logo);
+            (result as any).files.project_logo = (result as any).files.project_logo || ensureObjectPath('logos', projectData?.project_logo_file || projectData?.project_logo);
+
+            // Simplify amenities into stable { name, icon } entries. Accept strings, objects, or file-path strings.
+            if (Array.isArray((result as any).amenities)) {
+              (result as any).amenities = (result as any).amenities.map((a: any) => {
+                if (!a) return null;
+                if (typeof a === 'string') {
+                  // if string looks like a path, use as icon; otherwise as name
+                  const looksLikePath = a.includes('/') || /\.(png|jpg|jpeg|webp|svg|gif)$/i.test(a);
+                  const name = looksLikePath ? path.basename(a).replace(/[-_]+/g, ' ').replace(/\.[^.]+$/, '') : a;
+                  // compute canonical storage path for icon when possible
+                  const rawIcon = looksLikePath ? a.replace(/^\/*/, '') : null;
+                  const iconPath = rawIcon ? ensureObjectPath('amenities', rawIcon) : null;
+                  return { name, icon: iconPath };
+                }
+                if (typeof a === 'object') {
+                  const name = a.name || a.key || a.title || a.label || '';
+                  const rawIcon = a.icon || a.file || a.path || a.filename || null;
+                  const iconPath = (rawIcon && typeof rawIcon === 'string') ? ensureObjectPath('amenities', String(rawIcon).replace(/^\/*/, '')) : null;
+                  return { name: String(name).trim(), icon: iconPath };
+                }
+                return null;
+              }).filter(Boolean);
+            }
+
+          } catch (e) {
+            // non-fatal: keep original result shape if normalization fails
+            logger && logger.warn && logger.warn('normalizeApiResult failed', e && (e as Error).message);
+          }
+        })();
 
          logger.info("project_details response", { builderId, projectId, source: 'firestore', photos: photos.length, layouts: layouts.length });
          res.json(result);
@@ -685,6 +745,102 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
             }
           }
 
+          // If not found by probing common candidate paths, try a GCS prefix-list fallback.
+          if (!foundPath) {
+            try {
+              // Try listing the expected folder prefix and match by filename token (case-insensitive)
+              const prefix = `${builderId}/${projectId}/${folder}/`;
+              const [filesList] = await bucket.getFiles({ prefix, maxResults: 200 });
+              const filenameLower = (filename || '').toLowerCase();
+
+              if (filenameLower) {
+                // Prefer exact basename matches, then startsWith, then includes
+                let match = filesList.find(f => {
+                  const base = (f.name.split('/').pop() || '').toLowerCase();
+                  return base === filenameLower;
+                });
+                if (!match) {
+                  match = filesList.find(f => {
+                    const base = (f.name.split('/').pop() || '').toLowerCase();
+                    return base.startsWith(filenameLower) || base.includes(filenameLower);
+                  });
+                }
+                if (match) foundPath = match.name;
+              }
+
+              // If still not found, attempt tokenized fuzzy matching to handle cases where
+              // stored filenames include a hash prefix or safe-sanitized suffix (e.g. "3245abcd1234-ampthitheatre.png").
+              if (!foundPath && filesList && filename) {
+                try {
+                  const normalizeTokens = (s: string) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/).filter(Boolean);
+                  const queryNorm = filenameLower.replace(/\.[^/.]+$/, '');
+                  const queryTokens = new Set(normalizeTokens(queryNorm));
+                  let best = null as any;
+                  let bestScore = 0;
+                  for (const f of filesList) {
+                    const base = (f.name.split('/').pop() || '');
+                    let baseNoExt = base.replace(/\.[^/.]+$/, '').toLowerCase();
+                    // strip common hex-hash prefixes like '3245dcd5caf1-' or '3245dcd5caf1_'
+                    baseNoExt = baseNoExt.replace(/^[0-9a-f]{8,}[-_]?/i, '');
+                    const tokens = normalizeTokens(baseNoExt).filter(Boolean);
+                    if (tokens.length === 0) continue;
+                    // score by token intersection
+                    let common = 0;
+                    for (const t of tokens) if (queryTokens.has(t)) common++;
+                    // boost score if the cleaned base includes the full query string
+                    const cleaned = tokens.join(' ');
+                    if (cleaned.includes(queryNorm)) common += 2;
+                    if (common > bestScore) { bestScore = common; best = f; }
+                  }
+                  // Accept matches with at least one token in common, prefer higher scores
+                  if (best && bestScore >= 1) foundPath = best.name;
+                } catch (e) { /* ignore fuzzy matching errors */ }
+              }
+
+              // If caller requested the folder itself (file equals folder) or still nothing found,
+              // pick the first image-like file under the folder as a best-effort fallback.
+              if (!foundPath) {
+                if ((filename || '').toLowerCase() === (folder || '').toLowerCase()) {
+                  const img = filesList.find(f => /\.(jpe?g|png|webp|gif|svg)$/i.test(f.name));
+                  if (img) foundPath = img.name;
+                  else if (filesList.length) foundPath = filesList[0].name;
+                }
+              }
+
+              // Additional fallback: if nothing found within the folder, try searching across the entire project
+              if (!foundPath) {
+                try {
+                  const projectPrefix = `${builderId}/${projectId}/`;
+                  const [projectFiles] = await bucket.getFiles({ prefix: projectPrefix, maxResults: 500 });
+                  if (projectFiles && projectFiles.length && filename) {
+                    const normalizeTokens = (s: string) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/).filter(Boolean);
+                    const queryNorm = filenameLower.replace(/\.[^/.]+$/, '');
+                    const queryTokens = new Set(normalizeTokens(queryNorm));
+                    let best = null as any;
+                    let bestScore = 0;
+                    for (const f of projectFiles) {
+                      const base = (f.name.split('/').pop() || '');
+                      let baseNoExt = base.replace(/\.[^/.]+$/, '').toLowerCase();
+                      baseNoExt = baseNoExt.replace(/^[0-9a-f]{8,}[-_]?/i, '');
+                      const tokens = normalizeTokens(baseNoExt).filter(Boolean);
+                      if (tokens.length === 0) continue;
+                      let common = 0;
+                      for (const t of tokens) if (queryTokens.has(t)) common++;
+                      const cleaned = tokens.join(' ');
+                      if (cleaned.includes(queryNorm)) common += 2;
+                      if (common > bestScore) { bestScore = common; best = f; }
+                    }
+                    if (best && bestScore >= 1) foundPath = best.name;
+                  }
+                } catch (e) {
+                  // ignore project-wide listing errors
+                }
+              }
+            } catch (e) {
+              // ignore listing errors and fall through to returning 404
+            }
+          }
+
           if (!foundPath) {
             res.status(404).json({ error: `File not found`, tried: tried.slice(0, 10) });
             return;
@@ -749,54 +905,31 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
             }
           }
 
-          // Also accept object paths that may already include the builder/project prefix or other forms; try a few candidate variants
+          // Try to find the file as provided; accept exact object path only (no fuzzy matching here)
           const bucket = admin.storage().bucket();
-          const candidates = [objectPath];
-          // if it still contains a bucket-like prefix, also try stripping until a match is found
-          const segs = objectPath.split('/').filter(Boolean);
-          for (let i = 0; i < Math.min(3, segs.length - 1); i++) {
-            candidates.push(segs.slice(i).join('/'));
-          }
-
-          let fileRef: any = null;
-          let found: string | null = null;
-          for (const cand of Array.from(new Set(candidates))) {
-            if (!cand) continue;
-            try {
-              const f = bucket.file(cand);
-              const [exists] = await f.exists();
-              if (exists) { fileRef = f; found = cand; break; }
-            } catch (e) {
-              // ignore and try next candidate
-            }
-          }
-
-          if (!fileRef || !found) {
-            res.status(404).json({ error: "File not found", tried: candidates.slice(0, 10) });
+          const fileRef = bucket.file(objectPath);
+          const [exists] = await fileRef.exists();
+          if (!exists) {
+            res.status(404).json({ error: "File not found", path: objectPath });
             return;
           }
 
-          // Get metadata to forward Content-Type / Cache-Control if available
+          // Read metadata and set headers
           try {
             const [meta] = await fileRef.getMetadata();
             if (meta && meta.contentType) res.set("Content-Type", meta.contentType);
-            // Use object's cacheControl when present; otherwise set a sensible default for performance.
-            // Default: public for 1 hour on client, longer on CDN (s-maxage) and allow stale-while-revalidate.
-            const defaultCache = "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400";
-            if (meta && meta.cacheControl) res.set("Cache-Control", meta.cacheControl);
-            else res.set("Cache-Control", defaultCache);
+            const cacheCtr = meta && meta.cacheControl ? meta.cacheControl : "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400";
+            res.set("Cache-Control", cacheCtr);
           } catch (e) {
-            // ignore metadata errors and continue to stream
-            // If metadata can't be read, still set a safe default cache header
             res.set("Cache-Control", "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400");
           }
 
-          // Ensure CORS headers for the proxied response
-          const origin = req.headers.origin || "*";
-          res.set("Access-Control-Allow-Origin", origin);
-          res.set("Vary", "Origin");
+          // Set CORS headers explicitly
+          const origin = req.headers.origin || '*';
+          res.set('Access-Control-Allow-Origin', origin);
+          res.set('Vary', 'Origin');
 
-          // Stream file to response
+          // Stream the file
           const readStream = fileRef.createReadStream();
           readStream.on('error', (streamErr: any) => {
             console.error('error streaming file', streamErr);

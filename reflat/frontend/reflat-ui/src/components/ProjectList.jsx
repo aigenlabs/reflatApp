@@ -133,7 +133,7 @@ export default function PrjList() {
         if (!Array.isArray(projectsList)) throw new Error("Invalid projects response");
         // Normalize keys for ProjectCard (prefer structured Key_Project_details when available)
         const normalized = projectsList.map((p) => {
-          const kd = p.Key_Project_details || p.project || p || {};
+          const kd = p.key_project_details || p.project || p || {};
           return ({
             ...p,
             // prefer explicit builderId, but fall back to builder_name from Key_Project_details
@@ -152,7 +152,7 @@ export default function PrjList() {
              totalUnits: p.totalUnits || p.total_units || kd.total_units || kd.totalFlats || kd.total_flats || '',
              unitsPerFloor: p.unitsPerFloor || p.units_per_floor || kd.units_per_floor || kd.unitsPerFloor || '',
              totalFloors: p.totalFloors || p.total_floors || kd.total_floors || kd.totalFloors || '',
-             densityPerAcre: p.densityPerAcre || p.density_per_acre || kd.flats_density || kd.density_per_acre || kd.density || '',
+             densityPerAcre: p.densityPerAcre || p.flats_per_acre || kd.flats_per_acre || p.density_per_acre || kd.density_per_acre || p.flats_density || kd.flats_density || kd.density || '',
              brochure: p.brochure || (kd.brochures && Array.isArray(kd.brochures) ? kd.brochures[0] : kd.brochures) || '',
              website: p.website || kd.website || '',
              logo: p.logo || p.project_logo || kd.logo || kd.project_logo || '',

@@ -1,0 +1,6 @@
+run both from reflatApp folder:
+
+node tools/scripts/scrape_project.js myhome akrida https://www.myhomeconstructions.com/my-home-akrida/
+
+npm run pipeline:staging -- myhome akrida                              
+

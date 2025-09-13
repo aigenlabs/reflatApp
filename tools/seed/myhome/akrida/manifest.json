@@ -1,786 +1,966 @@
 {
-  "generatedAt": 1757404773326,
+  "generatedAt": 1757727638470,
   "files": {
+    "amenities": [
+      {
+        "path": "0f94478e4bf7-hall.png",
+        "sha": "0f94478e4bf70788ce27069811c022601475ef1a9a10400615be4a7367cb106c",
+        "size": 4131,
+        "dest": "myhome/akrida/amenities/0f94478e4bf7-hall.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/0f94478e4bf7-hall.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F0f94478e4bf7-hall.png?alt=media"
+      },
+      {
+        "path": "20446a53fcb2-theatre.png",
+        "sha": "20446a53fcb264b12999c0f9412184a115049d17c4d0bc0480273ba8f17e1b80",
+        "size": 5480,
+        "dest": "myhome/akrida/amenities/20446a53fcb2-theatre.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/20446a53fcb2-theatre.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F20446a53fcb2-theatre.png?alt=media"
+      },
+      {
+        "path": "2916faa0c52c-kids_play_area.png",
+        "sha": "2916faa0c52cb64df2df9133620437e1145494c3f33d72e36fc244ad39657f25",
+        "size": 5070,
+        "dest": "myhome/akrida/amenities/2916faa0c52c-kids_play_area.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/2916faa0c52c-kids_play_area.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F2916faa0c52c-kids_play_area.png?alt=media"
+      },
+      {
+        "path": "2a344555b42e-meditation_hall.png",
+        "sha": "2a344555b42ef85d491c49f7240ad97471ff3c05b5f0e04b86fc47236f1d0212",
+        "size": 6215,
+        "dest": "myhome/akrida/amenities/2a344555b42e-meditation_hall.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/2a344555b42e-meditation_hall.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F2a344555b42e-meditation_hall.png?alt=media"
+      },
+      {
+        "path": "2b9dde99e132-skating_track.png",
+        "sha": "2b9dde99e132a927e0e1fffa51515b287e82d2371c8e510abd712ab055cf262d",
+        "size": 5375,
+        "dest": "myhome/akrida/amenities/2b9dde99e132-skating_track.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/2b9dde99e132-skating_track.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F2b9dde99e132-skating_track.png?alt=media"
+      },
+      {
+        "path": "2d1c6887b368-grand_lobby.png",
+        "sha": "2d1c6887b368a76f0556da1b69f3ac2a1516a277d6be63fc1c689c55fff88138",
+        "size": 5152,
+        "dest": "myhome/akrida/amenities/2d1c6887b368-grand_lobby.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/2d1c6887b368-grand_lobby.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F2d1c6887b368-grand_lobby.png?alt=media"
+      },
+      {
+        "path": "2f322ce4b9b3-guest_rooms.png",
+        "sha": "2f322ce4b9b39a915135ee8e43e9d99a862351ed65f8c60855826c3345ee7ecb",
+        "size": 4608,
+        "dest": "myhome/akrida/amenities/2f322ce4b9b3-guest_rooms.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/2f322ce4b9b3-guest_rooms.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F2f322ce4b9b3-guest_rooms.png?alt=media"
+      },
+      {
+        "path": "309d7b1775d9-cricket_nets.png",
+        "sha": "309d7b1775d9f5d50265778110ddc5133bf816c5d30e75b9a4bd8cf6d5784714",
+        "size": 5097,
+        "dest": "myhome/akrida/amenities/309d7b1775d9-cricket_nets.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/309d7b1775d9-cricket_nets.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F309d7b1775d9-cricket_nets.png?alt=media"
+      },
+      {
+        "path": "334386580771-squash_court.png",
+        "sha": "334386580771ac82865e9f312eb44786bf7fa138f49e87156b5ce042e98af920",
+        "size": 4943,
+        "dest": "myhome/akrida/amenities/334386580771-squash_court.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/334386580771-squash_court.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F334386580771-squash_court.png?alt=media"
+      },
+      {
+        "path": "4273a9483dd2-f_b.png",
+        "sha": "4273a9483dd21e976af58ea8731955504ba89c175db6c940f1d37e8278641faa",
+        "size": 4850,
+        "dest": "myhome/akrida/amenities/4273a9483dd2-f_b.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/4273a9483dd2-f_b.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F4273a9483dd2-f_b.png?alt=media"
+      },
+      {
+        "path": "5a31c19fbb14-atm.png",
+        "sha": "5a31c19fbb147cb804acbbfdbb4a127569ede50494381081684995d85b4bda89",
+        "size": 3831,
+        "dest": "myhome/akrida/amenities/5a31c19fbb14-atm.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/5a31c19fbb14-atm.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F5a31c19fbb14-atm.png?alt=media"
+      },
+      {
+        "path": "5c46bce45207-reading_area.png",
+        "sha": "5c46bce45207733dcab885b40d138eda9b96a3ca60ec811ea2fb24e1adf10aca",
+        "size": 4422,
+        "dest": "myhome/akrida/amenities/5c46bce45207-reading_area.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/5c46bce45207-reading_area.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F5c46bce45207-reading_area.png?alt=media"
+      },
+      {
+        "path": "5f48edbb8ff2-tennis_courts.png",
+        "sha": "5f48edbb8ff21606e7f6e456ef9933db755b754e156332304b0b8ae24550ed78",
+        "size": 4521,
+        "dest": "myhome/akrida/amenities/5f48edbb8ff2-tennis_courts.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/5f48edbb8ff2-tennis_courts.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F5f48edbb8ff2-tennis_courts.png?alt=media"
+      },
+      {
+        "path": "669f327c6349-gym.png",
+        "sha": "669f327c6349831ed8465f842fcda2b7cb470f34d8f4f5c5960e1231cc734413",
+        "size": 5823,
+        "dest": "myhome/akrida/amenities/669f327c6349-gym.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/669f327c6349-gym.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F669f327c6349-gym.png?alt=media"
+      },
+      {
+        "path": "6f4e95b13a65-jogging.png",
+        "sha": "6f4e95b13a65fd1331a01aa193a53d52d9f440ecc781fc317478bedc1cdf287c",
+        "size": 5389,
+        "dest": "myhome/akrida/amenities/6f4e95b13a65-jogging.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/6f4e95b13a65-jogging.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F6f4e95b13a65-jogging.png?alt=media"
+      },
+      {
+        "path": "78879c404514-sky_walk.png",
+        "sha": "78879c404514c9f266b98b43cb4d6371ce2f993d531ba2c0223a5fded76ff2ac",
+        "size": 4265,
+        "dest": "myhome/akrida/amenities/78879c404514-sky_walk.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/78879c404514-sky_walk.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F78879c404514-sky_walk.png?alt=media"
+      },
+      {
+        "path": "7bb645871f9b-pharmacy.png",
+        "sha": "7bb645871f9b265edf97019f189a0800e8536fd71f3abfc38123d8872d68f220",
+        "size": 4370,
+        "dest": "myhome/akrida/amenities/7bb645871f9b-pharmacy.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/7bb645871f9b-pharmacy.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F7bb645871f9b-pharmacy.png?alt=media"
+      },
+      {
+        "path": "7f61e96ea22d-outdoor_gym.png",
+        "sha": "7f61e96ea22d0ba692393cce85fd84cbaaeda8eeb3a6e8e33c0a70ab9916e92c",
+        "size": 6677,
+        "dest": "myhome/akrida/amenities/7f61e96ea22d-outdoor_gym.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/7f61e96ea22d-outdoor_gym.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F7f61e96ea22d-outdoor_gym.png?alt=media"
+      },
+      {
+        "path": "986d27a2bdbd-basketball_court.png",
+        "sha": "986d27a2bdbd3ffe49c061a43a246b293516ca5278377e00b62b5df7809d6ca3",
+        "size": 4521,
+        "dest": "myhome/akrida/amenities/986d27a2bdbd-basketball_court.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/986d27a2bdbd-basketball_court.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2F986d27a2bdbd-basketball_court.png?alt=media"
+      },
+      {
+        "path": "a3c2191873e8-convinence_store.png",
+        "sha": "a3c2191873e8ba3ffcc3c10f6bedca04a00d2b9fe099ab70b71610f4ec7b9197",
+        "size": 4344,
+        "dest": "myhome/akrida/amenities/a3c2191873e8-convinence_store.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/a3c2191873e8-convinence_store.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2Fa3c2191873e8-convinence_store.png?alt=media"
+      },
+      {
+        "path": "b0ff9c35e369-swimming_pool.png",
+        "sha": "b0ff9c35e3695c248377000c0f5818a7b9ef814c54270d8dc2172d4b31889bcb",
+        "size": 5877,
+        "dest": "myhome/akrida/amenities/b0ff9c35e369-swimming_pool.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/b0ff9c35e369-swimming_pool.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2Fb0ff9c35e369-swimming_pool.png?alt=media"
+      },
+      {
+        "path": "b24d2798f28a-seating_zone.png",
+        "sha": "b24d2798f28aad56792788d06b52e74d6aad119133a67a30b1a2fd89f64b1742",
+        "size": 5786,
+        "dest": "myhome/akrida/amenities/b24d2798f28a-seating_zone.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/b24d2798f28a-seating_zone.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2Fb24d2798f28a-seating_zone.png?alt=media"
+      },
+      {
+        "path": "b3aa9fcc7677-indoor_badminton_courts.png",
+        "sha": "b3aa9fcc767747ac7f842819c3374c4a24248c181c2b1a2c8590c372e9279586",
+        "size": 5621,
+        "dest": "myhome/akrida/amenities/b3aa9fcc7677-indoor_badminton_courts.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/b3aa9fcc7677-indoor_badminton_courts.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2Fb3aa9fcc7677-indoor_badminton_courts.png?alt=media"
+      },
+      {
+        "path": "d97079cc503f-pet_zone.png",
+        "sha": "d97079cc503f1b541cf640cd5a2c23d91f59de7afa098259c5fd8860ada432b0",
+        "size": 6571,
+        "dest": "myhome/akrida/amenities/d97079cc503f-pet_zone.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/d97079cc503f-pet_zone.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2Fd97079cc503f-pet_zone.png?alt=media"
+      },
+      {
+        "path": "d989ed1ba4b6-indoor_games.png",
+        "sha": "d989ed1ba4b6155c9f87dfbae5b89aa7b476008a1ab30d9354bfe74077a971d7",
+        "size": 5269,
+        "dest": "myhome/akrida/amenities/d989ed1ba4b6-indoor_games.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/d989ed1ba4b6-indoor_games.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2Fd989ed1ba4b6-indoor_games.png?alt=media"
+      },
+      {
+        "path": "f3c24e90cb1b-cycling.png",
+        "sha": "f3c24e90cb1bc96d95d3acf4a7d45acfff1a612e8937296e6df97ef04522ff93",
+        "size": 6504,
+        "dest": "myhome/akrida/amenities/f3c24e90cb1b-cycling.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/f3c24e90cb1b-cycling.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2Ff3c24e90cb1b-cycling.png?alt=media"
+      },
+      {
+        "path": "f4ccad5ba347-box_cricket_space.png",
+        "sha": "f4ccad5ba347144dcbcc97fd02c8a8bf0fd86d70289380d596194bf893c80eb7",
+        "size": 5200,
+        "dest": "myhome/akrida/amenities/f4ccad5ba347-box_cricket_space.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/f4ccad5ba347-box_cricket_space.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2Ff4ccad5ba347-box_cricket_space.png?alt=media"
+      },
+      {
+        "path": "f88b36fddc39-lawns.png",
+        "sha": "f88b36fddc399bd13a2b766abe6bcd2f864e09631f8a3493ba3ba006c2af927b",
+        "size": 5063,
+        "dest": "myhome/akrida/amenities/f88b36fddc39-lawns.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/f88b36fddc39-lawns.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2Ff88b36fddc39-lawns.png?alt=media"
+      },
+      {
+        "path": "f8c6c2d30047-spa.png",
+        "sha": "f8c6c2d300470f80f02b1f8cf2a866692358e4a43d03824c383a5bae13270685",
+        "size": 5751,
+        "dest": "myhome/akrida/amenities/f8c6c2d30047-spa.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/amenities/f8c6c2d30047-spa.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Famenities%2Ff8c6c2d30047-spa.png?alt=media"
+      }
+    ],
     "banners": [
       {
-        "path": "mob_banner_1.png",
-        "sha": "38b5906b9266eaefaa9caf18fc5873613f84d4cd3ef2daf206fdf254e55e7967",
-        "size": 609466,
-        "dest": "myhome/akrida/banners/mob_banner_1.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/mob_banner_1.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2Fmob_banner_1.png?alt=media"
-      },
-      {
-        "path": "mob_banner_2.png",
+        "path": "256665364c5c-mob_banner_2.png",
         "sha": "256665364c5c60116ac17494f2efd53c9f9c6e12b50f5fe84c144db10a8a69b1",
         "size": 620607,
-        "dest": "myhome/akrida/banners/mob_banner_2.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/mob_banner_2.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2Fmob_banner_2.png?alt=media"
+        "dest": "myhome/akrida/banners/256665364c5c-mob_banner_2.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/256665364c5c-mob_banner_2.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2F256665364c5c-mob_banner_2.png?alt=media"
       },
       {
-        "path": "mob_banner_3.png",
-        "sha": "b6094fa48cbfb39cb2f8510726dd41259bf29972db8aff9f8c112b4864d59ae6",
-        "size": 712060,
-        "dest": "myhome/akrida/banners/mob_banner_3.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/mob_banner_3.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2Fmob_banner_3.png?alt=media"
-      },
-      {
-        "path": "mob_banner_4.png",
-        "sha": "df45dc7d3c2a45398d5aac753d7877b789e8f63686f4354acfc9c112e912a828",
-        "size": 707690,
-        "dest": "myhome/akrida/banners/mob_banner_4.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/mob_banner_4.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2Fmob_banner_4.png?alt=media"
-      },
-      {
-        "path": "mob_banner_5.png",
-        "sha": "64aa8fac727adcf60d6bc7b17af4e88a7b97b0c54755f980bd1cac14415b89c3",
-        "size": 632856,
-        "dest": "myhome/akrida/banners/mob_banner_5.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/mob_banner_5.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2Fmob_banner_5.png?alt=media"
-      },
-      {
-        "path": "web_banner_1.png",
+        "path": "2718b720b3ca-web_banner_1.png",
         "sha": "2718b720b3cadc73321667350db237f66aeaff1d8f59a429be2b62d02340ee49",
         "size": 3791696,
-        "dest": "myhome/akrida/banners/web_banner_1.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/web_banner_1.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2Fweb_banner_1.png?alt=media"
+        "dest": "myhome/akrida/banners/2718b720b3ca-web_banner_1.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/2718b720b3ca-web_banner_1.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2F2718b720b3ca-web_banner_1.png?alt=media"
       },
       {
-        "path": "web_banner_2.png",
-        "sha": "bae5907ef681ca8bfd2bdee1ea715e2a2a6fec27fb7334d4349f54705fded227",
-        "size": 3833130,
-        "dest": "myhome/akrida/banners/web_banner_2.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/web_banner_2.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2Fweb_banner_2.png?alt=media"
+        "path": "38b5906b9266-mob_banner_1.png",
+        "sha": "38b5906b9266eaefaa9caf18fc5873613f84d4cd3ef2daf206fdf254e55e7967",
+        "size": 609466,
+        "dest": "myhome/akrida/banners/38b5906b9266-mob_banner_1.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/38b5906b9266-mob_banner_1.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2F38b5906b9266-mob_banner_1.png?alt=media"
       },
       {
-        "path": "web_banner_3.png",
-        "sha": "66e73f1fc2c7f8d0735a4221528a69d389b99369f27689cf27094596f564a107",
-        "size": 4158013,
-        "dest": "myhome/akrida/banners/web_banner_3.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/web_banner_3.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2Fweb_banner_3.png?alt=media"
-      },
-      {
-        "path": "web_banner_4.png",
-        "sha": "6fa061b5788d5eb4b6f80a5c963dd74344213a77f71fcfa7c6dc6ae7bf7e37d0",
-        "size": 4156580,
-        "dest": "myhome/akrida/banners/web_banner_4.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/web_banner_4.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2Fweb_banner_4.png?alt=media"
-      },
-      {
-        "path": "web_banner_5.png",
+        "path": "5b373ebff9d9-web_banner_5.png",
         "sha": "5b373ebff9d9a7154795c6b1d8d3ae07539386c87aa10e75ecd703af2b6c562d",
         "size": 3753594,
-        "dest": "myhome/akrida/banners/web_banner_5.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/web_banner_5.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2Fweb_banner_5.png?alt=media"
+        "dest": "myhome/akrida/banners/5b373ebff9d9-web_banner_5.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/5b373ebff9d9-web_banner_5.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2F5b373ebff9d9-web_banner_5.png?alt=media"
+      },
+      {
+        "path": "64aa8fac727a-mob_banner_5.png",
+        "sha": "64aa8fac727adcf60d6bc7b17af4e88a7b97b0c54755f980bd1cac14415b89c3",
+        "size": 632856,
+        "dest": "myhome/akrida/banners/64aa8fac727a-mob_banner_5.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/64aa8fac727a-mob_banner_5.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2F64aa8fac727a-mob_banner_5.png?alt=media"
+      },
+      {
+        "path": "66e73f1fc2c7-web_banner_3.png",
+        "sha": "66e73f1fc2c7f8d0735a4221528a69d389b99369f27689cf27094596f564a107",
+        "size": 4158013,
+        "dest": "myhome/akrida/banners/66e73f1fc2c7-web_banner_3.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/66e73f1fc2c7-web_banner_3.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2F66e73f1fc2c7-web_banner_3.png?alt=media"
+      },
+      {
+        "path": "6fa061b5788d-web_banner_4.png",
+        "sha": "6fa061b5788d5eb4b6f80a5c963dd74344213a77f71fcfa7c6dc6ae7bf7e37d0",
+        "size": 4156580,
+        "dest": "myhome/akrida/banners/6fa061b5788d-web_banner_4.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/6fa061b5788d-web_banner_4.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2F6fa061b5788d-web_banner_4.png?alt=media"
+      },
+      {
+        "path": "b6094fa48cbf-mob_banner_3.png",
+        "sha": "b6094fa48cbfb39cb2f8510726dd41259bf29972db8aff9f8c112b4864d59ae6",
+        "size": 712060,
+        "dest": "myhome/akrida/banners/b6094fa48cbf-mob_banner_3.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/b6094fa48cbf-mob_banner_3.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2Fb6094fa48cbf-mob_banner_3.png?alt=media"
+      },
+      {
+        "path": "bae5907ef681-web_banner_2.png",
+        "sha": "bae5907ef681ca8bfd2bdee1ea715e2a2a6fec27fb7334d4349f54705fded227",
+        "size": 3833130,
+        "dest": "myhome/akrida/banners/bae5907ef681-web_banner_2.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/bae5907ef681-web_banner_2.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2Fbae5907ef681-web_banner_2.png?alt=media"
+      },
+      {
+        "path": "df45dc7d3c2a-mob_banner_4.png",
+        "sha": "df45dc7d3c2a45398d5aac753d7877b789e8f63686f4354acfc9c112e912a828",
+        "size": 707690,
+        "dest": "myhome/akrida/banners/df45dc7d3c2a-mob_banner_4.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/banners/df45dc7d3c2a-mob_banner_4.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbanners%2Fdf45dc7d3c2a-mob_banner_4.png?alt=media"
       }
     ],
     "floor_plans": [
       {
-        "path": "1.webp",
-        "sha": "4b30ba26aa3a23affb18f3bc56379c624342dffe12c3943340e6cec2a6a7f3af",
-        "size": 2235196,
-        "dest": "myhome/akrida/floor_plans/1.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/1.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F1.webp?alt=media"
-      },
-      {
-        "path": "10.webp",
-        "sha": "7b5b571375d8b98768fead5a620ad25554a40e81f7e53e09ec6904b4ef5f0d10",
-        "size": 1299938,
-        "dest": "myhome/akrida/floor_plans/10.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/10.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F10.webp?alt=media"
-      },
-      {
-        "path": "11.webp",
-        "sha": "9c36ebe269a88b71bbd23c49db83aceae3567336d6b9b50301a8516111564481",
-        "size": 1384694,
-        "dest": "myhome/akrida/floor_plans/11.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/11.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F11.webp?alt=media"
-      },
-      {
-        "path": "12.webp",
-        "sha": "a6566f7b4355d2e129d638b7e45900f87eeda2a9b2b12833e702e70ba20e27ef",
-        "size": 1713898,
-        "dest": "myhome/akrida/floor_plans/12.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/12.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F12.webp?alt=media"
-      },
-      {
-        "path": "13.webp",
-        "sha": "397e55cb961f5f80788a528135f8b504eb3f956818c179f4df228753015fe4df",
-        "size": 1657650,
-        "dest": "myhome/akrida/floor_plans/13.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/13.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F13.webp?alt=media"
-      },
-      {
-        "path": "14.webp",
-        "sha": "bb2139d91a92c4e03dea1dd10c323bc69d73babd85767898a322d8d914a5bd9c",
-        "size": 1704416,
-        "dest": "myhome/akrida/floor_plans/14.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/14.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F14.webp?alt=media"
-      },
-      {
-        "path": "15.webp",
-        "sha": "6ef0bfd60ded96736913a9adbacb412655e8815850ca19fb23ce35940b3b7164",
-        "size": 1594814,
-        "dest": "myhome/akrida/floor_plans/15.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/15.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F15.webp?alt=media"
-      },
-      {
-        "path": "16.webp",
+        "path": "297ff0f77aed-16.webp",
         "sha": "297ff0f77aed64146daee372782af5870f73511d60eb03f3188762886e68d941",
         "size": 1611288,
-        "dest": "myhome/akrida/floor_plans/16.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/16.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F16.webp?alt=media"
+        "dest": "myhome/akrida/floor_plans/297ff0f77aed-16.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/297ff0f77aed-16.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F297ff0f77aed-16.webp?alt=media"
       },
       {
-        "path": "17.webp",
-        "sha": "75164e8bcde6745922c23d461067db1112e9ab3c7b4256ec6b7311f26b6f0896",
-        "size": 1778312,
-        "dest": "myhome/akrida/floor_plans/17.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/17.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F17.webp?alt=media"
+        "path": "397e55cb961f-13.webp",
+        "sha": "397e55cb961f5f80788a528135f8b504eb3f956818c179f4df228753015fe4df",
+        "size": 1657650,
+        "dest": "myhome/akrida/floor_plans/397e55cb961f-13.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/397e55cb961f-13.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F397e55cb961f-13.webp?alt=media"
       },
       {
-        "path": "18.webp",
+        "path": "3bd12c9734ae-18.webp",
         "sha": "3bd12c9734aebc20830dc81deffa32347e19841564dd79ce7babbe4c66fa8add",
         "size": 1908946,
-        "dest": "myhome/akrida/floor_plans/18.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/18.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F18.webp?alt=media"
+        "dest": "myhome/akrida/floor_plans/3bd12c9734ae-18.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/3bd12c9734ae-18.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F3bd12c9734ae-18.webp?alt=media"
       },
       {
-        "path": "2.webp",
-        "sha": "7496a29b08499527051177c713f6edb03da0bcf9d716d4a61c078d5820c16336",
-        "size": 676248,
-        "dest": "myhome/akrida/floor_plans/2.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/2.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F2.webp?alt=media"
-      },
-      {
-        "path": "3.webp",
-        "sha": "6cb45cd79242280d85fd7b8003e012cba54a3f6a32f6a3352ad1e46368c6534f",
-        "size": 2266356,
-        "dest": "myhome/akrida/floor_plans/3.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/3.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F3.webp?alt=media"
-      },
-      {
-        "path": "4.webp",
-        "sha": "b906cd5638ac3eed087e9d97d2b7cf5fb6c9ac2d20650ea91a6615f1fb0ab1ce",
-        "size": 2102118,
-        "dest": "myhome/akrida/floor_plans/4.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/4.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F4.webp?alt=media"
-      },
-      {
-        "path": "5.webp",
-        "sha": "bb8d81f47e40a61b6574405c8add95312f60b0dc522584a3ca1debc745fab41f",
-        "size": 2258748,
-        "dest": "myhome/akrida/floor_plans/5.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/5.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F5.webp?alt=media"
-      },
-      {
-        "path": "6.webp",
-        "sha": "6d306d575c2fe1af25465cefc0c537ae57e20060069b3a115ab927211d23427d",
-        "size": 2187972,
-        "dest": "myhome/akrida/floor_plans/6.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/6.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F6.webp?alt=media"
-      },
-      {
-        "path": "7.webp",
-        "sha": "cd9cab940d888766a86ef854af04383149a19184a8df6f1a29f19558c22d55f9",
-        "size": 2203668,
-        "dest": "myhome/akrida/floor_plans/7.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/7.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F7.webp?alt=media"
-      },
-      {
-        "path": "8.webp",
-        "sha": "cee2bb8e467e0321c013b9ceca95b5e6abd8cdf881178ed8926f5ce6ee411a64",
-        "size": 2193752,
-        "dest": "myhome/akrida/floor_plans/8.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/8.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F8.webp?alt=media"
-      },
-      {
-        "path": "9.webp",
+        "path": "3e68efe1df9c-9.webp",
         "sha": "3e68efe1df9c0b0df5094bb1a6b67656f4029935b5c2854528a30fdbc72afd42",
         "size": 1590322,
-        "dest": "myhome/akrida/floor_plans/9.webp",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/9.webp",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F9.webp?alt=media"
+        "dest": "myhome/akrida/floor_plans/3e68efe1df9c-9.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/3e68efe1df9c-9.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F3e68efe1df9c-9.webp?alt=media"
+      },
+      {
+        "path": "4b30ba26aa3a-1.webp",
+        "sha": "4b30ba26aa3a23affb18f3bc56379c624342dffe12c3943340e6cec2a6a7f3af",
+        "size": 2235196,
+        "dest": "myhome/akrida/floor_plans/4b30ba26aa3a-1.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/4b30ba26aa3a-1.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F4b30ba26aa3a-1.webp?alt=media"
+      },
+      {
+        "path": "6cb45cd79242-3.webp",
+        "sha": "6cb45cd79242280d85fd7b8003e012cba54a3f6a32f6a3352ad1e46368c6534f",
+        "size": 2266356,
+        "dest": "myhome/akrida/floor_plans/6cb45cd79242-3.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/6cb45cd79242-3.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F6cb45cd79242-3.webp?alt=media"
+      },
+      {
+        "path": "6d306d575c2f-6.webp",
+        "sha": "6d306d575c2fe1af25465cefc0c537ae57e20060069b3a115ab927211d23427d",
+        "size": 2187972,
+        "dest": "myhome/akrida/floor_plans/6d306d575c2f-6.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/6d306d575c2f-6.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F6d306d575c2f-6.webp?alt=media"
+      },
+      {
+        "path": "6ef0bfd60ded-15.webp",
+        "sha": "6ef0bfd60ded96736913a9adbacb412655e8815850ca19fb23ce35940b3b7164",
+        "size": 1594814,
+        "dest": "myhome/akrida/floor_plans/6ef0bfd60ded-15.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/6ef0bfd60ded-15.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F6ef0bfd60ded-15.webp?alt=media"
+      },
+      {
+        "path": "7496a29b0849-2.webp",
+        "sha": "7496a29b08499527051177c713f6edb03da0bcf9d716d4a61c078d5820c16336",
+        "size": 676248,
+        "dest": "myhome/akrida/floor_plans/7496a29b0849-2.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/7496a29b0849-2.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F7496a29b0849-2.webp?alt=media"
+      },
+      {
+        "path": "75164e8bcde6-17.webp",
+        "sha": "75164e8bcde6745922c23d461067db1112e9ab3c7b4256ec6b7311f26b6f0896",
+        "size": 1778312,
+        "dest": "myhome/akrida/floor_plans/75164e8bcde6-17.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/75164e8bcde6-17.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F75164e8bcde6-17.webp?alt=media"
+      },
+      {
+        "path": "7b5b571375d8-10.webp",
+        "sha": "7b5b571375d8b98768fead5a620ad25554a40e81f7e53e09ec6904b4ef5f0d10",
+        "size": 1299938,
+        "dest": "myhome/akrida/floor_plans/7b5b571375d8-10.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/7b5b571375d8-10.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F7b5b571375d8-10.webp?alt=media"
+      },
+      {
+        "path": "9c36ebe269a8-11.webp",
+        "sha": "9c36ebe269a88b71bbd23c49db83aceae3567336d6b9b50301a8516111564481",
+        "size": 1384694,
+        "dest": "myhome/akrida/floor_plans/9c36ebe269a8-11.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/9c36ebe269a8-11.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2F9c36ebe269a8-11.webp?alt=media"
+      },
+      {
+        "path": "a6566f7b4355-12.webp",
+        "sha": "a6566f7b4355d2e129d638b7e45900f87eeda2a9b2b12833e702e70ba20e27ef",
+        "size": 1713898,
+        "dest": "myhome/akrida/floor_plans/a6566f7b4355-12.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/a6566f7b4355-12.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2Fa6566f7b4355-12.webp?alt=media"
+      },
+      {
+        "path": "b906cd5638ac-4.webp",
+        "sha": "b906cd5638ac3eed087e9d97d2b7cf5fb6c9ac2d20650ea91a6615f1fb0ab1ce",
+        "size": 2102118,
+        "dest": "myhome/akrida/floor_plans/b906cd5638ac-4.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/b906cd5638ac-4.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2Fb906cd5638ac-4.webp?alt=media"
+      },
+      {
+        "path": "bb2139d91a92-14.webp",
+        "sha": "bb2139d91a92c4e03dea1dd10c323bc69d73babd85767898a322d8d914a5bd9c",
+        "size": 1704416,
+        "dest": "myhome/akrida/floor_plans/bb2139d91a92-14.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/bb2139d91a92-14.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2Fbb2139d91a92-14.webp?alt=media"
+      },
+      {
+        "path": "bb8d81f47e40-5.webp",
+        "sha": "bb8d81f47e40a61b6574405c8add95312f60b0dc522584a3ca1debc745fab41f",
+        "size": 2258748,
+        "dest": "myhome/akrida/floor_plans/bb8d81f47e40-5.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/bb8d81f47e40-5.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2Fbb8d81f47e40-5.webp?alt=media"
+      },
+      {
+        "path": "cd9cab940d88-7.webp",
+        "sha": "cd9cab940d888766a86ef854af04383149a19184a8df6f1a29f19558c22d55f9",
+        "size": 2203668,
+        "dest": "myhome/akrida/floor_plans/cd9cab940d88-7.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/cd9cab940d88-7.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2Fcd9cab940d88-7.webp?alt=media"
+      },
+      {
+        "path": "cee2bb8e467e-8.webp",
+        "sha": "cee2bb8e467e0321c013b9ceca95b5e6abd8cdf881178ed8926f5ce6ee411a64",
+        "size": 2193752,
+        "dest": "myhome/akrida/floor_plans/cee2bb8e467e-8.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/floor_plans/cee2bb8e467e-8.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Ffloor_plans%2Fcee2bb8e467e-8.webp?alt=media"
+      }
+    ],
+    "logos": [
+      {
+        "path": ".DS_Store",
+        "sha": "d65165279105ca6773180500688df4bdc69a2c7b771752f0a46ef120b7fd8ec3",
+        "size": 6148,
+        "dest": "myhome/akrida/logos/.DS_Store",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/logos/.DS_Store",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Flogos%2F.DS_Store?alt=media"
+      },
+      {
+        "path": "3b3b245b35be-mob_prathima_myhome_logo.png",
+        "sha": "3b3b245b35be0499c5dd51000b825670990bcc9be17b04f898fae609d4d6db9c",
+        "size": 14683,
+        "dest": "myhome/akrida/logos/3b3b245b35be-mob_prathima_myhome_logo.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/logos/3b3b245b35be-mob_prathima_myhome_logo.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Flogos%2F3b3b245b35be-mob_prathima_myhome_logo.png?alt=media"
+      },
+      {
+        "path": "7d74114d1b66-logo.png",
+        "sha": "7d74114d1b66eeedd74190e3bb29ce83d5b6e649217c28c38909f34f6942576e",
+        "size": 7057,
+        "dest": "myhome/akrida/logos/7d74114d1b66-logo.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/logos/7d74114d1b66-logo.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Flogos%2F7d74114d1b66-logo.png?alt=media"
+      },
+      {
+        "path": "e244767aee03-white_logo.png",
+        "sha": "e244767aee03bfaa7b0ae6a0227ed58aa5139a01868f9c970daa5e4350e4852f",
+        "size": 6951,
+        "dest": "myhome/akrida/logos/e244767aee03-white_logo.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/logos/e244767aee03-white_logo.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Flogos%2Fe244767aee03-white_logo.png?alt=media"
       }
     ],
     "photos": [
       {
-        "path": "1.jpg",
-        "sha": "7a56877a8bc2d8d6bd8ff8254ce0201b56252bb65ca76406d29c16aa7b68af65",
-        "size": 651962,
-        "dest": "myhome/akrida/photos/1.jpg",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/1.jpg",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F1.jpg?alt=media"
-      },
-      {
-        "path": "1.png",
-        "sha": "6244535ad37940d4e3a755420cef96cf42d70c7a396a541abe107da16f717fc6",
-        "size": 517995,
-        "dest": "myhome/akrida/photos/1.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/1.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F1.png?alt=media"
-      },
-      {
-        "path": "10.jpg",
-        "sha": "d41ebd2b9e9a6f31ec23f560302d84985358fa3313f1d396e71f7776513f4365",
-        "size": 77724,
-        "dest": "myhome/akrida/photos/10.jpg",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/10.jpg",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F10.jpg?alt=media"
-      },
-      {
-        "path": "10.png",
-        "sha": "26d5a08f535be26e4dce0e4932421e37f6fd3aee48342d4a5dfc03eddcb2620e",
-        "size": 267141,
-        "dest": "myhome/akrida/photos/10.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/10.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F10.png?alt=media"
-      },
-      {
-        "path": "11.png",
-        "sha": "9e20152e3d7fcfe188a11d6ba566296003256e4c693d93030b61e3543053c8e8",
-        "size": 338088,
-        "dest": "myhome/akrida/photos/11.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/11.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F11.png?alt=media"
-      },
-      {
-        "path": "12.png",
-        "sha": "4bda45841d0165b70aff655f2a9b4dbfe9b40b83db8463e75663eb696a27575d",
-        "size": 311767,
-        "dest": "myhome/akrida/photos/12.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/12.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F12.png?alt=media"
-      },
-      {
-        "path": "2.jpg",
-        "sha": "95b2242a4c912f86607853f2c0b3a9380066c69bf09d90b0795ead8ee8dae5c4",
-        "size": 90758,
-        "dest": "myhome/akrida/photos/2.jpg",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/2.jpg",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F2.jpg?alt=media"
-      },
-      {
-        "path": "2.png",
-        "sha": "30e74326374eb47064fbf9bcc0e3c0d34c6f7cce53d529576c1332037952ac67",
-        "size": 410732,
-        "dest": "myhome/akrida/photos/2.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/2.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F2.png?alt=media"
-      },
-      {
-        "path": "3.jpg",
-        "sha": "02a6a2f815cb198b59e639fa22e204473d2fd89f5f42307f163103d7d875d20a",
-        "size": 341416,
-        "dest": "myhome/akrida/photos/3.jpg",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/3.jpg",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F3.jpg?alt=media"
-      },
-      {
-        "path": "3.png",
-        "sha": "05fe45f90bac53660272f9a3ea4cc548e047fedd1d80a1456b2cbc736e8488c7",
-        "size": 627401,
-        "dest": "myhome/akrida/photos/3.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/3.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F3.png?alt=media"
-      },
-      {
-        "path": "4.jpg",
-        "sha": "0a84d92ab51f3d3de0da7642487c983877f8344363b5bdc3c9843468c65ec8a5",
-        "size": 340517,
-        "dest": "myhome/akrida/photos/4.jpg",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/4.jpg",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F4.jpg?alt=media"
-      },
-      {
-        "path": "5.jpg",
-        "sha": "b3516df02cab9a990823fde4921da72f9bd86771a4617714b75fff8c99da4513",
-        "size": 208555,
-        "dest": "myhome/akrida/photos/5.jpg",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/5.jpg",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F5.jpg?alt=media"
-      },
-      {
-        "path": "6.jpg",
-        "sha": "aa991182ae8ee02887f5b5253f81fa196c2dc9b71e921e92637c34f3bcb21a37",
-        "size": 119524,
-        "dest": "myhome/akrida/photos/6.jpg",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/6.jpg",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F6.jpg?alt=media"
-      },
-      {
-        "path": "7.jpg",
-        "sha": "ed08878051fbdbdfca924c840dc4635d9302bbcb7d2472fbfa8f68fcc613c134",
-        "size": 807001,
-        "dest": "myhome/akrida/photos/7.jpg",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/7.jpg",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F7.jpg?alt=media"
-      },
-      {
-        "path": "7.png",
-        "sha": "7df00dcc3d4eda4e8cf0e00625a102f49150a2f07ea886d25b8c5174cad84793",
-        "size": 350955,
-        "dest": "myhome/akrida/photos/7.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/7.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F7.png?alt=media"
-      },
-      {
-        "path": "8.jpg",
-        "sha": "90cbc059e129503acf081694eea9fa7750b9fd8ba4b43668efbdd3d2030d29d0",
-        "size": 48496,
-        "dest": "myhome/akrida/photos/8.jpg",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/8.jpg",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F8.jpg?alt=media"
-      },
-      {
-        "path": "8.png",
-        "sha": "bb9156a20ba7669daa8fa9fc4eaef9f57d852d1ebb6506fa7b4f10595eb57cdc",
-        "size": 300991,
-        "dest": "myhome/akrida/photos/8.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/8.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F8.png?alt=media"
-      },
-      {
-        "path": "9.jpg",
-        "sha": "1ebe6005df6ed0f87ed05b89523de4c11246e2cc3bb6a17b2b1a354304294e21",
-        "size": 309052,
-        "dest": "myhome/akrida/photos/9.jpg",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/9.jpg",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F9.jpg?alt=media"
-      },
-      {
-        "path": "9.png",
-        "sha": "db5dffb9c5d3330b57c67739f77fc28ec31d46ab5f00a84285651dc29fe39ece",
-        "size": 304323,
-        "dest": "myhome/akrida/photos/9.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/9.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F9.png?alt=media"
-      },
-      {
-        "path": "ATM.png",
-        "sha": "5a31c19fbb147cb804acbbfdbb4a127569ede50494381081684995d85b4bda89",
-        "size": 3831,
-        "dest": "myhome/akrida/photos/ATM.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/ATM.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2FATM.png?alt=media"
-      },
-      {
-        "path": "Double_1.png",
-        "sha": "83c77a6bc3f657611244d4c738aee6488bc5cf9053723c06094452e839fcb97e",
-        "size": 2950696,
-        "dest": "myhome/akrida/photos/Double_1.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/Double_1.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2FDouble_1.png?alt=media"
-      },
-      {
-        "path": "Indoor_1.png",
-        "sha": "d357a8d5859dee88a075d909c119f70a5408d6356b5284a42276738eefac6df1",
-        "size": 2153375,
-        "dest": "myhome/akrida/photos/Indoor_1.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/Indoor_1.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2FIndoor_1.png?alt=media"
-      },
-      {
-        "path": "basketball_court.png",
-        "sha": "986d27a2bdbd3ffe49c061a43a246b293516ca5278377e00b62b5df7809d6ca3",
-        "size": 4521,
-        "dest": "myhome/akrida/photos/basketball_court.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/basketball_court.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fbasketball_court.png?alt=media"
-      },
-      {
-        "path": "box_cricket_space.png",
-        "sha": "f4ccad5ba347144dcbcc97fd02c8a8bf0fd86d70289380d596194bf893c80eb7",
-        "size": 5200,
-        "dest": "myhome/akrida/photos/box_cricket_space.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/box_cricket_space.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fbox_cricket_space.png?alt=media"
-      },
-      {
-        "path": "convinence_store.png",
-        "sha": "a3c2191873e8ba3ffcc3c10f6bedca04a00d2b9fe099ab70b71610f4ec7b9197",
-        "size": 4344,
-        "dest": "myhome/akrida/photos/convinence_store.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/convinence_store.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fconvinence_store.png?alt=media"
-      },
-      {
-        "path": "cotta.png",
-        "sha": "553425539673c945c17408bbb73ddfed67cfc3722d32261df55ff4d2f7e11ae6",
-        "size": 1968396,
-        "dest": "myhome/akrida/photos/cotta.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/cotta.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fcotta.png?alt=media"
-      },
-      {
-        "path": "cricket_nets.png",
-        "sha": "309d7b1775d9f5d50265778110ddc5133bf816c5d30e75b9a4bd8cf6d5784714",
-        "size": 5097,
-        "dest": "myhome/akrida/photos/cricket_nets.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/cricket_nets.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fcricket_nets.png?alt=media"
-      },
-      {
-        "path": "cycling.png",
-        "sha": "f3c24e90cb1bc96d95d3acf4a7d45acfff1a612e8937296e6df97ef04522ff93",
-        "size": 6504,
-        "dest": "myhome/akrida/photos/cycling.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/cycling.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fcycling.png?alt=media"
-      },
-      {
-        "path": "f&b.png",
-        "sha": "4273a9483dd21e976af58ea8731955504ba89c175db6c940f1d37e8278641faa",
-        "size": 4850,
-        "dest": "myhome/akrida/photos/f&b.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/f&b.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Ff%26b.png?alt=media"
-      },
-      {
-        "path": "facebook.png",
-        "sha": "8a36bbdc65d2c9a206825ef70356d7ad801fcce943f8f7d5a086fa41b6df587b",
-        "size": 272,
-        "dest": "myhome/akrida/photos/facebook.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/facebook.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Ffacebook.png?alt=media"
-      },
-      {
-        "path": "g1.png",
-        "sha": "b650d073ccae40d554ed957ddb4e1385d1c48f8966bc6a5289d09cad21a50a02",
-        "size": 2780622,
-        "dest": "myhome/akrida/photos/g1.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/g1.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fg1.png?alt=media"
-      },
-      {
-        "path": "g2.png",
-        "sha": "767721753c00c626988b84dc88b57880134b5e9b2c249f5f19062fff7edec5a4",
-        "size": 5329092,
-        "dest": "myhome/akrida/photos/g2.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/g2.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fg2.png?alt=media"
-      },
-      {
-        "path": "g3.png",
-        "sha": "77e991e1a122c024c17e4cc676ad04c93155d52622c2e2e6bcd043a6182465c8",
-        "size": 2535550,
-        "dest": "myhome/akrida/photos/g3.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/g3.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fg3.png?alt=media"
-      },
-      {
-        "path": "g4.png",
-        "sha": "c54c836b5f7f2a0ec31e0514b21e38255c6e41e94294a233f7e65e2401e6dd31",
-        "size": 3545402,
-        "dest": "myhome/akrida/photos/g4.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/g4.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fg4.png?alt=media"
-      },
-      {
-        "path": "g5.png",
+        "path": "01f33ca56370-g5.png",
         "sha": "01f33ca5637054641a960c9aa93783869255d14b5d08e32b725071d0a5c71b54",
         "size": 3754431,
-        "dest": "myhome/akrida/photos/g5.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/g5.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fg5.png?alt=media"
+        "dest": "myhome/akrida/photos/01f33ca56370-g5.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/01f33ca56370-g5.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F01f33ca56370-g5.png?alt=media"
       },
       {
-        "path": "g6.png",
-        "sha": "b11a0a840b0227032d6f51fb9e5cb1f6b05408fbcc104083bf618dcc7af13695",
-        "size": 3115859,
-        "dest": "myhome/akrida/photos/g6.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/g6.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fg6.png?alt=media"
+        "path": "02a6a2f815cb-3.jpg",
+        "sha": "02a6a2f815cb198b59e639fa22e204473d2fd89f5f42307f163103d7d875d20a",
+        "size": 341416,
+        "dest": "myhome/akrida/photos/02a6a2f815cb-3.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/02a6a2f815cb-3.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F02a6a2f815cb-3.jpg?alt=media"
       },
       {
-        "path": "grand_lobby.png",
-        "sha": "2d1c6887b368a76f0556da1b69f3ac2a1516a277d6be63fc1c689c55fff88138",
-        "size": 5152,
-        "dest": "myhome/akrida/photos/grand_lobby.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/grand_lobby.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fgrand_lobby.png?alt=media"
+        "path": "05fe45f90bac-3.png",
+        "sha": "05fe45f90bac53660272f9a3ea4cc548e047fedd1d80a1456b2cbc736e8488c7",
+        "size": 627401,
+        "dest": "myhome/akrida/photos/05fe45f90bac-3.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/05fe45f90bac-3.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F05fe45f90bac-3.png?alt=media"
       },
       {
-        "path": "guest_rooms.png",
-        "sha": "2f322ce4b9b39a915135ee8e43e9d99a862351ed65f8c60855826c3345ee7ecb",
-        "size": 4608,
-        "dest": "myhome/akrida/photos/guest_rooms.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/guest_rooms.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fguest_rooms.png?alt=media"
+        "path": "0a84d92ab51f-4.jpg",
+        "sha": "0a84d92ab51f3d3de0da7642487c983877f8344363b5bdc3c9843468c65ec8a5",
+        "size": 340517,
+        "dest": "myhome/akrida/photos/0a84d92ab51f-4.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/0a84d92ab51f-4.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F0a84d92ab51f-4.jpg?alt=media"
       },
       {
-        "path": "gym.png",
-        "sha": "669f327c6349831ed8465f842fcda2b7cb470f34d8f4f5c5960e1231cc734413",
-        "size": 5823,
-        "dest": "myhome/akrida/photos/gym.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/gym.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fgym.png?alt=media"
+        "path": "1ebe6005df6e-9.jpg",
+        "sha": "1ebe6005df6ed0f87ed05b89523de4c11246e2cc3bb6a17b2b1a354304294e21",
+        "size": 309052,
+        "dest": "myhome/akrida/photos/1ebe6005df6e-9.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/1ebe6005df6e-9.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F1ebe6005df6e-9.jpg?alt=media"
       },
       {
-        "path": "hall.png",
-        "sha": "0f94478e4bf70788ce27069811c022601475ef1a9a10400615be4a7367cb106c",
-        "size": 4131,
-        "dest": "myhome/akrida/photos/hall.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/hall.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fhall.png?alt=media"
+        "path": "26d5a08f535b-10.png",
+        "sha": "26d5a08f535be26e4dce0e4932421e37f6fd3aee48342d4a5dfc03eddcb2620e",
+        "size": 267141,
+        "dest": "myhome/akrida/photos/26d5a08f535b-10.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/26d5a08f535b-10.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F26d5a08f535b-10.png?alt=media"
       },
       {
-        "path": "indoor_badminton_courts.png",
-        "sha": "b3aa9fcc767747ac7f842819c3374c4a24248c181c2b1a2c8590c372e9279586",
-        "size": 5621,
-        "dest": "myhome/akrida/photos/indoor_badminton_courts.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/indoor_badminton_courts.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Findoor_badminton_courts.png?alt=media"
+        "path": "30e74326374e-2.png",
+        "sha": "30e74326374eb47064fbf9bcc0e3c0d34c6f7cce53d529576c1332037952ac67",
+        "size": 410732,
+        "dest": "myhome/akrida/photos/30e74326374e-2.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/30e74326374e-2.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F30e74326374e-2.png?alt=media"
       },
       {
-        "path": "indoor_games.png",
-        "sha": "d989ed1ba4b6155c9f87dfbae5b89aa7b476008a1ab30d9354bfe74077a971d7",
-        "size": 5269,
-        "dest": "myhome/akrida/photos/indoor_games.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/indoor_games.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Findoor_games.png?alt=media"
+        "path": "3245dcd5caf1-my_home_raka.webp",
+        "sha": "3245dcd5caf1cc0b1514c1302243bb8e394f7d311b7d398019d8a990b83dd1d7",
+        "size": 2064,
+        "dest": "myhome/akrida/photos/3245dcd5caf1-my_home_raka.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/3245dcd5caf1-my_home_raka.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F3245dcd5caf1-my_home_raka.webp?alt=media"
       },
       {
-        "path": "instagram.png",
-        "sha": "da15a383e165a4bf05f7c8662f4e85ca9ca2d8adc5cef5bb5c9698f3ea89b601",
-        "size": 364,
-        "dest": "myhome/akrida/photos/instagram.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/instagram.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Finstagram.png?alt=media"
+        "path": "3b3b245b35be-mob_prathima_myhome_logo.png",
+        "sha": "3b3b245b35be0499c5dd51000b825670990bcc9be17b04f898fae609d4d6db9c",
+        "size": 14683,
+        "dest": "myhome/akrida/photos/3b3b245b35be-mob_prathima_myhome_logo.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/3b3b245b35be-mob_prathima_myhome_logo.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F3b3b245b35be-mob_prathima_myhome_logo.png?alt=media"
       },
       {
-        "path": "jogging.png",
-        "sha": "6f4e95b13a65fd1331a01aa193a53d52d9f440ecc781fc317478bedc1cdf287c",
-        "size": 5389,
-        "dest": "myhome/akrida/photos/jogging.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/jogging.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fjogging.png?alt=media"
+        "path": "4bda45841d01-12.png",
+        "sha": "4bda45841d0165b70aff655f2a9b4dbfe9b40b83db8463e75663eb696a27575d",
+        "size": 311767,
+        "dest": "myhome/akrida/photos/4bda45841d01-12.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/4bda45841d01-12.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F4bda45841d01-12.png?alt=media"
       },
       {
-        "path": "kids_play_area.png",
-        "sha": "2916faa0c52cb64df2df9133620437e1145494c3f33d72e36fc244ad39657f25",
-        "size": 5070,
-        "dest": "myhome/akrida/photos/kids_play_area.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/kids_play_area.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fkids_play_area.png?alt=media"
+        "path": "553425539673-cotta.png",
+        "sha": "553425539673c945c17408bbb73ddfed67cfc3722d32261df55ff4d2f7e11ae6",
+        "size": 1968396,
+        "dest": "myhome/akrida/photos/553425539673-cotta.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/553425539673-cotta.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F553425539673-cotta.png?alt=media"
       },
       {
-        "path": "lawns.png",
-        "sha": "f88b36fddc399bd13a2b766abe6bcd2f864e09631f8a3493ba3ba006c2af927b",
-        "size": 5063,
-        "dest": "myhome/akrida/photos/lawns.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/lawns.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Flawns.png?alt=media"
+        "path": "6244535ad379-1.png",
+        "sha": "6244535ad37940d4e3a755420cef96cf42d70c7a396a541abe107da16f717fc6",
+        "size": 517995,
+        "dest": "myhome/akrida/photos/6244535ad379-1.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/6244535ad379-1.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F6244535ad379-1.png?alt=media"
       },
       {
-        "path": "linkdin.png",
-        "sha": "d151f97389a2d22fc44ebaaccf23dd186c813e6bb3bb976f6b544cbeb27ee85d",
-        "size": 421,
-        "dest": "myhome/akrida/photos/linkdin.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/linkdin.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Flinkdin.png?alt=media"
+        "path": "6313df8a7c7c-youtube.png",
+        "sha": "6313df8a7c7c2d778d0a3fb31a2a3813b1e93163607505072ecb43567368d820",
+        "size": 374,
+        "dest": "myhome/akrida/photos/6313df8a7c7c-youtube.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/6313df8a7c7c-youtube.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F6313df8a7c7c-youtube.png?alt=media"
       },
       {
-        "path": "living.png",
-        "sha": "af0d85bdb204002cff3a998ca031de0bb71632f17fdd57e8727f4c0273a318a7",
-        "size": 2069062,
-        "dest": "myhome/akrida/photos/living.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/living.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fliving.png?alt=media"
+        "path": "767721753c00-g2.png",
+        "sha": "767721753c00c626988b84dc88b57880134b5e9b2c249f5f19062fff7edec5a4",
+        "size": 5329092,
+        "dest": "myhome/akrida/photos/767721753c00-g2.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/767721753c00-g2.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F767721753c00-g2.png?alt=media"
       },
       {
-        "path": "meditation_hall.png",
-        "sha": "2a344555b42ef85d491c49f7240ad97471ff3c05b5f0e04b86fc47236f1d0212",
-        "size": 6215,
-        "dest": "myhome/akrida/photos/meditation_hall.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/meditation_hall.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fmeditation_hall.png?alt=media"
-      },
-      {
-        "path": "outdoor_gym.png",
-        "sha": "7f61e96ea22d0ba692393cce85fd84cbaaeda8eeb3a6e8e33c0a70ab9916e92c",
-        "size": 6677,
-        "dest": "myhome/akrida/photos/outdoor_gym.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/outdoor_gym.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Foutdoor_gym.png?alt=media"
-      },
-      {
-        "path": "pet_zone.png",
-        "sha": "d97079cc503f1b541cf640cd5a2c23d91f59de7afa098259c5fd8860ada432b0",
-        "size": 6571,
-        "dest": "myhome/akrida/photos/pet_zone.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/pet_zone.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fpet_zone.png?alt=media"
-      },
-      {
-        "path": "pharmacy.png",
-        "sha": "7bb645871f9b265edf97019f189a0800e8536fd71f3abfc38123d8872d68f220",
-        "size": 4370,
-        "dest": "myhome/akrida/photos/pharmacy.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/pharmacy.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fpharmacy.png?alt=media"
-      },
-      {
-        "path": "pool.png",
+        "path": "777c0f007d0b-pool.png",
         "sha": "777c0f007d0b43ba49bb7a087c15c299c8ee5e7c90de6e0888f27c15c3b3a269",
         "size": 4431100,
-        "dest": "myhome/akrida/photos/pool.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/pool.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fpool.png?alt=media"
+        "dest": "myhome/akrida/photos/777c0f007d0b-pool.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/777c0f007d0b-pool.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F777c0f007d0b-pool.png?alt=media"
       },
       {
-        "path": "reading_area.png",
-        "sha": "5c46bce45207733dcab885b40d138eda9b96a3ca60ec811ea2fb24e1adf10aca",
-        "size": 4422,
-        "dest": "myhome/akrida/photos/reading_area.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/reading_area.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Freading_area.png?alt=media"
+        "path": "77e991e1a122-g3.png",
+        "sha": "77e991e1a122c024c17e4cc676ad04c93155d52622c2e2e6bcd043a6182465c8",
+        "size": 2535550,
+        "dest": "myhome/akrida/photos/77e991e1a122-g3.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/77e991e1a122-g3.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F77e991e1a122-g3.png?alt=media"
       },
       {
-        "path": "seating_zone.png",
-        "sha": "b24d2798f28aad56792788d06b52e74d6aad119133a67a30b1a2fd89f64b1742",
-        "size": 5786,
-        "dest": "myhome/akrida/photos/seating_zone.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/seating_zone.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fseating_zone.png?alt=media"
+        "path": "7a56877a8bc2-1.jpg",
+        "sha": "7a56877a8bc2d8d6bd8ff8254ce0201b56252bb65ca76406d29c16aa7b68af65",
+        "size": 651962,
+        "dest": "myhome/akrida/photos/7a56877a8bc2-1.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/7a56877a8bc2-1.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F7a56877a8bc2-1.jpg?alt=media"
       },
       {
-        "path": "skating.png",
+        "path": "7df00dcc3d4e-7.png",
+        "sha": "7df00dcc3d4eda4e8cf0e00625a102f49150a2f07ea886d25b8c5174cad84793",
+        "size": 350955,
+        "dest": "myhome/akrida/photos/7df00dcc3d4e-7.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/7df00dcc3d4e-7.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F7df00dcc3d4e-7.png?alt=media"
+      },
+      {
+        "path": "83c77a6bc3f6-double_1.png",
+        "sha": "83c77a6bc3f657611244d4c738aee6488bc5cf9053723c06094452e839fcb97e",
+        "size": 2950696,
+        "dest": "myhome/akrida/photos/83c77a6bc3f6-double_1.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/83c77a6bc3f6-double_1.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F83c77a6bc3f6-double_1.png?alt=media"
+      },
+      {
+        "path": "8a36bbdc65d2-facebook.png",
+        "sha": "8a36bbdc65d2c9a206825ef70356d7ad801fcce943f8f7d5a086fa41b6df587b",
+        "size": 272,
+        "dest": "myhome/akrida/photos/8a36bbdc65d2-facebook.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/8a36bbdc65d2-facebook.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F8a36bbdc65d2-facebook.png?alt=media"
+      },
+      {
+        "path": "90cbc059e129-8.jpg",
+        "sha": "90cbc059e129503acf081694eea9fa7750b9fd8ba4b43668efbdd3d2030d29d0",
+        "size": 48496,
+        "dest": "myhome/akrida/photos/90cbc059e129-8.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/90cbc059e129-8.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F90cbc059e129-8.jpg?alt=media"
+      },
+      {
+        "path": "95b2242a4c91-2.jpg",
+        "sha": "95b2242a4c912f86607853f2c0b3a9380066c69bf09d90b0795ead8ee8dae5c4",
+        "size": 90758,
+        "dest": "myhome/akrida/photos/95b2242a4c91-2.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/95b2242a4c91-2.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F95b2242a4c91-2.jpg?alt=media"
+      },
+      {
+        "path": "9adf980f5102-skating.png",
         "sha": "9adf980f5102ddf4ef37fa9801406d538f68bbfa425f5c6a3a111d755a943499",
         "size": 5548477,
-        "dest": "myhome/akrida/photos/skating.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/skating.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fskating.png?alt=media"
+        "dest": "myhome/akrida/photos/9adf980f5102-skating.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/9adf980f5102-skating.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F9adf980f5102-skating.png?alt=media"
       },
       {
-        "path": "skating_track.png",
-        "sha": "2b9dde99e132a927e0e1fffa51515b287e82d2371c8e510abd712ab055cf262d",
-        "size": 5375,
-        "dest": "myhome/akrida/photos/skating_track.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/skating_track.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fskating_track.png?alt=media"
+        "path": "9e20152e3d7f-11.png",
+        "sha": "9e20152e3d7fcfe188a11d6ba566296003256e4c693d93030b61e3543053c8e8",
+        "size": 338088,
+        "dest": "myhome/akrida/photos/9e20152e3d7f-11.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/9e20152e3d7f-11.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2F9e20152e3d7f-11.png?alt=media"
       },
       {
-        "path": "sky_walk.png",
-        "sha": "78879c404514c9f266b98b43cb4d6371ce2f993d531ba2c0223a5fded76ff2ac",
-        "size": 4265,
-        "dest": "myhome/akrida/photos/sky_walk.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/sky_walk.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fsky_walk.png?alt=media"
-      },
-      {
-        "path": "spa.png",
-        "sha": "f8c6c2d300470f80f02b1f8cf2a866692358e4a43d03824c383a5bae13270685",
-        "size": 5751,
-        "dest": "myhome/akrida/photos/spa.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/spa.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fspa.png?alt=media"
-      },
-      {
-        "path": "squash_court.png",
-        "sha": "334386580771ac82865e9f312eb44786bf7fa138f49e87156b5ce042e98af920",
-        "size": 4943,
-        "dest": "myhome/akrida/photos/squash_court.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/squash_court.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fsquash_court.png?alt=media"
-      },
-      {
-        "path": "swimming_pool.png",
-        "sha": "b0ff9c35e3695c248377000c0f5818a7b9ef814c54270d8dc2172d4b31889bcb",
-        "size": 5877,
-        "dest": "myhome/akrida/photos/swimming_pool.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/swimming_pool.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fswimming_pool.png?alt=media"
-      },
-      {
-        "path": "tennis_courts.png",
-        "sha": "5f48edbb8ff21606e7f6e456ef9933db755b754e156332304b0b8ae24550ed78",
-        "size": 4521,
-        "dest": "myhome/akrida/photos/tennis_courts.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/tennis_courts.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Ftennis_courts.png?alt=media"
-      },
-      {
-        "path": "terra.png",
-        "sha": "ccd9fad5784699843e373d9c5d4a506fb12bc6e4bd24bb15b2aab34ea54e018a",
-        "size": 1376124,
-        "dest": "myhome/akrida/photos/terra.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/terra.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fterra.png?alt=media"
-      },
-      {
-        "path": "terraaa.png",
+        "path": "a90fbcf2fd66-terraaa.png",
         "sha": "a90fbcf2fd66b5d2859765e5ddc111e0376b3d22e7c0fb9c3d7bae2d7dbf297d",
         "size": 2867939,
-        "dest": "myhome/akrida/photos/terraaa.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/terraaa.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fterraaa.png?alt=media"
+        "dest": "myhome/akrida/photos/a90fbcf2fd66-terraaa.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/a90fbcf2fd66-terraaa.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fa90fbcf2fd66-terraaa.png?alt=media"
       },
       {
-        "path": "theatre.png",
-        "sha": "20446a53fcb264b12999c0f9412184a115049d17c4d0bc0480273ba8f17e1b80",
-        "size": 5480,
-        "dest": "myhome/akrida/photos/theatre.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/theatre.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Ftheatre.png?alt=media"
+        "path": "aa991182ae8e-6.jpg",
+        "sha": "aa991182ae8ee02887f5b5253f81fa196c2dc9b71e921e92637c34f3bcb21a37",
+        "size": 119524,
+        "dest": "myhome/akrida/photos/aa991182ae8e-6.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/aa991182ae8e-6.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Faa991182ae8e-6.jpg?alt=media"
       },
       {
-        "path": "youtube.png",
-        "sha": "4312291bba5fba7c048c2e7a0e7699865bf7aad051f27198b9f1b1af0b11fb7d",
-        "size": 411,
-        "dest": "myhome/akrida/photos/youtube.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/youtube.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fyoutube.png?alt=media"
-      }
-    ],
-    "layouts": [
+        "path": "af0d85bdb204-living.png",
+        "sha": "af0d85bdb204002cff3a998ca031de0bb71632f17fdd57e8727f4c0273a318a7",
+        "size": 2069062,
+        "dest": "myhome/akrida/photos/af0d85bdb204-living.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/af0d85bdb204-living.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Faf0d85bdb204-living.png?alt=media"
+      },
       {
-        "path": "layout.png",
-        "sha": "8ab63de8a37bbca9bccafffb476f163541d18a0a8904b8a5f5b3a2c646637a9f",
-        "size": 4087696,
-        "dest": "myhome/akrida/layouts/layout.png",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/layouts/layout.png",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Flayouts%2Flayout.png?alt=media"
+        "path": "b11a0a840b02-g6.png",
+        "sha": "b11a0a840b0227032d6f51fb9e5cb1f6b05408fbcc104083bf618dcc7af13695",
+        "size": 3115859,
+        "dest": "myhome/akrida/photos/b11a0a840b02-g6.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/b11a0a840b02-g6.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fb11a0a840b02-g6.png?alt=media"
+      },
+      {
+        "path": "b3516df02cab-5.jpg",
+        "sha": "b3516df02cab9a990823fde4921da72f9bd86771a4617714b75fff8c99da4513",
+        "size": 208555,
+        "dest": "myhome/akrida/photos/b3516df02cab-5.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/b3516df02cab-5.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fb3516df02cab-5.jpg?alt=media"
+      },
+      {
+        "path": "b443add3a7b1-my_home_tridasalogo.webp",
+        "sha": "b443add3a7b1e50c9d1e07a04ffb9fd527ff88306a91422d00634f1d6be15c17",
+        "size": 822,
+        "dest": "myhome/akrida/photos/b443add3a7b1-my_home_tridasalogo.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/b443add3a7b1-my_home_tridasalogo.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fb443add3a7b1-my_home_tridasalogo.webp?alt=media"
+      },
+      {
+        "path": "b4f673521f4c-grava.webp",
+        "sha": "b4f673521f4c481caebd49949ad45632ff032caf28562fe23a24481bcc5ccf96",
+        "size": 4928,
+        "dest": "myhome/akrida/photos/b4f673521f4c-grava.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/b4f673521f4c-grava.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fb4f673521f4c-grava.webp?alt=media"
+      },
+      {
+        "path": "b650d073ccae-g1.png",
+        "sha": "b650d073ccae40d554ed957ddb4e1385d1c48f8966bc6a5289d09cad21a50a02",
+        "size": 2780622,
+        "dest": "myhome/akrida/photos/b650d073ccae-g1.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/b650d073ccae-g1.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fb650d073ccae-g1.png?alt=media"
+      },
+      {
+        "path": "bb9156a20ba7-8.png",
+        "sha": "bb9156a20ba7669daa8fa9fc4eaef9f57d852d1ebb6506fa7b4f10595eb57cdc",
+        "size": 300991,
+        "dest": "myhome/akrida/photos/bb9156a20ba7-8.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/bb9156a20ba7-8.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fbb9156a20ba7-8.png?alt=media"
+      },
+      {
+        "path": "c2e4d4e8c0de-sayuk1.webp",
+        "sha": "c2e4d4e8c0debd1e3ca81bae36e2eb3d320ff298912be87f90353e92a9cb088a",
+        "size": 860,
+        "dest": "myhome/akrida/photos/c2e4d4e8c0de-sayuk1.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/c2e4d4e8c0de-sayuk1.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fc2e4d4e8c0de-sayuk1.webp?alt=media"
+      },
+      {
+        "path": "c54c836b5f7f-g4.png",
+        "sha": "c54c836b5f7f2a0ec31e0514b21e38255c6e41e94294a233f7e65e2401e6dd31",
+        "size": 3545402,
+        "dest": "myhome/akrida/photos/c54c836b5f7f-g4.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/c54c836b5f7f-g4.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fc54c836b5f7f-g4.png?alt=media"
+      },
+      {
+        "path": "c735330e7ec3-myhome99logo.webp",
+        "sha": "c735330e7ec315d5d17dda8a186c5541349b08d507fbaa5e3d0075b572e1e0e1",
+        "size": 560,
+        "dest": "myhome/akrida/photos/c735330e7ec3-myhome99logo.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/c735330e7ec3-myhome99logo.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fc735330e7ec3-myhome99logo.webp?alt=media"
+      },
+      {
+        "path": "cb72c00c554f-nishada_logo.webp",
+        "sha": "cb72c00c554f83505caee297efe2678860c8678d07325742b3a3dae14d20c2f5",
+        "size": 724,
+        "dest": "myhome/akrida/photos/cb72c00c554f-nishada_logo.webp",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/cb72c00c554f-nishada_logo.webp",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fcb72c00c554f-nishada_logo.webp?alt=media"
+      },
+      {
+        "path": "ccd9fad57846-terra.png",
+        "sha": "ccd9fad5784699843e373d9c5d4a506fb12bc6e4bd24bb15b2aab34ea54e018a",
+        "size": 1376124,
+        "dest": "myhome/akrida/photos/ccd9fad57846-terra.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/ccd9fad57846-terra.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fccd9fad57846-terra.png?alt=media"
+      },
+      {
+        "path": "d151f97389a2-linkdin.png",
+        "sha": "d151f97389a2d22fc44ebaaccf23dd186c813e6bb3bb976f6b544cbeb27ee85d",
+        "size": 421,
+        "dest": "myhome/akrida/photos/d151f97389a2-linkdin.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/d151f97389a2-linkdin.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fd151f97389a2-linkdin.png?alt=media"
+      },
+      {
+        "path": "d357a8d5859d-indoor_1.png",
+        "sha": "d357a8d5859dee88a075d909c119f70a5408d6356b5284a42276738eefac6df1",
+        "size": 2153375,
+        "dest": "myhome/akrida/photos/d357a8d5859d-indoor_1.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/d357a8d5859d-indoor_1.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fd357a8d5859d-indoor_1.png?alt=media"
+      },
+      {
+        "path": "d41ebd2b9e9a-10.jpg",
+        "sha": "d41ebd2b9e9a6f31ec23f560302d84985358fa3313f1d396e71f7776513f4365",
+        "size": 77724,
+        "dest": "myhome/akrida/photos/d41ebd2b9e9a-10.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/d41ebd2b9e9a-10.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fd41ebd2b9e9a-10.jpg?alt=media"
+      },
+      {
+        "path": "da15a383e165-instagram.png",
+        "sha": "da15a383e165a4bf05f7c8662f4e85ca9ca2d8adc5cef5bb5c9698f3ea89b601",
+        "size": 364,
+        "dest": "myhome/akrida/photos/da15a383e165-instagram.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/da15a383e165-instagram.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fda15a383e165-instagram.png?alt=media"
+      },
+      {
+        "path": "db5dffb9c5d3-9.png",
+        "sha": "db5dffb9c5d3330b57c67739f77fc28ec31d46ab5f00a84285651dc29fe39ece",
+        "size": 304323,
+        "dest": "myhome/akrida/photos/db5dffb9c5d3-9.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/db5dffb9c5d3-9.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fdb5dffb9c5d3-9.png?alt=media"
+      },
+      {
+        "path": "e244767aee03-white_logo.png",
+        "sha": "e244767aee03bfaa7b0ae6a0227ed58aa5139a01868f9c970daa5e4350e4852f",
+        "size": 6951,
+        "dest": "myhome/akrida/photos/e244767aee03-white_logo.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/e244767aee03-white_logo.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fe244767aee03-white_logo.png?alt=media"
+      },
+      {
+        "path": "ed08878051fb-7.jpg",
+        "sha": "ed08878051fbdbdfca924c840dc4635d9302bbcb7d2472fbfa8f68fcc613c134",
+        "size": 807001,
+        "dest": "myhome/akrida/photos/ed08878051fb-7.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/photos/ed08878051fb-7.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fphotos%2Fed08878051fb-7.jpg?alt=media"
       }
     ],
     "brochures": [
       {
-        "path": "myhome_akrida_e_brochure.pdf",
+        "path": "e2dfdaeb5324-myhome_akrida_e_brochure.pdf",
         "sha": "e2dfdaeb532417a63819384dce20207eb317e197203483598163f054fc253823",
         "size": 61720159,
-        "dest": "myhome/akrida/brochures/myhome_akrida_e_brochure.pdf",
-        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/brochures/myhome_akrida_e_brochure.pdf",
-        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbrochures%2Fmyhome_akrida_e_brochure.pdf?alt=media"
+        "dest": "myhome/akrida/brochures/e2dfdaeb5324-myhome_akrida_e_brochure.pdf",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/brochures/e2dfdaeb5324-myhome_akrida_e_brochure.pdf",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fbrochures%2Fe2dfdaeb5324-myhome_akrida_e_brochure.pdf?alt=media"
       }
     ],
     "documents": [],
-    "logos": [],
-    "news": []
+    "layouts": [
+      {
+        "path": "8ab63de8a37b-layout.png",
+        "sha": "8ab63de8a37bbca9bccafffb476f163541d18a0a8904b8a5f5b3a2c646637a9f",
+        "size": 4087696,
+        "dest": "myhome/akrida/layouts/8ab63de8a37b-layout.png",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/layouts/8ab63de8a37b-layout.png",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Flayouts%2F8ab63de8a37b-layout.png?alt=media"
+      }
+    ],
+    "news": [
+      {
+        "path": "02a6a2f815cb-3.jpg",
+        "sha": "02a6a2f815cb198b59e639fa22e204473d2fd89f5f42307f163103d7d875d20a",
+        "size": 341416,
+        "dest": "myhome/akrida/news/02a6a2f815cb-3.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/news/02a6a2f815cb-3.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fnews%2F02a6a2f815cb-3.jpg?alt=media"
+      },
+      {
+        "path": "0a84d92ab51f-4.jpg",
+        "sha": "0a84d92ab51f3d3de0da7642487c983877f8344363b5bdc3c9843468c65ec8a5",
+        "size": 340517,
+        "dest": "myhome/akrida/news/0a84d92ab51f-4.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/news/0a84d92ab51f-4.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fnews%2F0a84d92ab51f-4.jpg?alt=media"
+      },
+      {
+        "path": "1ebe6005df6e-9.jpg",
+        "sha": "1ebe6005df6ed0f87ed05b89523de4c11246e2cc3bb6a17b2b1a354304294e21",
+        "size": 309052,
+        "dest": "myhome/akrida/news/1ebe6005df6e-9.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/news/1ebe6005df6e-9.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fnews%2F1ebe6005df6e-9.jpg?alt=media"
+      },
+      {
+        "path": "7a56877a8bc2-1.jpg",
+        "sha": "7a56877a8bc2d8d6bd8ff8254ce0201b56252bb65ca76406d29c16aa7b68af65",
+        "size": 651962,
+        "dest": "myhome/akrida/news/7a56877a8bc2-1.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/news/7a56877a8bc2-1.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fnews%2F7a56877a8bc2-1.jpg?alt=media"
+      },
+      {
+        "path": "90cbc059e129-8.jpg",
+        "sha": "90cbc059e129503acf081694eea9fa7750b9fd8ba4b43668efbdd3d2030d29d0",
+        "size": 48496,
+        "dest": "myhome/akrida/news/90cbc059e129-8.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/news/90cbc059e129-8.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fnews%2F90cbc059e129-8.jpg?alt=media"
+      },
+      {
+        "path": "95b2242a4c91-2.jpg",
+        "sha": "95b2242a4c912f86607853f2c0b3a9380066c69bf09d90b0795ead8ee8dae5c4",
+        "size": 90758,
+        "dest": "myhome/akrida/news/95b2242a4c91-2.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/news/95b2242a4c91-2.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fnews%2F95b2242a4c91-2.jpg?alt=media"
+      },
+      {
+        "path": "aa991182ae8e-6.jpg",
+        "sha": "aa991182ae8ee02887f5b5253f81fa196c2dc9b71e921e92637c34f3bcb21a37",
+        "size": 119524,
+        "dest": "myhome/akrida/news/aa991182ae8e-6.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/news/aa991182ae8e-6.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fnews%2Faa991182ae8e-6.jpg?alt=media"
+      },
+      {
+        "path": "b3516df02cab-5.jpg",
+        "sha": "b3516df02cab9a990823fde4921da72f9bd86771a4617714b75fff8c99da4513",
+        "size": 208555,
+        "dest": "myhome/akrida/news/b3516df02cab-5.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/news/b3516df02cab-5.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fnews%2Fb3516df02cab-5.jpg?alt=media"
+      },
+      {
+        "path": "d41ebd2b9e9a-10.jpg",
+        "sha": "d41ebd2b9e9a6f31ec23f560302d84985358fa3313f1d396e71f7776513f4365",
+        "size": 77724,
+        "dest": "myhome/akrida/news/d41ebd2b9e9a-10.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/news/d41ebd2b9e9a-10.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fnews%2Fd41ebd2b9e9a-10.jpg?alt=media"
+      },
+      {
+        "path": "ed08878051fb-7.jpg",
+        "sha": "ed08878051fbdbdfca924c840dc4635d9302bbcb7d2472fbfa8f68fcc613c134",
+        "size": 807001,
+        "dest": "myhome/akrida/news/ed08878051fb-7.jpg",
+        "gsPath": "gs://reflat-staging.firebasestorage.app/myhome/akrida/news/ed08878051fb-7.jpg",
+        "firebaseUrl": "https://firebasestorage.googleapis.com/v0/b/reflat-staging.firebasestorage.app/o/myhome%2Fakrida%2Fnews%2Fed08878051fb-7.jpg?alt=media"
+      }
+    ]
   }
 }

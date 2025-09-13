@@ -77,6 +77,9 @@ async function main() {
     return s;
   }
 
+  // Default opts.env from SEED_ENV or NODE_ENV if not provided via --env
+  opts.env = opts.env || process.env.SEED_ENV || process.env.NODE_ENV;
+
   function tryLoadEnvFileManual() {
     // If dotenv wasn't installed or didn't populate needed vars, try a simple manual parse
     try {
@@ -103,79 +106,59 @@ async function main() {
   // Try manual .env parse as a fallback in case dotenv wasn't available or didn't set values
   tryLoadEnvFileManual();
 
-  opts.bucket = opts.bucket || stripQuotesAndWs(process.env.GS_BUCKET) || stripQuotesAndWs(process.env.GCLOUD_STORAGE_BUCKET) || null;
+  // Simplified: read bucket and credentials directly from environment variables (.env)
+  // Prefer explicit CLI --env then SEED_ENV/NODE_ENV to pick env-specific vars
+  opts.env = opts.env || process.env.SEED_ENV || process.env.NODE_ENV;
+  const up = opts.env ? String(opts.env).toUpperCase().replace(/[^A-Z0-9]/g, '_') : null;
 
-  // If env provided and no explicit bucket, look for GS_BUCKET_<ENV> or GCLOUD_STORAGE_BUCKET_<ENV>
-  if (!opts.bucket && opts.env) {
-    const up = opts.env.toUpperCase().replace(/[^A-Z0-9]/g, '_');
-    opts.bucket = stripQuotesAndWs(process.env[`GS_BUCKET_${up}`]) || stripQuotesAndWs(process.env[`GCLOUD_STORAGE_BUCKET_${up}`]) || null;
-    if (opts.bucket) console.log(`Using bucket from env for ${opts.env}: ${opts.bucket}`);
-  }
-
+  // Read bucket from simple env vars. The tools/scripts/.env should define STORAGE_BUCKET or GS_BUCKET.
+  opts.bucket = opts.bucket || process.env.STORAGE_BUCKET || process.env.GS_BUCKET || process.env.GCLOUD_STORAGE_BUCKET || (up ? (process.env[`STORAGE_BUCKET_${up}`] || process.env[`GS_BUCKET_${up}`] || process.env[`GCLOUD_STORAGE_BUCKET_${up}`]) : null);
   if (!opts.bucket) {
-    console.error('No bucket specified. Set GS_BUCKET, GS_BUCKET_<ENV> in tools/scripts/.env or pass --bucket <bucket-name>');
+    console.error('No bucket specified. Set STORAGE_BUCKET or GS_BUCKET (or their _<ENV> variants) in tools/scripts/.env or pass --bucket <bucket-name>');
     process.exit(1);
   }
-
   // normalize gs:// prefix
-  const bucketName = opts.bucket.replace(/^gs:\/\//, '');
+  const bucketName = String(opts.bucket).replace(/^gs:\/\//, '');
 
-  // Allow specifying credentials JSON via --credentials <path> (already parsed into opts.credentials)
-
-  // If an environment label was provided, allow GOOGLE_APPLICATION_CREDENTIALS_<ENV> in .env
-  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS && opts.env) {
-    try {
-      const up = opts.env.toUpperCase().replace(/[^A-Z0-9]/g, '_');
-      const envKey = `GOOGLE_APPLICATION_CREDENTIALS_${up}`;
-      const candidateEnvVal = stripQuotesAndWs(process.env[envKey]);
-      if (candidateEnvVal) {
-        const candidatePath = path.resolve(process.cwd(), candidateEnvVal);
-        if (fs.existsSync(candidatePath) && fs.statSync(candidatePath).isFile()) {
-          process.env.GOOGLE_APPLICATION_CREDENTIALS = candidatePath;
-          console.log(`Using credentials from ${envKey}:`, candidatePath);
-        } else {
-          console.warn(`Credentials path referenced by ${envKey} not found:`, candidatePath);
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
+  // Credentials: require GOOGLE_APPLICATION_CREDENTIALS or an env var per env like GOOGLE_APPLICATION_CREDENTIALS_STAGING
+  const credsEnv = process.env.GOOGLE_APPLICATION_CREDENTIALS || (up ? process.env[`GOOGLE_APPLICATION_CREDENTIALS_${up}`] : null);
+  if (!credsEnv) {
+    console.error('No Google application credentials found. Set GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_APPLICATION_CREDENTIALS_<ENV> in tools/scripts/.env');
+    process.exit(1);
   }
-
-  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    const candidates = [];
-    // 1) explicit --credentials path
-    if (opts.credentials) candidates.push(path.resolve(opts.credentials));
-    // Per request: only look for credentials JSON under tools/scripts
-    try {
-      const credsDir = path.join(process.cwd(), 'tools', 'scripts');
-      if (fs.existsSync(credsDir)) {
-        const files = fs.readdirSync(credsDir).filter(f => /adminsdk|firebase.*sdk|serviceaccount|\.json$/i.test(f));
-        for (const f of files) candidates.push(path.join(credsDir, f));
+  // If the provided value is not an absolute path, resolve it relative to the repo root (process.cwd()).
+  let credsResolved = credsEnv;
+  try {
+    if (!path.isAbsolute(credsEnv)) {
+      // Prefer resolving relative to tools/scripts (where .env is located)
+      const scriptsBase = path.join(process.cwd(), 'tools', 'scripts');
+      const candidateFromScripts = path.resolve(scriptsBase, credsEnv);
+      if (fs.existsSync(candidateFromScripts) && fs.statSync(candidateFromScripts).isFile()) {
+        credsResolved = candidateFromScripts;
+      } else {
+        // Fallback: resolve relative to repository root
+        credsResolved = path.resolve(process.cwd(), credsEnv);
       }
-    } catch (e) {
-      // ignore
     }
-
-    // Pick the first existing candidate
-    let chosen = null;
-    for (const c of candidates) {
-      if (!c) continue;
-      try {
-        if (fs.existsSync(c) && fs.statSync(c).isFile()) {
-          chosen = c; break;
-        }
-      } catch (e) { /* ignore */ }
-    }
-    if (chosen) {
-      process.env.GOOGLE_APPLICATION_CREDENTIALS = chosen;
-      console.log('Using credentials from', chosen);
-    } else {
-      console.log('No GOOGLE_APPLICATION_CREDENTIALS found; relying on environment or default application credentials.');
-    }
-  } else {
-    console.log('GOOGLE_APPLICATION_CREDENTIALS is set:', process.env.GOOGLE_APPLICATION_CREDENTIALS);
+  } catch (e) {
+    credsResolved = credsEnv;
   }
+  // Ensure the credentials file exists and is a file. Fail fast with helpful message.
+  try {
+    if (!fs.existsSync(credsResolved) || !fs.statSync(credsResolved).isFile()) {
+      console.error('Google application credentials file not found or not a file.');
+      console.error('Value from env:', credsEnv);
+      console.error('Tried resolving to (tools/scripts relative):', path.resolve(path.join(process.cwd(), 'tools', 'scripts'), credsEnv));
+      console.error('Tried resolving to (repo root relative):', path.resolve(process.cwd(), credsEnv));
+      console.error('Please set GOOGLE_APPLICATION_CREDENTIALS to an absolute path, or a path relative to tools/scripts or the repository root.');
+      process.exit(1);
+    }
+  } catch (e) {
+    console.error('Error while checking credentials file:', e.message || e);
+    process.exit(1);
+  }
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = credsResolved;
+  console.log('Using credentials from env:', process.env.GOOGLE_APPLICATION_CREDENTIALS);
 
   const storage = new Storage();
   const bucket = storage.bucket(bucketName);
@@ -316,13 +299,18 @@ async function main() {
       if (fs.existsSync(detailsPath)) {
         const details = JSON.parse(fs.readFileSync(detailsPath, 'utf8'));
         if (!opts.skipLocations) {
-          execSync(`node ${path.resolve(__dirname, 'add_project_to_locations.js')} "${builderId}" "${projectId}" "${details.project_name || details.name}" "${details.city}" "${details.location}"`, { stdio: 'inherit' });
-          // Pass along SEED_ENV if provided so upload_locations_to_firestore picks correct key
+          // Do NOT modify local locations.json. Instead, invoke the Firestore updater
+          // which will read tools/data/locations.json and upload a cleaned view.
           const envVars = Object.assign({}, process.env);
           if (opts.env) envVars.SEED_ENV = opts.env;
-          execSync(`node ${path.resolve(__dirname, 'upload_locations_to_firestore.js')}`, { stdio: 'inherit', env: envVars });
+          // Ensure bucket and credentials are passed along
+          envVars.STORAGE_BUCKET = envVars.STORAGE_BUCKET || opts.bucket;
+          envVars.GS_BUCKET = envVars.GS_BUCKET || opts.bucket;
+          envVars.GOOGLE_APPLICATION_CREDENTIALS = envVars.GOOGLE_APPLICATION_CREDENTIALS || process.env.GOOGLE_APPLICATION_CREDENTIALS;
+          // Call update script in single-project mode so it only processes this project
+          execSync(`node ${path.resolve(__dirname, 'update_firestore.js')} "${builderId}" "${projectId}"`, { stdio: 'inherit', env: envVars });
         } else {
-          console.log('Skipping add/upload of locations (opts.skipLocations=true)');
+          console.log('Skipping upload of locations to Firestore (opts.skipLocations=true)');
         }
       } else {
         console.warn('Project details JSON not found for locations update:', detailsPath);
@@ -346,10 +334,13 @@ async function main() {
   // Upload with concurrency
   const concurrency = 8;
   const queue = [...filesToUpload];
+  // If any worker fails, set aborted=true and terminate the process to avoid partial uploads
+  let aborted = false;
 
   async function worker(id) {
     const workerResults = [];
     while (true) {
+      if (aborted) return workerResults;
       const f = queue.shift();
       if (!f) return workerResults;
 
@@ -387,7 +378,11 @@ async function main() {
         }
         workerResults.push({ status: 'ok', path: f.localPath });
       } catch (err) {
-        workerResults.push({ status: 'failed', path: f.localPath, error: err.message || err });
+        // Mark aborted and immediately terminate the process to avoid partial state
+        aborted = true;
+        console.error(`[Worker ${id}] FAILED uploading ${f.localPath}:`, err.message || err);
+        // Allow any pending console output to flush, then exit with non-zero status
+        process.exit(1);
       }
     }
   }
@@ -508,13 +503,14 @@ async function main() {
     if (fs.existsSync(detailsPath)) {
       const details = JSON.parse(fs.readFileSync(detailsPath, 'utf8'));
       if (!opts.skipLocations) {
-        execSync(`node ${path.resolve(__dirname, 'add_project_to_locations.js')} "${builderId}" "${projectId}" "${details.project_name || details.name}" "${details.city}" "${details.location}"`, { stdio: 'inherit' });
-        // Pass along SEED_ENV if provided so upload_locations_to_firestore picks correct key
         const envVars = Object.assign({}, process.env);
         if (opts.env) envVars.SEED_ENV = opts.env;
-        execSync(`node ${path.resolve(__dirname, 'upload_locations_to_firestore.js')}`, { stdio: 'inherit', env: envVars });
+        envVars.STORAGE_BUCKET = envVars.STORAGE_BUCKET || opts.bucket;
+        envVars.GS_BUCKET = envVars.GS_BUCKET || opts.bucket;
+        envVars.GOOGLE_APPLICATION_CREDENTIALS = envVars.GOOGLE_APPLICATION_CREDENTIALS || process.env.GOOGLE_APPLICATION_CREDENTIALS;
+        execSync(`node ${path.resolve(__dirname, 'update_firestore.js')} "${builderId}" "${projectId}"`, { stdio: 'inherit', env: envVars });
       } else {
-        console.log('Skipping add/upload of locations (opts.skipLocations=true)');
+        console.log('Skipping upload of locations to Firestore (opts.skipLocations=true)');
       }
     } else {
       console.warn('Project details JSON not found for locations update:', detailsPath);

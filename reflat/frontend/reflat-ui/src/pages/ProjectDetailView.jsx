@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -18,7 +18,7 @@ import { getCachedImage } from '../components/imageCache';
 export default function ProjectDetailView() {
   const { builderId, projectId } = useParams();
 
-  const [data, setData] = useState(null);
+  const [data, setData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [signedUrls, setSignedUrls] = useState({});
@@ -27,6 +27,8 @@ export default function ProjectDetailView() {
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState("");
   const [bannerSrc, setBannerSrc] = useState(null);
+  const [builderLogoCached, setBuilderLogoCached] = useState(null);
+  const [projectLogoCached, setProjectLogoCached] = useState(null);
   // Track pending signed_url fetches to avoid duplicate requests
   const pendingSignedFetches = useRef(new Set());
 
@@ -36,6 +38,59 @@ export default function ProjectDetailView() {
   const [floorPlansOpen, setFloorPlansOpen] = useState(false);
   const [photosOpen, setPhotosOpen] = useState(false);
   const [videosOpen, setVideosOpen] = useState(false);
+
+  // Banner carousel state
+  const [bannerIndex, setBannerIndex] = useState(0);
+  const bannerTimerRef = useRef(null);
+  // Swipe/drag refs for carousel interaction
+  const touchStartXRef = useRef(null);
+  const touchDeltaXRef = useRef(0);
+  const isPointerDownRef = useRef(false);
+  const pointerStartXRef = useRef(0);
+
+  // Project details are provided by backend under data.project.key_project_details
+  const pd = data ? ((data.project && data.project.key_project_details) || {}) : {};
+
+  // Safe alias to avoid accessing properties of null while data is still loading
+  const dataSafe = data || {};
+
+  // Banner candidates depend on pd/data and must be declared after pd
+  const bannerCandidates = Array.isArray(data?.banners) && data.banners.length
+    ? data.banners.slice()
+    : (pd?.banner ? [pd.banner] : (pd?.banner_image ? [pd.banner_image] : []));
+
+  // Prefetch signed URLs for carousel entries
+  useEffect(() => {
+    if (!bannerCandidates || bannerCandidates.length === 0) return;
+    let alive = true;
+    bannerCandidates.forEach((b, i) => {
+      // ...existing per-candidate handling...
+      if (!b) return;
+      let fname = b;
+      const parts = (typeof fname === 'string') ? fname.split('/').filter(Boolean) : [];
+      if (parts.length >= 4 && parts[0] === builderId && parts[1] === projectId) {
+        const folderFromPath = parts[2];
+        const filenameFromPath = parts.slice(3).join('/');
+        fetchSignedUrlOnDemand(folderFromPath, normalizeFilenameForUrl(filenameFromPath), `banner_${i}`);
+        return;
+      }
+      if (parts.length >= 2 && parts[0] === 'banners') {
+        const filenameFromPath = parts.slice(1).join('/');
+        fetchSignedUrlOnDemand('banners', normalizeFilenameForUrl(filenameFromPath), `banner_${i}`);
+        return;
+      }
+      fetchSignedUrlOnDemand('banners', normalizeFilenameForUrl(String(fname)), `banner_${i}`);
+    });
+    return () => { alive = false; };
+  }, [bannerCandidates, builderId, projectId]);
+
+  // Auto-advance banner carousel
+  useEffect(() => {
+    if (!bannerCandidates || bannerCandidates.length <= 1) return;
+    if (bannerTimerRef.current) clearInterval(bannerTimerRef.current);
+    bannerTimerRef.current = setInterval(() => setBannerIndex((n) => (n + 1) % bannerCandidates.length), 5000);
+    return () => { if (bannerTimerRef.current) { clearInterval(bannerTimerRef.current); bannerTimerRef.current = null; } };
+  }, [bannerCandidates.length]);
 
   const handleOpenModal = (imageUrl) => {
     setModalImageUrl(imageUrl);
@@ -69,7 +124,7 @@ export default function ProjectDetailView() {
           throw new Error(`HTTP ${fbResp.status}: ${text.substring(0, 200)}`);
         }
         const json = await fbResp.json();
-        if (alive) setData(json);
+        if (alive) setData(json || {});
       } catch (e) {
         if (alive) setError(String(e?.message || e));
       } finally {
@@ -79,13 +134,24 @@ export default function ProjectDetailView() {
     return () => { alive = false; };
   }, [builderId, projectId]);
 
-  // Prefer project details from several possible keys to handle different response shapes
-  // Common variants: Key_Project_details, key_project_details, data.project, data.project.Key_Project_details
-  const pd = (data && (
-    data.Key_Project_details || data.key_project_details ||
-    data.project?.Key_Project_details || data.project?.key_project_details ||
-    data.project || {}
-  )) || {};
+  // Stable callbacks for resolving logos so effects can safely depend on them
+  const resolveBuilderLogoCandidate = useCallback(() => {
+    if (signedUrls.builder_logo) return signedUrls.builder_logo;
+    if (pd?.builder_logo) return resolveFileUrl(pd.builder_logo, 'logos', 'builder_logo');
+    if (pd?.logo) return resolveFileUrl(pd.logo, 'logos', 'builder_logo');
+    if (Array.isArray(data?.logos) && data.logos.length > 0) return resolveFileUrl(data.logos[0], 'logos');
+    if (data?.logo) return data.logo;
+    return null;
+  }, [pd, data, signedUrls]);
+
+  const resolveProjectLogoCandidate = useCallback(() => {
+    if (signedUrls.project_logo) return signedUrls.project_logo;
+    if (pd?.project_logo) return resolveFileUrl(pd.project_logo, 'logos', 'project_logo');
+    if (pd?.logo) return resolveFileUrl(pd.logo, 'logos', 'project_logo');
+    if (Array.isArray(data?.logos) && data.logos.length > 1) return resolveFileUrl(data.logos[1], 'logos');
+    if (Array.isArray(data?.logos) && data.logos.length === 1) return resolveFileUrl(data.logos[0], 'logos');
+    return null;
+  }, [pd, data, signedUrls]);
 
   // DEBUG: surface the resolved data shape in browser console to help locate description fields
   // (will be useful while some scrapes may not include a dedicated description key)
@@ -94,7 +160,20 @@ export default function ProjectDetailView() {
   }
 
   // Amenities source used in multiple places (signed-url fetch, rendering, key lookups)
-  const amenitySrc = (data && (data.amenities || data.project?.amenities || pd?.amenities)) || [];
+  const amenitySrc = (data && (data.amenities)) || [];
+
+  // Heuristic: determine whether a value likely refers to an asset filename/path
+  // We only request signed URLs for values that look like file paths or have an image extension.
+  function looksLikeAssetFilename(v) {
+    if (!v || typeof v !== 'string') return false;
+    // contains a path segment -> likely an object path
+    if (v.includes('/')) return true;
+    // has a known image/video extension
+    if (/\.(jpe?g|png|webp|svg|gif|bmp|avif|tiff|mp4|mov)(\?.*)?$/i.test(v)) return true;
+    // percent-encoded filename probably valid
+    if (/%[0-9A-F]{2}/i.test(v)) return true;
+    return false;
+  }
 
   // Fetch signed URLs for main files (banner, brochure, logos) and a small set of assets
   useEffect(() => {
@@ -133,6 +212,12 @@ export default function ProjectDetailView() {
       let fname = typeof value === 'string' ? value : (value.path || value.file || value.file_name || value.filename || value.name);
       if (!fname) return;
 
+      // NEW: Avoid requesting signed_url for amenity names that are not asset filenames
+      if (folder === 'amenities' && typeof fname === 'string' && !looksLikeAssetFilename(fname)) {
+        if (process.env.NODE_ENV !== 'production') console.debug('addIf: skipping non-asset amenity candidate', fname);
+        return;
+      }
+
       // If fname already looks like an object path that includes builder/project (e.g. 'myhome/akrida/photos/1.jpg')
       if (typeof fname === 'string') {
         const parts = fname.split('/').filter(Boolean);
@@ -164,37 +249,47 @@ export default function ProjectDetailView() {
       toFetch.push({ key, folder, filename: fname });
     };
 
-    addIf('banner', 'banners', data.files?.banner);
-    addIf('brochure', 'brochures', data.files?.brochure);
-    addIf('builder_logo', 'logos', data.files?.builder_logo);
-    addIf('project_logo', 'logos', data.files?.project_logo);
+    // data.files is deprecated; prefer pd.* and top-level arrays
+    addIf('banner', 'banners', pd?.banner || (Array.isArray(dataSafe?.banners) ? dataSafe.banners[0] : null));
+    addIf('brochure', 'brochures', pd?.brochure || (Array.isArray(dataSafe?.brochures) ? dataSafe.brochures[0] : null));
+    addIf('builder_logo', 'logos', pd?.builder_logo || pd?.project_logo || (Array.isArray(dataSafe?.logos) ? dataSafe.logos[0] : null));
+    addIf('project_logo', 'logos', pd?.project_logo || pd?.builder_logo || (Array.isArray(dataSafe?.logos) ? (dataSafe.logos[1] || dataSafe.logos[0]) : null));
 
     // Fetch signed URLs for asset groups only when their section is opened in the UI
     if (photosOpen) {
-      (data.photos || []).forEach((p, i) => addIf(`photo_${i}`, 'photos', p));
+      (dataSafe.photos || []).forEach((p, i) => addIf(`photo_${i}`, 'photos', p));
     }
     if (layoutsOpen) {
-      (data.layouts || []).forEach((l, i) => addIf(`layout_${i}`, 'layouts', l));
+      (dataSafe.layouts || []).forEach((l, i) => addIf(`layout_${i}`, 'layouts', l));
     }
     if (floorPlansOpen) {
-      (data.floor_plans || []).forEach((f, i) => addIf(`floor_${i}`, 'floor_plans', f));
+      (dataSafe.floor_plans || []).forEach((f, i) => addIf(`floor_${i}`, 'floor_plans', f));
     }
     // Add amenities (use the component-scoped amenitySrc) only when opened
     if (amenitiesOpen) {
-      amenitySrc.forEach((a, i) => addIf(`amenity_${i}`, 'amenities', a));
+      amenitySrc.forEach((a, i) => {
+        // amenity may be a string or an object { name, icon }
+        // Only consider explicit icon/path/file values for amenity assets. Do NOT use amenity.name.
+        const candidate = (a && typeof a === 'object') ? (a.icon || null) : a;
+        // Do not attempt to fetch when the amenity has no explicit icon or the value is a human-readable name
+        if (!candidate) return;
+        if (typeof candidate === 'string' && !looksLikeAssetFilename(candidate)) return;
+        addIf(`amenity_${i}`, 'amenities', candidate);
+      });
+
     }
 
     if (toFetch.length === 0) {
       if (process.env.NODE_ENV !== 'production') {
-        console.debug('ProjectDetailView: no assets to fetch for signed URLs', { builderId, projectId, dataFiles: data.files, photos: data.photos?.length, layouts: data.layouts?.length, floor_plans: data.floor_plans?.length, amenityCount: amenitySrc.length });
+        console.debug('ProjectDetailView: no assets to fetch for signed URLs', { builderId, projectId, dataFiles: dataSafe.files, photos: dataSafe.photos?.length, layouts: dataSafe.layouts?.length, floor_plans: dataSafe.floor_plans?.length, amenityCount: amenitySrc.length });
       }
       return;
     }
 
     // Ensure banner and logos are explicitly requested so UI (banner/logo) can render quickly.
     try {
-      if (data.files?.banner) {
-        let fname = typeof data.files.banner === 'string' ? data.files.banner : (data.files.banner.path || data.files.banner.file || data.files.banner.file_name || data.files.banner.filename || data.files.banner.name);
+      if (pd?.banner || (Array.isArray(dataSafe.banners) && dataSafe.banners.length)) {
+        let fname = pd?.banner || (Array.isArray(dataSafe.banners) ? dataSafe.banners[0] : null);
         if (fname) {
           const parts = (typeof fname === 'string') ? fname.split('/').filter(Boolean) : [];
           let folder = 'banners';
@@ -208,35 +303,34 @@ export default function ProjectDetailView() {
           fetchSignedUrlOnDemand(folder, normalizeFilenameForUrl(String(file)), 'banner');
         }
       }
-      if (data.files?.builder_logo) {
-        let fname = typeof data.files.builder_logo === 'string' ? data.files.builder_logo : (data.files.builder_logo.path || data.files.builder_logo.file || data.files.builder_logo.file_name || data.files.builder_logo.filename || data.files.builder_logo.name);
-        if (fname) {
-          const parts = (typeof fname === 'string') ? fname.split('/').filter(Boolean) : [];
-          let folder = 'logos';
-          let file = fname;
-          if (parts.length >= 4 && parts[0] === builderId && parts[1] === projectId) {
-            folder = parts[2];
-            file = parts.slice(3).join('/');
-          } else if (parts.length >= 2 && parts[0] === 'logos') {
-            file = parts.slice(1).join('/');
-          }
-          fetchSignedUrlOnDemand(folder, normalizeFilenameForUrl(String(file)), 'builder_logo');
+      // builder_logo: prefer canonical pd fields when available
+      const builderLogoCandidate = pd?.builder_logo || pd?.project_logo || (Array.isArray(dataSafe?.logos) ? dataSafe.logos[0] : null);
+      if (builderLogoCandidate) {
+        let fname = builderLogoCandidate;
+        const parts = (typeof fname === 'string') ? fname.split('/').filter(Boolean) : [];
+        let folder = 'logos';
+        let file = fname;
+        if (parts.length >= 4 && parts[0] === builderId && parts[1] === projectId) {
+          folder = parts[2];
+          file = parts.slice(3).join('/');
+        } else if (parts.length >= 2 && parts[0] === 'logos') {
+          file = parts.slice(1).join('/');
         }
+        fetchSignedUrlOnDemand(folder, normalizeFilenameForUrl(String(file)), 'builder_logo');
       }
-      if (data.files?.project_logo) {
-        let fname = typeof data.files.project_logo === 'string' ? data.files.project_logo : (data.files.project_logo.path || data.files.project_logo.file || data.files.project_logo.file_name || data.files.project_logo.filename || data.files.project_logo.name);
-        if (fname) {
-          const parts = (typeof fname === 'string') ? fname.split('/').filter(Boolean) : [];
-          let folder = 'logos';
-          let file = fname;
-          if (parts.length >= 4 && parts[0] === builderId && parts[1] === projectId) {
-            folder = parts[2];
-            file = parts.slice(3).join('/');
-          } else if (parts.length >= 2 && parts[0] === 'logos') {
-            file = parts.slice(1).join('/');
-          }
-          fetchSignedUrlOnDemand(folder, normalizeFilenameForUrl(String(file)), 'project_logo');
+      const projectLogoCandidate = pd?.project_logo || pd?.builder_logo || (Array.isArray(dataSafe?.logos) ? (dataSafe.logos[1] || dataSafe.logos[0]) : null);
+      if (projectLogoCandidate) {
+        let fname = projectLogoCandidate;
+        const parts = (typeof fname === 'string') ? fname.split('/').filter(Boolean) : [];
+        let folder = 'logos';
+        let file = fname;
+        if (parts.length >= 4 && parts[0] === builderId && parts[1] === projectId) {
+          folder = parts[2];
+          file = parts.slice(3).join('/');
+        } else if (parts.length >= 2 && parts[0] === 'logos') {
+          file = parts.slice(1).join('/');
         }
+        fetchSignedUrlOnDemand(folder, normalizeFilenameForUrl(String(file)), 'project_logo');
       }
     } catch (e) {
       // ignore
@@ -295,8 +389,8 @@ export default function ProjectDetailView() {
     let alive = true;
     (async () => {
       try {
-        if (!data) return;
-        const candidate = (signedUrls.banner) || resolveFileUrl(data.files?.banner, 'banners');
+        if (!dataSafe) return;
+        const candidate = (signedUrls.banner) || resolveFileUrl(pd?.banner || (Array.isArray(dataSafe?.banners) ? dataSafe.banners[0] : null), 'banners');
         if (!candidate) return;
         // getCachedImage will request a signed URL if needed and return an object URL or original URL
         const cached = await getCachedImage(candidate);
@@ -323,6 +417,38 @@ export default function ProjectDetailView() {
     return () => { alive = false; };
   }, [data, signedUrls]);
 
+  // Fetch and cache builder logo for header
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const candidate = resolveBuilderLogoCandidate();
+        if (!candidate) return;
+        const cached = await getCachedImage(candidate);
+        if (alive) setBuilderLogoCached(cached);
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => { alive = false; };
+  }, [data, signedUrls]);
+
+  // Fetch and cache project logo for title
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const candidate = resolveProjectLogoCandidate();
+        if (!candidate) return;
+        const cached = await getCachedImage(candidate);
+        if (alive) setProjectLogoCached(cached);
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => { alive = false; };
+  }, [data, signedUrls]);
+
   function normalizeFilenameForUrl(name) {
     if (!name) return name;
     // This logic should EXACTLY match the `normalizeFilename` function in the upload script.
@@ -334,7 +460,7 @@ export default function ProjectDetailView() {
     // item may be a string filename or an object with url/file/file_name/name
     if (!item) return null;
 
-    const rawFilename = typeof item === 'string' ? item : (item.file || item.file_name || item.filename || item.name || item.path || fallbackName);
+    const rawFilename = typeof item === 'string' ? item : (item.file || item.path || item.file_name || item.filename || fallbackName);
 
     if (typeof rawFilename === 'string' && rawFilename.startsWith('http')) {
       return rawFilename;
@@ -390,17 +516,17 @@ export default function ProjectDetailView() {
     // Helper: get normalized base name (last path segment) for various item shapes
     function extractNormalizedBase(itemOrString) {
       if (!itemOrString) return '';
-      const raw = (typeof itemOrString === 'string') ? itemOrString : (itemOrString.file || itemOrString.path || itemOrString.file_name || itemOrString.filename || itemOrString.name || '');
+      const raw = (typeof itemOrString === 'string') ? itemOrString : (itemOrString.file || itemOrString.path || itemOrString.file_name || itemOrString.filename || '');
       const norm = normalizeFilenameForUrl(String(raw));
       return norm.split('/').filter(Boolean).pop() || '';
     }
 
     const baseFilename = filename.split('/').filter(Boolean).pop();
 
-    const photoIndex = (data?.photos || []).findIndex(p => extractNormalizedBase(p) === baseFilename);
-    const layoutIndex = (data?.layouts || []).findIndex(l => extractNormalizedBase(l) === baseFilename);
-    const floorIndex = (data?.floor_plans || []).findIndex(f => extractNormalizedBase(f) === baseFilename);
-    const amenityIndex = (amenitySrc || []).findIndex(a => extractNormalizedBase(a) === baseFilename);
+    const photoIdx = (data?.photos || []).findIndex(p => extractNormalizedBase(p) === baseFilename);
+    const layoutIdx = (data?.layouts || []).findIndex(l => extractNormalizedBase(l) === baseFilename);
+    const floorIdx = (data?.floor_plans || []).findIndex(f => extractNormalizedBase(f) === baseFilename);
+    const amenityIdx = (amenitySrc || []).findIndex(a => extractNormalizedBase(a) === baseFilename);
 
     const keyCandidates = [
       // main file keys
@@ -408,10 +534,10 @@ export default function ProjectDetailView() {
       folder === 'brochures' && 'brochure',
       folder === 'logos' && (fallbackName && fallbackName.includes('builder') ? 'builder_logo' : 'project_logo'),
       // dynamic keys for small-asset caches (only include when index found)
-      photoIndex >= 0 && `photo_${photoIndex}`,
-      layoutIndex >= 0 && `layout_${layoutIndex}`,
-      floorIndex >= 0 && `floor_${floorIndex}`,
-      amenityIndex >= 0 && `amenity_${amenityIndex}`,
+      photoIdx >= 0 && `photo_${photoIdx}`,
+      layoutIdx >= 0 && `layout_${layoutIdx}`,
+      floorIdx >= 0 && `floor_${floorIdx}`,
+      amenityIdx >= 0 && `amenity_${amenityIdx}`,
     ].filter(Boolean);
 
     for (const k of keyCandidates) {
@@ -439,9 +565,10 @@ export default function ProjectDetailView() {
       try {
         // Normalize for on-demand request
         const normalized = normalizeFilenameForUrl(filename);
-        fetchSignedUrlOnDemand(folder, normalized, null);
+        // Only request on-demand signed URL when the filename looks like an actual asset (has extension or path)
+        if (looksLikeAssetFilename(filename)) fetchSignedUrlOnDemand(folder, normalized, null);
       } catch (e) {
-        fetchSignedUrlOnDemand(folder, filename, null);
+        if (looksLikeAssetFilename(filename)) fetchSignedUrlOnDemand(folder, filename, null);
       }
     }
 
@@ -468,28 +595,6 @@ export default function ProjectDetailView() {
     return null;
   }
 
-  // Resolve builder/project logo by checking signed URLs, data.files, data.logos array and Key_Project_details
-  function resolveLogoCandidate() {
-    // signedUrls override
-    if (signedUrls.builder_logo) return signedUrls.builder_logo;
-    if (signedUrls.project_logo) return signedUrls.project_logo;
-    // data.files.*
-    if (data?.files?.builder_logo) return resolveFileUrl(data.files.builder_logo, 'logos', 'builder_logo');
-    if (data?.files?.project_logo) return resolveFileUrl(data.files.project_logo, 'logos', 'project_logo');
-    // data.logos array common in local JSON
-    if (Array.isArray(data?.logos) && data.logos.length > 0) {
-      const first = data.logos[0];
-      return resolveFileUrl(first, 'logos');
-    }
-    // Key_Project_details fields
-    if (pd?.builder_logo) return resolveFileUrl(pd.builder_logo, 'logos');
-    if (pd?.project_logo) return resolveFileUrl(pd.project_logo, 'logos');
-    // fallback to top-level logo fields
-    if (data?.logo) return data.logo;
-    if (data?.project?.logo) return data.project.logo;
-    return null;
-  }
-
   // Fetch a signed URL for a specific folder/filename and merge into signedUrls state
   async function fetchSignedUrlOnDemand(folder, filename, keyHint) {
     if (!folder || !filename) return;
@@ -497,6 +602,13 @@ export default function ProjectDetailView() {
     const composite2 = `${folder}/${filename}`;
     if (signedUrls[composite1] || signedUrls[composite2]) return; // already have it
     const pendingKey = `${folder}::${filename}`;
+
+    // NEW: Skip requests for values that do not look like asset filenames (prevents requests like 'Multipurpose_Halls')
+    if (typeof filename === 'string' && !looksLikeAssetFilename(filename)) {
+      if (process.env.NODE_ENV !== 'production') console.debug('fetchSignedUrlOnDemand: skipping non-asset filename', filename, folder, keyHint);
+      return;
+    }
+
     if (pendingSignedFetches.current.has(pendingKey)) return;
     pendingSignedFetches.current.add(pendingKey);
     try {
@@ -523,8 +635,9 @@ export default function ProjectDetailView() {
   function prefetchGroup(folder, items) {
     if (!items || !Array.isArray(items)) return;
     items.forEach((it, idx) => {
-      let candidate = typeof it === 'string' ? it : (it.path || it.file || it.file_name || it.filename || it.name || it);
-      if (!candidate) return;
+      // Only use explicit fields: it.icon (asset path) and it.name (display). Do NOT fall back to .path/.file/.filename or raw string values.
+      const candidateRaw = (it && typeof it === 'object') ? (it.icon ?? null) : null;
+
       // Determine a UI-friendly key hint so fetchSignedUrlOnDemand stores the URL under dynamic keys like 'layout_0'
       let keyHint = null;
       if (folder === 'photos') keyHint = `photo_${idx}`;
@@ -532,38 +645,102 @@ export default function ProjectDetailView() {
       if (folder === 'floor_plans') keyHint = `floor_${idx}`;
       if (folder === 'amenities') keyHint = `amenity_${idx}`;
 
-      // If candidate includes builder/project prefix, extract folder+filename
-      if (typeof candidate === 'string') {
-        const parts = candidate.split('/').filter(Boolean);
-        if (parts.length >= 4 && parts[0] === builderId && parts[1] === projectId) {
-          const folderFromPath = parts[2];
-          const filenameFromPath = parts.slice(3).join('/');
-          fetchSignedUrlOnDemand(folderFromPath, normalizeFilenameForUrl(filenameFromPath), keyHint);
+
+      // Candidate must be a string path/filename
+      if (typeof candidateRaw !== 'string') return;
+
+      const candidate = candidateRaw;
+
+      // If the candidate looks like it was synthesized from the amenity name (e.g. last segment equals the amenity.name
+      // and there is no file extension), skip. This prevents treating an absent icon as a filename derived from the name.
+      try {
+        const lastSegment = String(candidate).split('/').filter(Boolean).pop() || '';
+        const lastNoExt = lastSegment.replace(/\.[^/.]+$/, '');
+        const nameCandidate = (it && typeof it === 'object' && it.name) ? normalizeFilenameForUrl(String(it.name)) : '';
+        const lastNormalized = normalizeFilenameForUrl(String(lastNoExt));
+        const looksSynthesizedFromName = nameCandidate && lastNormalized && nameCandidate === lastNormalized && !/\.[a-z0-9]{2,6}(\?.*)?$/i.test(lastSegment);
+        if (looksSynthesizedFromName) {
+          if (process.env.NODE_ENV !== 'production') console.debug('prefetchGroup: skipping synthesized icon (matches amenity.name)', { candidate, name: it.name, keyHint });
           return;
         }
-        if (parts.length >= 2 && parts[0] === folder) {
-          const filenameFromPath = parts.slice(1).join('/');
-          fetchSignedUrlOnDemand(folder, normalizeFilenameForUrl(filenameFromPath), keyHint);
-          return;
-        }
+      } catch (e) {
+        // ignore and continue
       }
-      // Fallback: ask for filename directly
+
+      // Debug: show candidate and keyHint
+      if (process.env.NODE_ENV !== 'production') console.debug('prefetchGroup candidate', { candidate, folder, keyHint });
+
+      // Strict additional guard: require an extension in the last path segment (e.g. '.png', '.jpg')
+      // or percent-encoding present. This avoids prefetching values that are generated from an amenity name
+      // like 'myhome/akrida/amenities/Multipurpose_Halls' which lack an actual file extension.
+      const lastSegment = candidate.split('/').filter(Boolean).pop() || '';
+      const hasExt = /\.[a-z0-9]{2,6}(\?.*)?$/i.test(lastSegment);
+      const hasPct = /%[0-9A-F]{2}/i.test(candidate);
+      if (!hasExt && !hasPct) {
+        if (process.env.NODE_ENV !== 'production') console.debug('prefetchGroup: skipping non-asset candidate (no extension)', { candidate, folder, keyHint });
+        return;
+      }
+
+      // If candidate includes builder/project prefix, extract folder+filename
+      const parts = candidate.split('/').filter(Boolean);
+      if (parts.length >= 4 && parts[0] === builderId && parts[1] === projectId) {
+        const folderFromPath = parts[2];
+        const filenameFromPath = parts.slice(3).join('/');
+        // Only fetch if filename looks like a valid asset
+        if (looksLikeAssetFilename(filenameFromPath)) fetchSignedUrlOnDemand(folderFromPath, normalizeFilenameForUrl(filenameFromPath), keyHint);
+        return;
+      }
+
+      // If candidate already includes the folder (e.g. 'amenities/x.png'), extract the filename
+      if (parts.length >= 2 && parts[0] === folder) {
+        const filenameFromPath = parts.slice(1).join('/');
+        if (looksLikeAssetFilename(filenameFromPath)) fetchSignedUrlOnDemand(folder, normalizeFilenameForUrl(filenameFromPath), keyHint);
+        return;
+      }
+
+      // Fallback: only request when the candidate looks like an asset filename (has extension or path)
+      if (!looksLikeAssetFilename(candidate)) return;
       fetchSignedUrlOnDemand(folder, normalizeFilenameForUrl(String(candidate)), keyHint);
     });
   }
 
   return (
     <Box sx={{ maxWidth: 1100, mx: 'auto', p: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}>
-        <Button component={Link} to="/new-projects" startIcon={<ArrowBackIcon />}>Back</Button>
-        {resolveLogoCandidate() && (
-          <Box
-            component="img"
-            src={resolveLogoCandidate()}
-            alt="builder logo"
-            sx={{ height: { xs: 32, sm: 40 }, maxWidth: 120, objectFit: 'contain', display: 'block' }}
-          />
-        )}
+      {/* Header row: Back | Project title | Builder logo (right aligned) */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2,
+        position: 'sticky', top: 0, backgroundColor: 'background.paper', zIndex: 1200, pt: 1, pb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+          <Button component={Link} to="/new-projects" startIcon={<ArrowBackIcon />}>Back</Button>
+          {/* Project logo to the left of the title (small, responsive) */}
+          {projectLogoCached && (
+            <Box
+              component="img"
+              src={projectLogoCached}
+              alt="project logo"
+              sx={{ width: { xs: 40, sm: 56 }, height: { xs: 28, sm: 40 }, objectFit: 'contain', flex: '0 0 auto' }}
+            />
+          )}
+          <Box sx={{ overflow: 'hidden', minWidth: 0 }}>
+            <Typography variant="h5" component="div" sx={{ fontWeight: 700, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+              {pd.project_name || pd.name || data.project?.project_name || data.project?.name || 'Untitled'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+              {(pd.project_location || pd.location || '')}{pd.project_city ? `, ${pd.project_city}` : ''}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Builder logo always right-aligned */}
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          {builderLogoCached && (
+            <Box
+              component="img"
+              src={builderLogoCached}
+              alt="builder logo"
+              sx={{ height: { xs: 32, sm: 40 }, maxWidth: 140, objectFit: 'contain', display: 'block' }}
+            />
+          )}
+        </Box>
       </Box>
 
       {loading && <Typography color="text.secondary">Loading…</Typography>}
@@ -571,131 +748,201 @@ export default function ProjectDetailView() {
 
       {!loading && !error && data && (
         <Box>
-          {/* Project Title & Logo */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-            {data.files?.project_logo && (
-              <Box component="img" src={ signedUrls.project_logo || resolveLogoCandidate() || resolveFileUrl(data.files?.project_logo, 'logos', 'project_logo') } alt="project logo" sx={{ width: 60, height: 60, objectFit: 'contain', borderRadius: 1, p: 0.5, border: '1px solid #eee' }} />
-            )}
-            <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
-              {pd.project_name || pd.name || data.project?.project_name || data.project?.name || 'Untitled'}
-            </Typography>
-          </Box>
-
-          <Typography color="text.secondary" sx={{ mb: 2, pl: '76px' /* Align with title, accounting for logo width + gap */ }}>
-            {(pd.project_location || pd.location || '')}{pd.project_city ? `, ${pd.project_city}` : ''}
-          </Typography>
-
-          {/* Description / Highlights: try several common keys so we show text when available */}
+          {/* Description / Highlights (left aligned beneath header) */}
           {(pd.description || data.description || pd.highlights || data.highlights || pd.summary || data.summary || pd.overview || data.overview) && (
-            <Typography variant="body1" sx={{ mb: 2, pl: '76px' }}>
+            <Typography variant="body1" sx={{ mb: 2, textAlign: 'left' }}>
               {pd.description || data.description || pd.highlights || data.highlights || pd.summary || data.summary || pd.overview || data.overview}
             </Typography>
           )}
 
-          {/* Banner image */}
-          {data.files?.banner && (
-            <Box
-              component="img"
-              src={bannerSrc || signedUrls.banner || resolveFileUrl(data.files.banner, 'banners')}
-              alt="banner"
-              loading="eager"
-              fetchPriority="high"
-              sx={{ width: '100%', height: 'auto', maxHeight: 400, objectFit: 'cover', borderRadius: 2, mb: 4, aspectRatio: '16/7' }}
-            />
-          )}
+          {/* Banner: single image or simple carousel when multiple banners present */}
+          {bannerCandidates && bannerCandidates.length > 0 && (() => {
+            const current = bannerIndex % bannerCandidates.length;
+            const currentCandidate = bannerCandidates[current];
+            // Ensure we treat the candidate as a string for filename extraction. The banner entry may be an object.
+            const candidateStr = (typeof currentCandidate === 'string')
+              ? currentCandidate
+              : (currentCandidate && (currentCandidate.file || currentCandidate.path || currentCandidate.url || currentCandidate.name)) || '';
+            const normalizedBase = normalizeFilenameForUrl(String(candidateStr).split('/').filter(Boolean).pop() || '');
+            const src = signedUrls[`banner_${current}`] || signedUrls[`banners:${normalizedBase}`] || signedUrls[`banners/${normalizedBase}`] || bannerSrc || resolveFileUrl(currentCandidate, 'banners');
 
-          {/* Project Details Section */}
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h5" sx={{ mb: 2, borderBottom: 1, borderColor: 'divider', pb: 1 }}>Project Details</Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
-                {/* Actions */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start' }}>
-                  {data.files?.brochure && (
-                    <Button
-                      onClick={() => handleOpenPdfModal(signedUrls.brochure || resolveFileUrl(data.files.brochure, 'brochures'))}
-                      startIcon={<i className="fa-solid fa-file-pdf" />}
-                    >
-                      Brochure
-                    </Button>
-                  )}
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={8}>
-                {/* Property details grid */}
-                <Grid container spacing={2}>
-                  <Field label="Configuration" value={pd.configuration || pd.config} />
-                  <Field label="Unit Sizes" value={pd.unit_sizes || pd.unitSizes || pd.unitSizes} />
-                  <Field label="Total Acres" value={pd.total_acres || pd.totalAcres} />
-                  <Field label="Towers" value={pd.total_towers || pd.totalTowers || pd.total_towers} />
-                  <Field label="Total Units" value={pd.total_units || pd.totalUnits || pd.total_flats || pd.totalFlats} />
-                  <Field label="Floors" value={pd.total_floors || pd.totalFloors} />
-                  <Field label="Units / Floor" value={pd.units_per_floor || pd.units_perfloor || pd.unitsPerFloor} />
-                  <Field label="Flats / acre" value={pd.flats_density || pd.density_per_acre || pd.density || pd.flatsDensity} />
-                  {pd.possession_date && <Field label="Possession" value={pd.possession_date} />}
-                  {pd.rera_number && <Field label="RERA" value={pd.rera_number} />}
-                </Grid>
+            return (
+              <Box
+                sx={{ position: 'relative', mb: 4, touchAction: 'pan-y' }}
+                onTouchStart={(e) => { touchStartXRef.current = e.touches?.[0]?.clientX ?? null; }}
+                onTouchMove={(e) => { if (touchStartXRef.current != null) touchDeltaXRef.current = e.touches?.[0]?.clientX - touchStartXRef.current; }}
+                onTouchEnd={() => {
+                  const delta = touchDeltaXRef.current || 0;
+                  touchStartXRef.current = null;
+                  touchDeltaXRef.current = 0;
+                  if (Math.abs(delta) > 50 && bannerCandidates && bannerCandidates.length > 0) {
+                    if (delta < 0) setBannerIndex((n) => (n + 1) % bannerCandidates.length);
+                    else setBannerIndex((n) => (n - 1 + bannerCandidates.length) % bannerCandidates.length);
+                    if (bannerTimerRef.current) { clearInterval(bannerTimerRef.current); bannerTimerRef.current = null; }
+                  }
+                }}
+                onMouseDown={(e) => { isPointerDownRef.current = true; pointerStartXRef.current = e.clientX; }}
+                onMouseMove={(e) => { if (!isPointerDownRef.current) return; touchDeltaXRef.current = e.clientX - pointerStartXRef.current; }}
+                onMouseUp={() => {
+                  if (!isPointerDownRef.current) return;
+                  const delta = touchDeltaXRef.current || 0;
+                  isPointerDownRef.current = false;
+                  touchDeltaXRef.current = 0;
+                  pointerStartXRef.current = 0;
+                  if (Math.abs(delta) > 50 && bannerCandidates && bannerCandidates.length > 0) {
+                    if (delta < 0) setBannerIndex((n) => (n + 1) % bannerCandidates.length);
+                    else setBannerIndex((n) => (n - 1 + bannerCandidates.length) % bannerCandidates.length);
+                    if (bannerTimerRef.current) { clearInterval(bannerTimerRef.current); bannerTimerRef.current = null; }
+                  }
+                }}
+                onMouseLeave={() => { isPointerDownRef.current = false; touchDeltaXRef.current = 0; pointerStartXRef.current = 0; }}
+              >
+                <Box
+                  component="img"
+                  src={src}
+                  alt={`banner-${current}`}
+                  loading="eager"
+                  fetchPriority="high"
+                  sx={{ width: '100%', height: 'auto', maxHeight: 420, objectFit: 'cover', borderRadius: 2, aspectRatio: '16/7', userSelect: 'none' }}
+                />
+                {/* Clickable overlay areas to support mouse click navigation */}
+                {bannerCandidates.length > 1 && (
+                  <>
+                    <Box
+                      onClick={() => { setBannerIndex((n) => (n - 1 + bannerCandidates.length) % bannerCandidates.length); if (bannerTimerRef.current) { clearInterval(bannerTimerRef.current); bannerTimerRef.current = null; } }}
+                      sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', cursor: 'pointer', zIndex: 2 }}
+                      aria-hidden
+                    />
+                    <Box
+                      onClick={() => { setBannerIndex((n) => (n + 1) % bannerCandidates.length); if (bannerTimerRef.current) { clearInterval(bannerTimerRef.current); bannerTimerRef.current = null; } }}
+                      sx={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '30%', cursor: 'pointer', zIndex: 2 }}
+                      aria-hidden
+                    />
+                  </>
+                )}
+                 {bannerCandidates.length > 1 && (
+                   <>
+                     <Button onClick={() => { setBannerIndex((n) => (n - 1 + bannerCandidates.length) % bannerCandidates.length); if (bannerTimerRef.current) { clearInterval(bannerTimerRef.current); bannerTimerRef.current = null; } }} sx={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)' }}>‹</Button>
+                     <Button onClick={() => { setBannerIndex((n) => (n + 1) % bannerCandidates.length); if (bannerTimerRef.current) { clearInterval(bannerTimerRef.current); bannerTimerRef.current = null; } }} sx={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}>›</Button>
+                     <Box sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 8, display: 'flex', gap: 1 }}>
+                       {bannerCandidates.map((_, i) => (
+                         <Box key={i} sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: i === current ? 'primary.main' : 'rgba(255,255,255,0.6)' }} />
+                       ))}
+                     </Box>
+                   </>
+                 )}
+              </Box>
+             );
+           })()}
+
+          {/* Key Details header row with Brochure button on the right */}
+          <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+            <Typography variant="h5" sx={{ mb: 0, borderBottom: 1, borderColor: 'divider', pb: 1, textAlign: 'left' }}>Key Details</Typography>
+            {(pd?.brochure || (Array.isArray(data?.brochures) && data.brochures.length)) && (
+              <Box>
+                <Button
+                  onClick={() => handleOpenPdfModal(signedUrls.brochure || resolveFileUrl(pd?.brochure || (Array.isArray(data?.brochures) ? data.brochures[0] : null), 'brochures'))}
+                  startIcon={<i className="fa-solid fa-file-pdf" />}
+                  variant="outlined"
+                >
+                  Brochure
+                </Button>
+              </Box>
+            )}
+          </Box>
+
+          <Grid container spacing={2} sx={{ justifyContent: 'center', maxWidth: 800, mt: 0 }}>
+            <Grid item xs={12} md={4}>
+              {/* Actions */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start' }} />
+            </Grid>
+            <Grid item xs={12} md={8}>
+              {/* Property details grid */}
+              <Grid container spacing={2}>
+                <Field label="Configuration" value={pd.configuration || pd.config} />
+                <Field label="Unit Sizes" value={pd.unit_sizes || pd.unitSizes || pd.unitSizes} />
+                <Field label="Total Acres" value={pd.total_acres || pd.totalAcres} />
+                <Field label="Towers" value={pd.total_towers || pd.totalTowers || pd.total_towers} />
+                <Field label="Total Units" value={pd.total_units || pd.totalUnits || pd.total_flats || pd.totalFlats} />
+                <Field label="Floors" value={pd.total_floors || pd.totalFloors} />
+                <Field label="Units / Floor" value={pd.units_per_floor || pd.units_perfloor || pd.unitsPerFloor} />
+                <Field label="Flats / acre" value={pd.flats_per_acre || pd.density_per_acre || pd.density || pd.flats_density || pd.flatsDensity} />
+                {pd.possession_date && <Field label="Possession" value={pd.possession_date} />}
+                {pd.rera_number && <Field label="RERA" value={pd.rera_number} />}
               </Grid>
             </Grid>
-          </Box>
+          </Grid>
 
           {/* Amenities */}
           {Array.isArray(amenitySrc) && amenitySrc.length > 0 && (
             <Accordion sx={{ mb: 4 }} defaultExpanded={false} expanded={amenitiesOpen} onChange={(e, isExpanded) => { setAmenitiesOpen(isExpanded); if (isExpanded) prefetchGroup('amenities', amenitySrc); }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ position: 'sticky', top: '64px', zIndex: 1100, backgroundColor: 'background.paper' }}>
                 <Typography variant="h6">Amenities ({amenitySrc.length})</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                <Box sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
-                  gap: '16px',
-                }}>
-                  {amenitySrc.map((amenity, idx) => {
-                    const src = resolveFileUrl(amenity, 'amenities');
-                    // Derive a stable key from common properties or the string value; fall back to index-based key
-                    const derivedKey = (amenity && typeof amenity === 'object')
-                      ? (amenity.name || amenity.path || amenity.file || amenity.file_name || amenity.filename)
-                      : (typeof amenity === 'string' ? amenity : null);
-                    const stableKey = derivedKey || `amenity_${idx}`;
-                    return (
-                      <React.Fragment key={stableKey}>
-                        {src ? (
-                          <Box
-                            sx={{ textAlign: 'center', cursor: 'pointer' }}
-                            onClick={() => handleOpenModal(src)}
-                          >
+                {amenitiesOpen ? (
+                  <Box sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+                    gap: '16px',
+                  }}>
+                    {amenitySrc.map((amenity, idx) => {
+                      // Display name: prefer amenity.name when object, otherwise string value
+                      const displayName = (amenity && typeof amenity === 'object') ? (amenity.name || '') : (typeof amenity === 'string' ? amenity : '');
+
+                      // Image candidate: ONLY from amenity.icon when amenity is an object
+                      const imageCandidate = (amenity && typeof amenity === 'object') ? (amenity.icon || null) : null;
+
+                      // Resolve URL only if we have an explicit image candidate
+                      const src = imageCandidate ? resolveFileUrl(imageCandidate, 'amenities') : null;
+
+                      // Stable key based on display name or index
+                      const stableKey = displayName || `amenity_${idx}`;
+
+                      return (
+                        <React.Fragment key={stableKey}>
+                          {src ? (
                             <Box
-                              component="img"
-                              src={src}
-                              alt={amenity.name}
-                              loading="lazy"
-                              fetchPriority="low"
-                              sx={{
-                                width: 64,
-                                height: 64,
-                                objectFit: 'contain',
-                                borderRadius: '50%',
-                                border: '1px solid #eee',
-                                p: 1,
-                                mb: 1,
-                              }}
-                            />
-                            <Typography
-                              variant="caption"
-                              display="block"
-                              title={amenity.name}
+                              sx={{ textAlign: 'center', cursor: 'pointer' }}
+                              onClick={() => handleOpenModal(src)}
                             >
-                              {amenity.name}
-                            </Typography>
-                          </Box>
-                        ) : (
-                          <Box sx={{ width: 64, height: 64, bgcolor: 'grey.100', borderRadius: '50%' }} />
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-                </Box>
+                              <Box
+                                component="img"
+                                src={src}
+                                alt={displayName}
+                                loading="lazy"
+                                fetchPriority="low"
+                                sx={{
+                                  width: 64,
+                                  height: 64,
+                                  objectFit: 'contain',
+                                  borderRadius: '50%',
+                                  border: '1px solid #eee',
+                                  p: 1,
+                                  mb: 1,
+                                }}
+                              />
+                              <Typography
+                                variant="caption"
+                                display="block"
+                                title={displayName}
+                              >
+                                {displayName}
+                              </Typography>
+                            </Box>
+                          ) : (
+                            <Box sx={{ textAlign: 'center' }}>
+                              <Box sx={{ width: 64, height: 64, bgcolor: 'grey.100', borderRadius: '50%', display: 'inline-block' }} />
+                              <Typography variant="caption" display="block" title={displayName} sx={{ mt: 1 }}>
+                                {displayName}
+                              </Typography>
+                            </Box>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </Box>
+                ) : null}
               </AccordionDetails>
             </Accordion>
           )}
@@ -703,34 +950,34 @@ export default function ProjectDetailView() {
           {/* Site Plan (Layouts) */}
           {Array.isArray(data.layouts) && data.layouts.length > 0 && (
             <Accordion sx={{ mb: 4 }} expanded={layoutsOpen} onChange={(e, isExpanded) => { setLayoutsOpen(isExpanded); if (isExpanded) prefetchGroup('layouts', data.layouts); }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ position: 'sticky', top: '64px', zIndex: 1100, backgroundColor: 'background.paper' }}>
                 <Typography variant="h6">Site Plan ({data.layouts.length})</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                <Grid container spacing={2}>
-                  {data.layouts.map((l) => {
-                    const src = resolveFileUrl(l, 'layouts');
-                    console.log('Layout src:', src);
-                    console.log('Layout src l:', l);
-                    return (
-                      <Grid item key={l.id || l.path || (l.file || l.file_name || Math.random())} xs={6} sm={4} md={3}>
-                        {src ? (
-                          <Box
-                            component="img"
-                            src={src}
-                            alt={l.caption || 'layout'}
-                            loading="lazy"
-                            fetchPriority="low"
-                            sx={{ width: '100%', height: 'auto', objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd', cursor: 'pointer', aspectRatio: '4/3', minHeight: 120 }}
-                            onClick={() => handleOpenModal(src)}
-                          />
-                        ) : (
-                          <Box sx={{ width: '100%', aspectRatio: '4/3', bgcolor: 'grey.100', borderRadius: 1 }} />
-                        )}
-                      </Grid>
-                    );
-                  })}
-                </Grid>
+                {layoutsOpen ? (
+                  <Grid container spacing={2}>
+                    {data.layouts.map((l) => {
+                      const src = resolveFileUrl(l, 'layouts');
+                      return (
+                        <Grid item key={l.id || l.path || (l.file || l.file_name || Math.random())} xs={6} sm={4} md={3}>
+                          {src ? (
+                            <Box
+                              component="img"
+                              src={src}
+                              alt={l.caption || 'layout'}
+                              loading="lazy"
+                              fetchPriority="low"
+                              sx={{ width: '100%', height: 'auto', objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd', cursor: 'pointer', aspectRatio: '4/3', minHeight: 120 }}
+                              onClick={() => handleOpenModal(src)}
+                            />
+                          ) : (
+                            <Box sx={{ width: '100%', aspectRatio: '4/3', bgcolor: 'grey.100', borderRadius: 1 }} />
+                          )}
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                ) : null}
               </AccordionDetails>
             </Accordion>
           )}
@@ -738,32 +985,34 @@ export default function ProjectDetailView() {
           {/* Floor Plans */}
           {Array.isArray(data.floor_plans) && data.floor_plans.length > 0 && (
             <Accordion sx={{ mb: 4 }} expanded={floorPlansOpen} onChange={(e, isExpanded) => { setFloorPlansOpen(isExpanded); if (isExpanded) prefetchGroup('floor_plans', data.floor_plans); }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ position: 'sticky', top: '64px', zIndex: 1100, backgroundColor: 'background.paper' }}>
                 <Typography variant="h6">Floor Plans ({data.floor_plans.length})</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                <Grid container spacing={2}>
-                  {data.floor_plans.map((f) => {
-                    const src = resolveFileUrl(f, 'floor_plans');
-                    return (
-                      <Grid item key={f.id || f.path || (f.file || Math.random())} xs={6} sm={4} md={3}>
-                        {src ? (
-                          <Box
-                            component="img"
-                            src={src}
-                            alt={f.caption || 'floor plan'}
-                            loading="lazy"
-                            fetchPriority="low"
-                            sx={{ width: '100%', height: 'auto', objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd', cursor: 'pointer', aspectRatio: '4/3', minHeight: 120 }}
-                            onClick={() => handleOpenModal(src)}
-                          />
-                        ) : (
-                          <Box sx={{ width: '100%', aspectRatio: '4/3', bgcolor: 'grey.100', borderRadius: 1 }} />
-                        )}
-                      </Grid>
-                    );
-                  })}
-                </Grid>
+                {floorPlansOpen ? (
+                  <Grid container spacing={2}>
+                    {data.floor_plans.map((f) => {
+                      const src = resolveFileUrl(f, 'floor_plans');
+                      return (
+                        <Grid item key={f.id || f.path || (f.file || Math.random())} xs={6} sm={4} md={3}>
+                          {src ? (
+                            <Box
+                              component="img"
+                              src={src}
+                              alt={f.caption || 'floor plan'}
+                              loading="lazy"
+                              fetchPriority="low"
+                              sx={{ width: '100%', height: 'auto', objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd', cursor: 'pointer', aspectRatio: '4/3', minHeight: 120 }}
+                              onClick={() => handleOpenModal(src)}
+                            />
+                          ) : (
+                            <Box sx={{ width: '100%', aspectRatio: '4/3', bgcolor: 'grey.100', borderRadius: 1 }} />
+                          )}
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                ) : null}
               </AccordionDetails>
             </Accordion>
           )}
@@ -771,42 +1020,44 @@ export default function ProjectDetailView() {
           {/* Videos */}
           {Array.isArray(data.videos) && data.videos.length > 0 && (
             <Accordion sx={{ mb: 4 }} expanded={videosOpen} onChange={(e, isExpanded) => { setVideosOpen(isExpanded); if (isExpanded) prefetchGroup('videos', data.videos); }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ position: 'sticky', top: '64px', zIndex: 1100, backgroundColor: 'background.paper' }}>
                 <Typography variant="h6">Videos ({data.videos.length})</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                <Grid container spacing={2} justifyContent="center">
-                  {data.videos.map((videoUrl, index) => {
-                    const videoId = getYouTubeId(videoUrl);
-                    const resolvedUrl = resolveFileUrl(videoUrl, 'videos');
-                    return (
-                      <Grid item xs={12} md={6} key={index}>
-                        {videoId ? (
-                          <Box sx={{ position: 'relative', width: '100%', pb: '56.25%', borderRadius: 2, overflow: 'hidden', bgcolor: 'black' }}>
-                            <iframe
-                              title={`project-video-${index}`}
-                              src={`https://www.youtube.com/embed/${videoId}?rel=0`}
-                              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                              frameBorder="0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                            />
-                          </Box>
-                        ) : (
-                          <Box sx={{ width: '100%', borderRadius: 2, overflow: 'hidden', bgcolor: 'black' }}>
-                            <video
-                              src={resolvedUrl}
-                              controls
-                              style={{ width: '100%', height: 'auto', maxHeight: 320, backgroundColor: 'black', display: 'block' }}
-                            >
-                              Sorry, your browser doesn't support embedded videos.
-                            </video>
-                          </Box>
-                        )}
-                      </Grid>
-                    );
-                  })}
-                </Grid>
+                {videosOpen ? (
+                  <Grid container spacing={2} justifyContent="center">
+                    {data.videos.map((videoUrl, index) => {
+                      const videoId = getYouTubeId(videoUrl);
+                      const resolvedUrl = resolveFileUrl(videoUrl, 'videos');
+                      return (
+                        <Grid item xs={12} md={6} key={index}>
+                          {videoId ? (
+                            <Box sx={{ position: 'relative', width: '100%', pb: '56.25%', borderRadius: 2, overflow: 'hidden', bgcolor: 'black' }}>
+                              <iframe
+                                title={`project-video-${index}`}
+                                src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            </Box>
+                          ) : (
+                            <Box sx={{ width: '100%', borderRadius: 2, overflow: 'hidden', bgcolor: 'black' }}>
+                              <video
+                                src={resolvedUrl}
+                                controls
+                                style={{ width: '100%', height: 'auto', maxHeight: 320, backgroundColor: 'black', display: 'block' }}
+                              >
+                                Sorry, your browser doesn't support embedded videos.
+                              </video>
+                            </Box>
+                          )}
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                ) : null}
               </AccordionDetails>
             </Accordion>
           )}
@@ -814,40 +1065,42 @@ export default function ProjectDetailView() {
           {/* Photo Gallery */}
           {Array.isArray(data.photos) && data.photos.length > 0 && (
             <Accordion sx={{ mb: 4 }} expanded={photosOpen} onChange={(e, isExpanded) => { setPhotosOpen(isExpanded); if (isExpanded) prefetchGroup('photos', data.photos); }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ position: 'sticky', top: '64px', zIndex: 1100, backgroundColor: 'background.paper' }}>
                 <Typography variant="h6">Photo Gallery ({data.photos.length})</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                <Grid container spacing={2}>
-                  {data.photos.map((p) => {
-                    const src = resolveFileUrl(p, 'photos');
-                    return (
-                      <Grid item key={p.id || p.path || (p.file || p.file_name || Math.random())} xs={6} sm={4} md={3}>
-                        {src ? (
-                          <Box
-                            component="img"
-                            src={src}
-                            alt={p.caption || 'photo'}
-                            loading="lazy"
-                            fetchPriority="low"
-                            sx={{ width: '100%', height: 'auto', objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd', cursor: 'pointer', aspectRatio: '4/3', minHeight: 120 }}
-                            onClick={() => handleOpenModal(src)}
-                          />
-                        ) : (
-                          <Box sx={{ width: '100%', aspectRatio: '4/3', bgcolor: 'grey.100', borderRadius: 1 }} />
-                        )}
-                      </Grid>
-                    );
-                  })}
-                </Grid>
+                {photosOpen ? (
+                  <Grid container spacing={2}>
+                    {data.photos.map((p) => {
+                      const src = resolveFileUrl(p, 'photos');
+                      return (
+                        <Grid item key={p.id || p.path || (p.file || p.file_name || Math.random())} xs={6} sm={4} md={3}>
+                          {src ? (
+                            <Box
+                              component="img"
+                              src={src}
+                              alt={p.caption || 'photo'}
+                              loading="lazy"
+                              fetchPriority="low"
+                              sx={{ width: '100%', height: 'auto', objectFit: 'cover', borderRadius: 1, border: '1px solid #ddd', cursor: 'pointer', aspectRatio: '4/3', minHeight: 120 }}
+                              onClick={() => handleOpenModal(src)}
+                            />
+                          ) : (
+                            <Box sx={{ width: '100%', aspectRatio: '4/3', bgcolor: 'grey.100', borderRadius: 1 }} />
+                          )}
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                ) : null}
               </AccordionDetails>
             </Accordion>
           )}
 
           {/* Website Link */}
-          {data.files?.website && (
+          {(pd?.website || data.website) && (
             <Box sx={{ mt: 4, textAlign: 'center' }}>
-              <Button component="a" href={data.files.website} target="_blank" rel="noopener noreferrer" startIcon={<LanguageIcon />} variant="outlined">
+              <Button component="a" href={pd?.website || data.website} target="_blank" rel="noopener noreferrer" startIcon={<LanguageIcon />} variant="outlined">
                 Visit Project Website
               </Button>
             </Box>
@@ -898,7 +1151,7 @@ function Field({ label, value }) {
   if (!value) return null;
   return (
     <Grid item xs={12} sm={6}>
-      <Box>
+      <Box sx={{ textAlign: 'center' }}>
         <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase' }}>{label}</Typography>
         <Typography variant="body1" sx={{ fontWeight: 500 }}>{value}</Typography>
       </Box>
