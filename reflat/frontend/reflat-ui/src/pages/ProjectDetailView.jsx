@@ -14,6 +14,19 @@ import LanguageIcon from '@mui/icons-material/Language';
 import { FIREBASE_FUNCTIONS_URL, FIREBASE_STORAGE_URL } from '../components/constants';
 import { getCachedImage } from '../components/imageCache';
 
+// Field component definition - moved to top to avoid hoisting warnings
+function Field({ label, value }) {
+  if (!value) return null;
+  return (
+    <Grid item xs={12} sm={6}>
+      <Box sx={{ textAlign: 'center' }}>
+        <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase' }}>{label}</Typography>
+        <Typography variant="body1" sx={{ fontWeight: 500 }}>{value}</Typography>
+      </Box>
+    </Grid>
+  );
+}
+
 
 export default function ProjectDetailView() {
   const { builderId, projectId } = useParams();
@@ -64,21 +77,26 @@ export default function ProjectDetailView() {
     if (!bannerCandidates || bannerCandidates.length === 0) return;
     let alive = true;
     bannerCandidates.forEach((b, i) => {
-      // ...existing per-candidate handling...
+      // Skip empty banners
       if (!b) return;
+      
       let fname = b;
       const parts = (typeof fname === 'string') ? fname.split('/').filter(Boolean) : [];
+      
+      // If already has builder/project path structure
       if (parts.length >= 4 && parts[0] === builderId && parts[1] === projectId) {
         const folderFromPath = parts[2];
         const filenameFromPath = parts.slice(3).join('/');
         fetchSignedUrlOnDemand(folderFromPath, normalizeFilenameForUrl(filenameFromPath), `banner_${i}`);
         return;
       }
+      // If has folder prefix like 'banners/filename'
       if (parts.length >= 2 && parts[0] === 'banners') {
         const filenameFromPath = parts.slice(1).join('/');
         fetchSignedUrlOnDemand('banners', normalizeFilenameForUrl(filenameFromPath), `banner_${i}`);
         return;
       }
+      // Default case - assume it's just the filename
       fetchSignedUrlOnDemand('banners', normalizeFilenameForUrl(String(fname)), `banner_${i}`);
     });
     return () => { alive = false; };
@@ -447,7 +465,7 @@ export default function ProjectDetailView() {
       }
     })();
     return () => { alive = false; };
-  }, [data, signedUrls]);
+  }, [data, signedUrls, resolveProjectLogoCandidate]);
 
   function normalizeFilenameForUrl(name) {
     if (!name) return name;
@@ -706,40 +724,108 @@ export default function ProjectDetailView() {
 
   return (
     <Box sx={{ maxWidth: 1100, mx: 'auto', p: 2 }}>
-      {/* Header row: Back | Project title | Builder logo (right aligned) */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2,
-        position: 'sticky', top: 0, backgroundColor: 'background.paper', zIndex: 1200, pt: 1, pb: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
-          <Button component={Link} to="/new-projects" startIcon={<ArrowBackIcon />}>Back</Button>
-          {/* Project logo to the left of the title (small, responsive) */}
-          {projectLogoCached && (
-            <Box
-              component="img"
-              src={projectLogoCached}
-              alt="project logo"
-              sx={{ width: { xs: 40, sm: 56 }, height: { xs: 28, sm: 40 }, objectFit: 'contain', flex: '0 0 auto' }}
-            />
-          )}
-          <Box sx={{ overflow: 'hidden', minWidth: 0 }}>
-            <Typography variant="h5" component="div" sx={{ fontWeight: 700, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-              {pd.project_name || pd.name || data.project?.project_name || data.project?.name || 'Untitled'}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-              {(pd.project_location || pd.location || '')}{pd.project_city ? `, ${pd.project_city}` : ''}
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Builder logo always right-aligned */}
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      {/* Mobile-optimized header: separate rows for better space utilization */}
+      <Box sx={{ 
+        mb: 2,
+        position: 'sticky', 
+        top: 'var(--app-header-height, 72px)', 
+        backgroundColor: 'background.paper', 
+        zIndex: 1300, 
+        pt: 1, 
+        pb: 1 
+      }}>
+        {/* Top row: Back button and Builder logo */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+          <Button 
+            component={Link} 
+            to="/new-projects" 
+            startIcon={<ArrowBackIcon />} 
+            size="small"
+            sx={{ 
+              minWidth: 'auto',
+              px: { xs: 1, sm: 2 },
+              fontSize: { xs: '0.8rem', sm: '0.875rem' }
+            }}
+          >
+            Back
+          </Button>
+          {/* Builder logo on the right */}
           {builderLogoCached && (
             <Box
               component="img"
               src={builderLogoCached}
               alt="builder logo"
-              sx={{ height: { xs: 32, sm: 40 }, maxWidth: 140, objectFit: 'contain', display: 'block' }}
+              sx={{ height: { xs: 32, sm: 40 }, maxWidth: 120, objectFit: 'contain', display: 'block' }}
             />
           )}
+        </Box>
+
+        {/* Bottom row: Project logo, title, and brochure button */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, minWidth: 0 }}>
+          {/* Left side: Project logo and title */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0, flex: 1 }}>
+            {/* Project logo */}
+            {projectLogoCached && (
+              <Box
+                component="img"
+                src={projectLogoCached}
+                alt="project logo"
+                sx={{ width: { xs: 40, sm: 56 }, height: { xs: 28, sm: 40 }, objectFit: 'contain', flex: '0 0 auto' }}
+              />
+            )}
+            {/* Project title and location with available width */}
+            <Box sx={{ overflow: 'hidden', minWidth: 0, flex: 1 }}>
+              <Typography 
+                variant="h5" 
+                component="div" 
+                sx={{ 
+                  fontWeight: 700, 
+                  fontSize: { xs: '1.1rem', sm: '1.5rem' }, // Slightly smaller on mobile
+                  lineHeight: 1.2,
+                  // Responsive text handling: wrap on mobile, ellipsis on larger screens
+                  whiteSpace: { xs: 'normal', sm: 'nowrap' },
+                  textOverflow: { xs: 'initial', sm: 'ellipsis' },
+                  overflow: 'hidden',
+                  // On mobile, limit to 2 lines using CSS line clamping
+                  display: { xs: '-webkit-box', sm: 'block' },
+                  WebkitLineClamp: { xs: 2, sm: 'unset' },
+                  WebkitBoxOrient: { xs: 'vertical', sm: 'unset' },
+                  maxHeight: { xs: '2.4em', sm: 'auto' },
+                  wordBreak: { xs: 'break-word', sm: 'normal' }
+                }}
+              >
+                {pd.project_name || pd.name || data.project?.project_name || data.project?.name || 'Untitled'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                {(pd.project_location || pd.location || '')}{pd.project_city ? `, ${pd.project_city}` : ''}
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Right side: Brochure button and RERA */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+            {(pd?.brochure || (Array.isArray(data?.brochures) && data.brochures.length)) && (
+              <Button
+                onClick={() => handleOpenPdfModal(signedUrls.brochure || resolveFileUrl(pd?.brochure || (Array.isArray(data?.brochures) ? data.brochures[0] : null), 'brochures'))}
+                startIcon={<i className="fa-solid fa-file-pdf" />}
+                variant="outlined"
+                size="small"
+                sx={{ 
+                  flex: '0 0 auto',
+                  minWidth: 'auto',
+                  px: { xs: 1, sm: 2 },
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                }}
+              >
+                Brochure
+              </Button>
+            )}
+            {pd.rera_number && (
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
+                RERA: {pd.rera_number}
+              </Typography>
+            )}
+          </Box>
         </Box>
       </Box>
 
@@ -764,13 +850,52 @@ export default function ProjectDetailView() {
               ? currentCandidate
               : (currentCandidate && (currentCandidate.file || currentCandidate.path || currentCandidate.url || currentCandidate.name)) || '';
             const normalizedBase = normalizeFilenameForUrl(String(candidateStr).split('/').filter(Boolean).pop() || '');
-            const src = signedUrls[`banner_${current}`] || signedUrls[`banners:${normalizedBase}`] || signedUrls[`banners/${normalizedBase}`] || bannerSrc || resolveFileUrl(currentCandidate, 'banners');
+            
+            // Try multiple ways to get the banner URL for the current index
+            let src = null;
+            
+            // First, try the indexed banner from signed URLs
+            if (signedUrls[`banner_${current}`]) {
+              src = signedUrls[`banner_${current}`];
+            }
+            // Then try the normalized base name approach
+            else if (signedUrls[`banners:${normalizedBase}`] || signedUrls[`banners/${normalizedBase}`]) {
+              src = signedUrls[`banners:${normalizedBase}`] || signedUrls[`banners/${normalizedBase}`];
+            }
+            // For the first banner, try the cached banner source
+            else if (current === 0 && bannerSrc) {
+              src = bannerSrc;
+            }
+            // Finally, try resolving the URL for the current candidate
+            else {
+              src = resolveFileUrl(currentCandidate, 'banners');
+            }
+
+            // If no src available, try to use the candidate directly if it's a URL
+            const finalSrc = src || (typeof currentCandidate === 'string' && currentCandidate.startsWith('http') ? currentCandidate : null);
+
+            // Debug logging to help troubleshoot carousel issues
+            if (process.env.NODE_ENV !== 'production') {
+              console.debug('Banner carousel debug:', {
+                current,
+                currentCandidate,
+                normalizedBase,
+                src,
+                finalSrc,
+                availableSignedUrls: Object.keys(signedUrls).filter(k => k.includes('banner')),
+                bannerCandidatesLength: bannerCandidates.length
+              });
+            }
 
             return (
               <Box
-                sx={{ position: 'relative', mb: 4, touchAction: 'pan-y' }}
-                onTouchStart={(e) => { touchStartXRef.current = e.touches?.[0]?.clientX ?? null; }}
-                onTouchMove={(e) => { if (touchStartXRef.current != null) touchDeltaXRef.current = e.touches?.[0]?.clientX - touchStartXRef.current; }}
+                sx={{ position: 'relative', mb: 1.5, touchAction: 'pan-y' }} // Reduced from mb: 4 to mb: 1.5
+                onTouchStart={(e) => { 
+                  touchStartXRef.current = e.touches?.[0]?.clientX ?? null; 
+                }}
+                onTouchMove={(e) => { 
+                  if (touchStartXRef.current != null) touchDeltaXRef.current = e.touches?.[0]?.clientX - touchStartXRef.current; 
+                }}
                 onTouchEnd={() => {
                   const delta = touchDeltaXRef.current || 0;
                   touchStartXRef.current = null;
@@ -778,7 +903,10 @@ export default function ProjectDetailView() {
                   if (Math.abs(delta) > 50 && bannerCandidates && bannerCandidates.length > 0) {
                     if (delta < 0) setBannerIndex((n) => (n + 1) % bannerCandidates.length);
                     else setBannerIndex((n) => (n - 1 + bannerCandidates.length) % bannerCandidates.length);
-                    if (bannerTimerRef.current) { clearInterval(bannerTimerRef.current); bannerTimerRef.current = null; }
+                    if (bannerTimerRef.current) { 
+                      clearInterval(bannerTimerRef.current); 
+                      bannerTimerRef.current = setInterval(() => setBannerIndex((n) => (n + 1) % bannerCandidates.length), 5000);
+                    }
                   }
                 }}
                 onMouseDown={(e) => { isPointerDownRef.current = true; pointerStartXRef.current = e.clientX; }}
@@ -792,91 +920,225 @@ export default function ProjectDetailView() {
                   if (Math.abs(delta) > 50 && bannerCandidates && bannerCandidates.length > 0) {
                     if (delta < 0) setBannerIndex((n) => (n + 1) % bannerCandidates.length);
                     else setBannerIndex((n) => (n - 1 + bannerCandidates.length) % bannerCandidates.length);
-                    if (bannerTimerRef.current) { clearInterval(bannerTimerRef.current); bannerTimerRef.current = null; }
+                    if (bannerTimerRef.current) { 
+                      clearInterval(bannerTimerRef.current); 
+                      bannerTimerRef.current = setInterval(() => setBannerIndex((n) => (n + 1) % bannerCandidates.length), 5000);
+                    }
                   }
                 }}
                 onMouseLeave={() => { isPointerDownRef.current = false; touchDeltaXRef.current = 0; pointerStartXRef.current = 0; }}
               >
-                <Box
-                  component="img"
-                  src={src}
-                  alt={`banner-${current}`}
-                  loading="eager"
-                  fetchPriority="high"
-                  sx={{ width: '100%', height: 'auto', maxHeight: 420, objectFit: 'cover', borderRadius: 2, aspectRatio: '16/7', userSelect: 'none' }}
-                />
-                {/* Clickable overlay areas to support mouse click navigation */}
+                {finalSrc ? (
+                  <Box
+                    component="img"
+                    src={finalSrc}
+                    alt={`banner-${current}`}
+                    loading="eager"
+                    fetchPriority="high"
+                    sx={{ 
+                      width: '100%', 
+                      height: 'auto', 
+                      maxHeight: { xs: 200, sm: 280 }, // Reduced from 420px for mobile-first
+                      objectFit: 'cover', 
+                      borderRadius: 2, 
+                      aspectRatio: '16/9', // Changed from 16/7 to be less tall
+                      userSelect: 'none' 
+                    }}
+                  />
+                ) : (
+                  <Box 
+                    sx={{ 
+                      width: '100%', 
+                      height: { xs: 200, sm: 280 },
+                      maxHeight: { xs: 200, sm: 280 },
+                      backgroundColor: 'grey.100',
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      aspectRatio: '16/9'
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">Loading banner...</Typography>
+                  </Box>
+                )}
+                
+                {/* Left/Right click areas for navigation */}
                 {bannerCandidates.length > 1 && (
                   <>
+                    {/* Left click area - previous */}
                     <Box
-                      onClick={() => { setBannerIndex((n) => (n - 1 + bannerCandidates.length) % bannerCandidates.length); if (bannerTimerRef.current) { clearInterval(bannerTimerRef.current); bannerTimerRef.current = null; } }}
-                      sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', cursor: 'pointer', zIndex: 2 }}
-                      aria-hidden
-                    />
+                      sx={{
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        width: '50%',
+                        height: '100%',
+                        cursor: 'pointer',
+                        zIndex: 10,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        pl: 2,
+                        background: 'transparent',
+                        '&:hover': {
+                          background: 'linear-gradient(to right, rgba(0,0,0,0.1), transparent)'
+                        }
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setBannerIndex((n) => (n - 1 + bannerCandidates.length) % bannerCandidates.length);
+                        // Reset auto-advance timer
+                        if (bannerTimerRef.current) {
+                          clearInterval(bannerTimerRef.current);
+                          bannerTimerRef.current = setInterval(() => setBannerIndex((n) => (n + 1) % bannerCandidates.length), 5000);
+                        }
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(255,255,255,0.8)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          opacity: 0,
+                          transition: 'opacity 0.2s ease',
+                          '&:hover': { opacity: 1 },
+                          '.parent:hover &': { opacity: 0.7 }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 0,
+                            height: 0,
+                            borderTop: '6px solid transparent',
+                            borderBottom: '6px solid transparent',
+                            borderRight: '8px solid #333',
+                            ml: '-2px'
+                          }}
+                        />
+                      </Box>
+                    </Box>
+
+                    {/* Right click area - next */}
                     <Box
-                      onClick={() => { setBannerIndex((n) => (n + 1) % bannerCandidates.length); if (bannerTimerRef.current) { clearInterval(bannerTimerRef.current); bannerTimerRef.current = null; } }}
-                      sx={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '30%', cursor: 'pointer', zIndex: 2 }}
-                      aria-hidden
-                    />
+                      sx={{
+                        position: 'absolute',
+                        right: 0,
+                        top: 0,
+                        width: '50%',
+                        height: '100%',
+                        cursor: 'pointer',
+                        zIndex: 10,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        pr: 2,
+                        background: 'transparent',
+                        '&:hover': {
+                          background: 'linear-gradient(to left, rgba(0,0,0,0.1), transparent)'
+                        }
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setBannerIndex((n) => (n + 1) % bannerCandidates.length);
+                        // Reset auto-advance timer
+                        if (bannerTimerRef.current) {
+                          clearInterval(bannerTimerRef.current);
+                          bannerTimerRef.current = setInterval(() => setBannerIndex((n) => (n + 1) % bannerCandidates.length), 5000);
+                        }
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(255,255,255,0.8)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          opacity: 0,
+                          transition: 'opacity 0.2s ease',
+                          '&:hover': { opacity: 1 },
+                          '.parent:hover &': { opacity: 0.7 }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 0,
+                            height: 0,
+                            borderTop: '6px solid transparent',
+                            borderBottom: '6px solid transparent',
+                            borderLeft: '8px solid #333',
+                            mr: '-2px'
+                          }}
+                        />
+                      </Box>
+                    </Box>
                   </>
                 )}
-                 {bannerCandidates.length > 1 && (
-                   <>
-                     <Button onClick={() => { setBannerIndex((n) => (n - 1 + bannerCandidates.length) % bannerCandidates.length); if (bannerTimerRef.current) { clearInterval(bannerTimerRef.current); bannerTimerRef.current = null; } }} sx={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)' }}>‹</Button>
-                     <Button onClick={() => { setBannerIndex((n) => (n + 1) % bannerCandidates.length); if (bannerTimerRef.current) { clearInterval(bannerTimerRef.current); bannerTimerRef.current = null; } }} sx={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}>›</Button>
-                     <Box sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 8, display: 'flex', gap: 1 }}>
-                       {bannerCandidates.map((_, i) => (
-                         <Box key={i} sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: i === current ? 'primary.main' : 'rgba(255,255,255,0.6)' }} />
-                       ))}
-                     </Box>
-                   </>
-                 )}
+
+                {/* Simple dots indicator for multiple banners */}
+                {bannerCandidates.length > 1 && (
+                  <Box sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: 8, display: 'flex', gap: 1 }}>
+                    {bannerCandidates.map((_, i) => (
+                      <Box 
+                        key={i} 
+                        sx={{ 
+                          width: 8, 
+                          height: 8, 
+                          borderRadius: '50%', 
+                          bgcolor: i === current ? 'primary.main' : 'rgba(255,255,255,0.6)', 
+                          transition: 'background-color 0.2s ease'
+                        }} 
+                      />
+                    ))}
+                  </Box>
+                )}
+
               </Box>
              );
            })()}
 
-          {/* Key Details header row with Brochure button on the right */}
-          <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
-            <Typography variant="h5" sx={{ mb: 0, borderBottom: 1, borderColor: 'divider', pb: 1, textAlign: 'left' }}>Key Details</Typography>
-            {(pd?.brochure || (Array.isArray(data?.brochures) && data.brochures.length)) && (
-              <Box>
-                <Button
-                  onClick={() => handleOpenPdfModal(signedUrls.brochure || resolveFileUrl(pd?.brochure || (Array.isArray(data?.brochures) ? data.brochures[0] : null), 'brochures'))}
-                  startIcon={<i className="fa-solid fa-file-pdf" />}
-                  variant="outlined"
-                >
-                  Brochure
-                </Button>
-              </Box>
-            )}
-          </Box>
-
-          <Grid container spacing={2} sx={{ justifyContent: 'center', maxWidth: 800, mt: 0 }}>
-            <Grid item xs={12} md={4}>
-              {/* Actions */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start' }} />
-            </Grid>
-            <Grid item xs={12} md={8}>
-              {/* Property details grid */}
-              <Grid container spacing={2}>
-                <Field label="Configuration" value={pd.configuration || pd.config} />
-                <Field label="Unit Sizes" value={pd.unit_sizes || pd.unitSizes || pd.unitSizes} />
-                <Field label="Total Acres" value={pd.total_acres || pd.totalAcres} />
-                <Field label="Towers" value={pd.total_towers || pd.totalTowers || pd.total_towers} />
-                <Field label="Total Units" value={pd.total_units || pd.totalUnits || pd.total_flats || pd.totalFlats} />
-                <Field label="Floors" value={pd.total_floors || pd.totalFloors} />
-                <Field label="Units / Floor" value={pd.units_per_floor || pd.units_perfloor || pd.unitsPerFloor} />
-                <Field label="Flats / acre" value={pd.flats_per_acre || pd.density_per_acre || pd.density || pd.flats_density || pd.flatsDensity} />
-                {pd.possession_date && <Field label="Possession" value={pd.possession_date} />}
-                {pd.rera_number && <Field label="RERA" value={pd.rera_number} />}
+          {/* Property details grid - directly after banner with tight spacing */}
+          <Box sx={{ mt: 0.5, mb: 2, borderTop: 1, borderColor: 'divider', pt: 1 }}>
+            <Grid container spacing={2} sx={{ justifyContent: 'center', maxWidth: 800 }}>
+              <Grid item xs={12}>
+                {/* Property details grid with better visual emphasis */}
+                <Grid container spacing={2} sx={{ '& .MuiGrid-item': { textAlign: 'center' } }}>
+                  <Field label="Towers" value={pd.total_towers || pd.totalTowers || pd.total_towers} />
+                  <Field label="Total Units" value={pd.total_units || pd.totalUnits || pd.total_flats || pd.totalFlats} />
+                  <Field label="Floors" value={pd.total_floors || pd.totalFloors} />
+                  <Field label="Units/Floor" value={pd.units_per_floor || pd.units_perfloor || pd.unitsPerFloor} />
+                  <Field label="Acres" value={pd.total_acres || pd.totalAcres} />
+                  <Field label="Flats/Acres" value={pd.flats_per_acre || pd.density_per_acre || pd.density || pd.flats_density || pd.flatsDensity} />
+                  <Field label="Configuration" value={pd.configuration || pd.config} />
+                  <Field label="Unit Sizes" value={pd.unit_sizes || pd.unitSizes || pd.flat_sizes} />
+                  {pd.possession_date && <Field label="Possession" value={pd.possession_date} />}
+                </Grid>
               </Grid>
             </Grid>
-          </Grid>
+          </Box>
 
           {/* Amenities */}
           {Array.isArray(amenitySrc) && amenitySrc.length > 0 && (
             <Accordion sx={{ mb: 4 }} defaultExpanded={false} expanded={amenitiesOpen} onChange={(e, isExpanded) => { setAmenitiesOpen(isExpanded); if (isExpanded) prefetchGroup('amenities', amenitySrc); }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ position: 'sticky', top: '64px', zIndex: 1100, backgroundColor: 'background.paper' }}>
+              <AccordionSummary 
+                expandIcon={<ExpandMoreIcon />} 
+                sx={{ 
+                  position: 'sticky', 
+                  top: 'calc(var(--app-header-height, 72px) + 120px)', // Adjusted for project header
+                  zIndex: 1100, 
+                  backgroundColor: 'background.paper',
+                  borderBottom: amenitiesOpen ? '1px solid' : 'none',
+                  borderColor: 'divider',
+                  boxShadow: amenitiesOpen ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+                }}
+              >
                 <Typography variant="h6">Amenities ({amenitySrc.length})</Typography>
               </AccordionSummary>
               <AccordionDetails>
@@ -950,9 +1212,20 @@ export default function ProjectDetailView() {
           {/* Site Plan (Layouts) */}
           {Array.isArray(data.layouts) && data.layouts.length > 0 && (
             <Accordion sx={{ mb: 4 }} expanded={layoutsOpen} onChange={(e, isExpanded) => { setLayoutsOpen(isExpanded); if (isExpanded) prefetchGroup('layouts', data.layouts); }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ position: 'sticky', top: '64px', zIndex: 1100, backgroundColor: 'background.paper' }}>
-                <Typography variant="h6">Site Plan ({data.layouts.length})</Typography>
-              </AccordionSummary>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{
+                  position: 'sticky',
+                  top: 'calc(var(--app-header-height, 72px) + 120px)', // Adjusted for project header
+                  zIndex: 1100,
+                  backgroundColor: 'background.paper',
+                  borderBottom: layoutsOpen ? '1px solid' : 'none',
+                  borderColor: 'divider',
+                  boxShadow: layoutsOpen ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+                }}
+              >
+                 <Typography variant="h6">Site Plans ({data.layouts?.length || 0})</Typography>
+               </AccordionSummary>
               <AccordionDetails>
                 {layoutsOpen ? (
                   <Grid container spacing={2}>
@@ -985,9 +1258,20 @@ export default function ProjectDetailView() {
           {/* Floor Plans */}
           {Array.isArray(data.floor_plans) && data.floor_plans.length > 0 && (
             <Accordion sx={{ mb: 4 }} expanded={floorPlansOpen} onChange={(e, isExpanded) => { setFloorPlansOpen(isExpanded); if (isExpanded) prefetchGroup('floor_plans', data.floor_plans); }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ position: 'sticky', top: '64px', zIndex: 1100, backgroundColor: 'background.paper' }}>
-                <Typography variant="h6">Floor Plans ({data.floor_plans.length})</Typography>
-              </AccordionSummary>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{
+                  position: 'sticky',
+                  top: 'calc(var(--app-header-height, 72px) + 120px)', // Adjusted for project header
+                  zIndex: 1100,
+                  backgroundColor: 'background.paper',
+                  borderBottom: floorPlansOpen ? '1px solid' : 'none',
+                  borderColor: 'divider',
+                  boxShadow: floorPlansOpen ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+                }}
+              >
+                 <Typography variant="h6">Floor Plans ({data.floor_plans?.length || 0})</Typography>
+               </AccordionSummary>
               <AccordionDetails>
                 {floorPlansOpen ? (
                   <Grid container spacing={2}>
@@ -1020,7 +1304,18 @@ export default function ProjectDetailView() {
           {/* Videos */}
           {Array.isArray(data.videos) && data.videos.length > 0 && (
             <Accordion sx={{ mb: 4 }} expanded={videosOpen} onChange={(e, isExpanded) => { setVideosOpen(isExpanded); if (isExpanded) prefetchGroup('videos', data.videos); }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ position: 'sticky', top: '64px', zIndex: 1100, backgroundColor: 'background.paper' }}>
+              <AccordionSummary 
+                expandIcon={<ExpandMoreIcon />} 
+                sx={{ 
+                  position: 'sticky', 
+                  top: 'calc(var(--app-header-height, 72px) + 120px)', // Adjusted for project header
+                  zIndex: 1100, 
+                  backgroundColor: 'background.paper',
+                  borderBottom: videosOpen ? '1px solid' : 'none',
+                  borderColor: 'divider',
+                  boxShadow: videosOpen ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+                }}
+              >
                 <Typography variant="h6">Videos ({data.videos.length})</Typography>
               </AccordionSummary>
               <AccordionDetails>
@@ -1065,7 +1360,18 @@ export default function ProjectDetailView() {
           {/* Photo Gallery */}
           {Array.isArray(data.photos) && data.photos.length > 0 && (
             <Accordion sx={{ mb: 4 }} expanded={photosOpen} onChange={(e, isExpanded) => { setPhotosOpen(isExpanded); if (isExpanded) prefetchGroup('photos', data.photos); }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ position: 'sticky', top: '64px', zIndex: 1100, backgroundColor: 'background.paper' }}>
+              <AccordionSummary 
+                expandIcon={<ExpandMoreIcon />} 
+                sx={{ 
+                  position: 'sticky', 
+                  top: 'calc(var(--app-header-height, 72px) + 120px)', // Adjusted for project header
+                  zIndex: 1100, 
+                  backgroundColor: 'background.paper',
+                  borderBottom: photosOpen ? '1px solid' : 'none',
+                  borderColor: 'divider',
+                  boxShadow: photosOpen ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+                }}
+              >
                 <Typography variant="h6">Photo Gallery ({data.photos.length})</Typography>
               </AccordionSummary>
               <AccordionDetails>
@@ -1144,17 +1450,5 @@ export default function ProjectDetailView() {
         </Box>
       </Modal>
     </Box>
-  );
-}
-
-function Field({ label, value }) {
-  if (!value) return null;
-  return (
-    <Grid item xs={12} sm={6}>
-      <Box sx={{ textAlign: 'center' }}>
-        <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase' }}>{label}</Typography>
-        <Typography variant="body1" sx={{ fontWeight: 500 }}>{value}</Typography>
-      </Box>
-    </Grid>
   );
 }

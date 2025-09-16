@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from 'react-dom';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import { FIREBASE_FUNCTIONS_URL } from './constants';
@@ -184,172 +185,139 @@ export default function SearchBar({
         </button>
       </div>
 
-      {/* Drawer (classNames + inline fallbacks) */}
-      <div
-        ref={drawerRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Filters"
-        className={`filter-drawer ${open ? "open" : ""}`}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 1050,
-          pointerEvents: open ? "auto" : "none",
-        }}
-        onClick={closeDrawer}
-      >
-        {/* Panel */}
+      {/* Drawer rendered as portal to document.body to escape stacking contexts */}
+      {createPortal(
         <div
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
-          className="filter-drawer__panel"
+          ref={drawerRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Filters"
+          className={`filter-drawer ${open ? "open" : ""}`}
           style={{
-            position: "absolute",
-            right: 0,
-            top: 0,
-            height: "100%",
-            width: "min(92vw, 360px)",
-            background: "#fff",
-            boxShadow: "-8px 0 24px rgba(0,0,0,.08)",
-            padding: 16,
-            transform: open ? "translateX(0)" : "translateX(100%)",
-            transition: "transform .24s ease",
-            zIndex: 2,
-            overflowY: "auto",
-            WebkitOverflowScrolling: "touch",
-            overscrollBehavior: "contain",
-          }}
-        >
-          <div className="d-flex align-items-center justify-content-between mb-2">
-            <h6 className="m-0">Filters</h6>
-            <button
-              type="button"
-              className="btn btn-link btn-sm text-muted p-0"
-              onClick={closeDrawer}
-              aria-label="Close"
-              style={{ textDecoration: "none" }}
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* City */}
-          <div className="mb-2">
-            <label htmlFor="citySelect" className="form-label mb-1">
-              City
-            </label>
-            <select
-              id="citySelect"
-              className="form-select form-select-sm"
-              value={tmpCity}
-              onChange={(e) => {
-                setTmpCity(e.target.value);
-                setTmpLocation("");
-                setTmpBuilder("");
-              }}
-              disabled={isCityDisabled}
-              title={isCityDisabled ? "No cities available" : ""}
-            >
-              <option value="">Select City</option>
-              {cities.map((city) => (
-                <option key={city} value={city}>
-                  {city}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Locality */}
-          <div className="mb-2">
-            <label htmlFor="locationSelect" className="form-label mb-1">
-              Locality
-            </label>
-            <select
-              id="locationSelect"
-              className="form-select form-select-sm"
-              value={tmpLocation}
-              onChange={(e) => {
-                setTmpLocation(e.target.value);
-                setTmpBuilder("");
-              }}
-              disabled={isLocationDisabled}
-              title={isLocationDisabled ? "Select a city to choose localities" : ""}
-            >
-              <option value="">Select Locality</option>
-              {locations.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Builder */}
-          <div className="form-group" style={{ marginBottom: 16 }}>
-            <label htmlFor="builder-select" style={{ display: 'block', marginBottom: 4, fontSize: 14, color: '#555' }}>Builder</label>
-            <select
-              id="builder-select"
-              value={tmpBuilder}
-              onChange={(e) => setTmpBuilder(e.target.value)}
-              disabled={isBuilderSelectDisabled}
-              style={selectStyle(isBuilderSelectDisabled)}
-            >
-              <option value="">All Builders</option>
-              {availableBuilders.map((b) => (
-                <option key={b} value={b}>
-                  {b.toUpperCase()}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Actions */}
-          <div className="actions" style={{ display: "flex", gap: 8, marginTop: 24 }}>
-            <button
-              type="button"
-              className="drawer-apply btn btn-primary btn-sm"
-              onClick={applyFilters}
-            >
-              Apply
-            </button>
-            <button
-              type="button"
-              className="btn btn-outline-secondary btn-sm"
-              onClick={closeDrawer}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="btn btn-link btn-sm text-muted ms-auto p-0"
-              onClick={clearAll}
-              title="Reset filters"
-              aria-label="Reset Filters"
-              style={{ color: '#d9534f', fontWeight: 700, padding: '6px 8px', display: 'inline-flex', alignItems: 'center' }}
-            >
-              <CloseIcon fontSize="small" style={{ marginRight: 8, color: '#d9534f' }} />
-              <span style={{ color: '#d9534f' }}>Reset</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Backdrop (inline fallback for opacity/pointer events) */}
-        <div
-          className="filter-drawer__backdrop"
-          onClick={closeDrawer}
-          style={{
-            position: "absolute",
+            position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,.25)",
-            opacity: open ? 1 : 0,
-            transition: "opacity .24s ease",
-            zIndex: 1,
+            zIndex: 99999,
             pointerEvents: open ? "auto" : "none",
           }}
-        />
-      </div>
+          onClick={closeDrawer}
+        >
+          {/* Panel */}
+          <div
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            className="filter-drawer__panel"
+            style={{
+              position: "fixed",
+              right: 0,
+              top: 0,
+              height: "100%",
+              width: "min(92vw, 360px)",
+              background: "#fff",
+              boxShadow: "-8px 0 24px rgba(0,0,0,.08)",
+              padding: 16,
+              transform: open ? "translateX(0)" : "translateX(100%)",
+              transition: "transform .24s ease",
+              zIndex: 100000,
+              overflowY: "auto",
+              WebkitOverflowScrolling: "touch",
+              overscrollBehavior: "contain",
+            }}
+          >
+            <div className="d-flex align-items-center justify-content-between mb-2">
+              <h6 className="m-0">Filters</h6>
+              <button
+                type="button"
+                className="btn btn-link btn-sm text-muted p-0"
+                onClick={closeDrawer}
+                aria-label="Close"
+                style={{ textDecoration: "none" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* City */}
+            <div className="mb-2">
+              <label htmlFor="citySelect" className="form-label mb-1">City</label>
+              <select
+                id="citySelect"
+                className="form-select form-select-sm"
+                value={tmpCity}
+                onChange={(e) => { setTmpCity(e.target.value); setTmpLocation(""); setTmpBuilder(""); }}
+                disabled={isCityDisabled}
+                title={isCityDisabled ? "No cities available" : ""}
+              >
+                <option value="">Select City</option>
+                {cities.map((city) => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Locality */}
+            <div className="mb-2">
+              <label htmlFor="locationSelect" className="form-label mb-1">Locality</label>
+              <select
+                id="locationSelect"
+                className="form-select form-select-sm"
+                value={tmpLocation}
+                onChange={(e) => { setTmpLocation(e.target.value); setTmpBuilder(""); }}
+                disabled={isLocationDisabled}
+                title={isLocationDisabled ? "Select a city to choose localities" : ""}
+              >
+                <option value="">Select Locality</option>
+                {locations.map((loc) => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Builder */}
+            <div className="form-group" style={{ marginBottom: 16 }}>
+              <label htmlFor="builder-select" style={{ display: 'block', marginBottom: 4, fontSize: 14, color: '#555' }}>Builder</label>
+              <select
+                id="builder-select"
+                value={tmpBuilder}
+                onChange={(e) => setTmpBuilder(e.target.value)}
+                disabled={isBuilderSelectDisabled}
+                style={selectStyle(isBuilderSelectDisabled)}
+              >
+                <option value="">All Builders</option>
+                {availableBuilders.map((b) => (
+                  <option key={b} value={b}>{b.toUpperCase()}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Actions */}
+            <div className="actions" style={{ display: "flex", gap: 8, marginTop: 24 }}>
+              <button type="button" className="drawer-apply btn btn-primary btn-sm" onClick={applyFilters}>Apply</button>
+              <button type="button" className="btn btn-outline-secondary btn-sm" onClick={closeDrawer}>Cancel</button>
+              <button type="button" className="btn btn-link btn-sm text-muted ms-auto p-0" onClick={clearAll} title="Reset filters" aria-label="Reset Filters" style={{ color: '#d9534f', fontWeight: 700, padding: '6px 8px', display: 'inline-flex', alignItems: 'center' }}>
+                <CloseIcon fontSize="small" style={{ marginRight: 8, color: '#d9534f' }} />
+                <span style={{ color: '#d9534f' }}>Reset</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Backdrop (inline fallback for opacity/pointer events) */}
+          <div
+            className="filter-drawer__backdrop"
+            onClick={closeDrawer}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,.25)",
+              opacity: open ? 1 : 0,
+              transition: "opacity .24s ease",
+              zIndex: 99998,
+              pointerEvents: open ? "auto" : "none",
+            }}
+          />
+        </div>,
+        document.body
+      )}
     </>
   );
 }

@@ -28,7 +28,7 @@ const activeStyle = {
 // ===== New: just the nav bar (no routes) =====
 export function MenuBar() {
   return (
-    <nav className="mobile-nav" style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px", background: "transparent", borderBottom: 0 }}>
+    <nav className="mobile-nav" style={{ position: 'sticky', top: 0, zIndex: 1400, display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "#fff", borderBottom: '1px solid #eee', backdropFilter: 'saturate(180%) blur(6px)' }}>
       {/* Scrollable links */}
       <div style={{ display: "flex", gap: 8, overflowX: "auto", whiteSpace: "nowrap", WebkitOverflowScrolling: "touch", flex: "1 1 auto" }}>
         <NavLink to="/new-projects" style={({ isActive }) => ({ ...linkBase, ...(isActive ? activeStyle : {}) })}>New Projects</NavLink>

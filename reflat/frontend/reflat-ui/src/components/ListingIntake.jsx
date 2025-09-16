@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
+import { createPortal } from 'react-dom';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
@@ -48,6 +49,8 @@ export default function ListingIntake({
   // Add flow gating: require fresh filter apply before enabling paste/extract
   const [addRequireFilters, setAddRequireFilters] = useState(false);
   const [addFiltersReady, setAddFiltersReady] = useState(false);
+  // ref for portal drawer
+  const drawerRef = useRef(null);
   // Sorting
   const [sortKey, setSortKey] = useState('default');
   const [listings, setListings] = useState([]);
@@ -653,21 +656,41 @@ export default function ListingIntake({
       </div>
       )}
 
-      {/* Drawer (mount only when open to avoid overlay blocking nav) */}
-      {drawerOpen && (
-        <div className="filter-drawer open" style={{ position: 'fixed', inset: 0, zIndex: 1050 }}>
-          {/* Backdrop */}
-          <div
-            className="filter-drawer__backdrop"
-            onClick={cancelDrawer}
-            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.25)', opacity: 1, transition: 'opacity .24s ease', zIndex: 1 }}
-          />
+      {/* Drawer: render as a portal to document.body so it escapes header stacking contexts */}
+      {createPortal(
+        <div
+          ref={drawerRef}
+          className={`filter-drawer ${drawerOpen ? 'open' : ''}`}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Filters"
+          style={{ position: 'fixed', inset: 0, zIndex: 99999, pointerEvents: drawerOpen ? 'auto' : 'none' }}
+          onClick={cancelDrawer}
+        >
           {/* Panel */}
           <div
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
             className="filter-drawer__panel"
             role="dialog"
             aria-modal="true"
-            style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: 'min(92vw, 360px)', background: '#fff', boxShadow: '-8px 0 24px rgba(0,0,0,.08)', padding: 16, transform: 'translateX(0)', transition: 'transform .24s ease', zIndex: 2, overflowY: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
+            style={{
+              position: 'fixed',
+              right: 0,
+              top: 0,
+              height: '100%',
+              width: 'min(92vw, 360px)',
+              background: '#fff',
+              boxShadow: '-8px 0 24px rgba(0,0,0,.08)',
+              padding: 16,
+              transform: drawerOpen ? 'translateX(0)' : 'translateX(100%)',
+              transition: 'transform .24s ease',
+              zIndex: 100000,
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain',
+            }}
           >
             <div className="d-flex align-items-center justify-content-between mb-2" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <h6 className="m-0" style={{ margin: 0 }}>Filters</h6>
@@ -748,7 +771,23 @@ export default function ListingIntake({
               </button>
             </div>
           </div>
-        </div>
+
+          {/* Backdrop (inline fallback for opacity/pointer events) */}
+          <div
+            className="filter-drawer__backdrop"
+            onClick={cancelDrawer}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,.25)',
+              opacity: drawerOpen ? 1 : 0,
+              transition: 'opacity .24s ease',
+              zIndex: 99998,
+              pointerEvents: drawerOpen ? 'auto' : 'none',
+            }}
+          />
+        </div>,
+        document.body
       )}
 
       {/* Form (shown after extract) */}

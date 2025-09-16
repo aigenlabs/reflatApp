@@ -11,7 +11,18 @@ export default function App() {
       {/* Row 1: Logo + Menu (same line) */}
       <header
         className="d-flex align-items-center"
-        style={{ padding: "4px 8px", gap: 8, borderBottom: "1px solid #eef2f5" }}
+        style={{
+          padding: "4px 8px",
+          gap: 8,
+          borderBottom: "1px solid #eef2f5",
+          position: 'sticky',
+          top: 0,
+          zIndex: 1400,
+          background: '#fff',
+          backdropFilter: 'saturate(180%) blur(6px)',
+          // expose header height for pages that need to stick below it
+          ['--app-header-height']: '72px'
+        }}
       >
         <img
           src={logo /* or logoPath */}
