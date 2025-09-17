@@ -31,7 +31,8 @@ export default function ProjectCard({ project }) {
   const name = kd.project_name;
   const city = kd.project_city;
   const location = kd.project_location;
-  const unitSizes = kd.unit_sizes;
+  // const unitSizes = kd.unit_sizes;
+  const unitSizes = kd.flat_sizes;
   const configuration = kd.config;
   const totalAcres = kd.total_acres;
   const totalTowers = kd.total_towers;

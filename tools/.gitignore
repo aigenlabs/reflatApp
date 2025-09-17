@@ -7,3 +7,4 @@
 
 # Ignore generated files
 **/uploaded_manifest.json
+**/manifest.json

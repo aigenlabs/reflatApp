@@ -1111,13 +1111,13 @@ export default function ProjectDetailView() {
                 {/* Property details grid with better visual emphasis */}
                 <Grid container spacing={2} sx={{ '& .MuiGrid-item': { textAlign: 'center' } }}>
                   <Field label="Towers" value={pd.total_towers || pd.totalTowers || pd.total_towers} />
-                  <Field label="Total Units" value={pd.total_units || pd.totalUnits || pd.total_flats || pd.totalFlats} />
+                  <Field label="Flats" value={pd.total_units || pd.totalUnits || pd.total_flats || pd.totalFlats} />
                   <Field label="Floors" value={pd.total_floors || pd.totalFloors} />
-                  <Field label="Units/Floor" value={pd.units_per_floor || pd.units_perfloor || pd.unitsPerFloor} />
+                  <Field label="/Floor" value={pd.flats_per_floor || pd.units_perfloor || pd.unitsPerFloor} />
                   <Field label="Acres" value={pd.total_acres || pd.totalAcres} />
-                  <Field label="Flats/Acres" value={pd.flats_per_acre || pd.density_per_acre || pd.density || pd.flats_density || pd.flatsDensity} />
+                  <Field label="/Acre" value={pd.flats_per_acre || pd.density_per_acre || pd.density || pd.flats_density || pd.flatsDensity} />
                   <Field label="Configuration" value={pd.configuration || pd.config} />
-                  <Field label="Unit Sizes" value={pd.unit_sizes || pd.unitSizes || pd.flat_sizes} />
+                  <Field label="Flat Sizes" value={pd.unit_sizes || pd.unitSizes || pd.flat_sizes} />
                   {pd.possession_date && <Field label="Possession" value={pd.possession_date} />}
                 </Grid>
               </Grid>
@@ -1125,7 +1125,7 @@ export default function ProjectDetailView() {
           </Box>
 
           {/* Amenities */}
-          {Array.isArray(amenitySrc) && amenitySrc.length > 0 && (
+          {/* {Array.isArray(amenitySrc) && amenitySrc.length > 0 && (
             <Accordion sx={{ mb: 4 }} defaultExpanded={false} expanded={amenitiesOpen} onChange={(e, isExpanded) => { setAmenitiesOpen(isExpanded); if (isExpanded) prefetchGroup('amenities', amenitySrc); }}>
               <AccordionSummary 
                 expandIcon={<ExpandMoreIcon />} 
@@ -1207,7 +1207,7 @@ export default function ProjectDetailView() {
                 ) : null}
               </AccordionDetails>
             </Accordion>
-          )}
+          )} */}
 
           {/* Site Plan (Layouts) */}
           {Array.isArray(data.layouts) && data.layouts.length > 0 && (

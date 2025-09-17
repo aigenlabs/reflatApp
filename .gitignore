@@ -50,3 +50,7 @@ reflat/backend/firebase-debug.log
 # Secrets & credentials (ensure not committed)
 reflat/backend/serviceAccountKey.json
 
+# Generated project manifests (rebuild as needed)
+tools/seed/**/manifest.json
+tools/data/**/manifest.json
+

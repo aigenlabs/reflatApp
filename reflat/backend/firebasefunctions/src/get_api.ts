@@ -466,7 +466,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
         const location = (req.query?.location as string | undefined) || undefined;
         const builder = (req.query?.builder as string | undefined) || undefined;
 
-        const docRef = db.collection("locations").doc("projects");
+        const docRef = db.collection("builders").doc("locations");
         const snap = await docRef.get();
 
         if (!snap.exists) {
@@ -474,7 +474,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
           return;
         }
         const data = snap.data();
-        let projects = (data?.prj_locations || []) as ProjectLocation[];
+        let projects = (data?.locations || []) as ProjectLocation[];
 
         // Filter by city/location if provided
         if (city) {
@@ -527,7 +527,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
         const city = parts[1];
         const location = parts[2];
 
-        const docRef = db.collection("locations").doc("projects");
+        const docRef = db.collection("builders").doc("locations");
         const snap = await docRef.get();
 
         if (!snap.exists) {
@@ -535,7 +535,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
           return;
         }
         const data = snap.data();
-        const projects = (data?.prj_locations || []) as ProjectLocation[];
+        const projects = (data?.locations || []) as ProjectLocation[];
 
         const project = projects.find((p) => {
           const cityMatch = !city || p.city?.toLowerCase() === city.toLowerCase();
@@ -586,7 +586,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
   // -----------------------------
   if (parts[0] === "locations") {
     // Public (non-sensitive) read; keep open. Add caching later if needed.
-    const docRef = db.collection("locations").doc("projects");
+    const docRef = db.collection("builders").doc("locations");
     const snap = await docRef.get();
 
     if (!snap.exists) {
@@ -595,7 +595,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
     }
 
     const data = snap.data();
-    const locations = (data?.prj_locations || []) as {
+    const locations = (data?.locations || []) as {
       city: string;
       location: string;
       projects: { builder_id: string }[];

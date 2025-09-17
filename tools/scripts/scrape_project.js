@@ -1,12 +1,22 @@
 #!/usr/bin/env node
 /*
 Usage:
-  node scrape_project.js <builderId> <projectId> <websiteUrl>
+  node scrape_project.js <builderId> <projectId> <websiteUrl> [flags]
+
+Flags:
+  --allow-reorganize    Allow re-downloading files that exist in other subfolders
+  --no-download         Scan website and build JSON but skip downloading files
+
+Example:
+  node scrape_project.js myhome grava https://example.com
+  node scrape_project.js myhome grava https://example.com --no-download
 
 - Scrapes the given project website for details and media.
 - Saves details as project-details.json.
 - Downloads media into standard subfolders (logos, floor_plans, brochures, banners, photos, layouts, news, documents) under tools/data/<builderId>/<projectId>/media/<subfolder>/
 - If no files for a subfolder, it remains empty.
+- Use --no-download to preserve existing organization and only update metadata.
+- To rebuild JSON from existing files without scraping, use build_project_json.js instead.
 
 Requires: npm install axios cheerio node-fetch@2 fs-extra
 */
@@ -17,18 +27,11 @@ const fetch = require('node-fetch');
 const fs = require('fs-extra');
 const path = require('path');
 const crypto = require('crypto');
+const { getProjectData, SUBFOLDERS, isValidLocalFile } = require('./project-utils');
 
-const SUBFOLDERS = [
-  'logos',
-  'floor_plans',
-  'brochures',
-  'banners',
-  'photos', // merged gallery and photos
-  'layouts', // merged layouts and site_layout
-  'news',
-  'amenities',
-  'documents'
-];
+// Note: SUBFOLDERS constant is now imported from project-utils.js
+
+// Note: Location and builder name lookup functions are now imported from project-utils.js
 
 // Helper: quick file type check by extension
 function isLikelyMediaExt(ext) {
@@ -60,18 +63,27 @@ function bufferLooksValid(buffer, ext) {
   return buffer.length > 128;
 }
 
-// Helper: validate a local file by reading header bytes and extension
-function isValidLocalFile(fp) {
-  try {
-    const ext = path.extname(fp) || '';
-    if (!isLikelyMediaExt(ext)) return false;
-    const stat = fs.statSync(fp);
-    if (!stat || !stat.isFile() || stat.size < 64) return false;
-    const buf = fs.readFileSync(fp, { encoding: null, flag: 'r' });
-    return bufferLooksValid(buf, ext);
-  } catch (e) {
-    return false;
+// Helper: check if a file with the same hash exists in any subfolder
+function findExistingFileByHash(hash, mediaDir) {
+  for (const subfolder of SUBFOLDERS) {
+    const dir = path.join(mediaDir, subfolder);
+    if (!fs.existsSync(dir)) continue;
+    try {
+      const files = fs.readdirSync(dir);
+      const existingFile = files.find(f => f && f.startsWith(hash));
+      if (existingFile) {
+        return {
+          subfolder: subfolder,
+          filename: existingFile,
+          relativePath: `${subfolder}/${existingFile}`,
+          fullPath: path.join(dir, existingFile)
+        };
+      }
+    } catch (e) {
+      // ignore read errors for this subfolder
+    }
   }
+  return null;
 }
 
 // Remove obvious OS artifacts and invalid files from media subfolders
@@ -126,15 +138,52 @@ async function reverseGeocode(lat, lng) {
 
 async function main() {
   console.log('Starting scrape_project.js...');
-  const [builderId, projectId, websiteUrl] = process.argv.slice(2);
+  
+  // Parse command line arguments
+  const args = process.argv.slice(2);
+  
+  // Check for flags
+  const preserveOrganization = !args.includes('--allow-reorganize');
+  const noDownload = args.includes('--no-download');
+  const filteredArgs = args.filter(arg => !arg.startsWith('--'));
+  
+  const builderId = filteredArgs[0];
+  const projectId = filteredArgs[1];
+  const websiteUrl = filteredArgs[2];
+  
   if (!builderId || !projectId || !websiteUrl) {
-    console.error('Usage: node scrape_project.js <builderId> <projectId> <websiteUrl>');
+    console.error('Usage: node scrape_project.js <builderId> <projectId> <websiteUrl> [--allow-reorganize] [--no-download]');
+    console.error('');
+    console.error('Flags:');
+    console.error('  --allow-reorganize    Re-download files only if they have changed (size/content)');
+    console.error('                        (default: preserve existing file organization completely)');
+    console.error('  --no-download         Scan website and build JSON but skip downloading any files');
+    console.error('                        (preserves existing file organization completely)');
+    console.error('');
+    console.error('Example:');
+    console.error('  node scrape_project.js myhome grava https://example.com');
+    console.error('  node scrape_project.js myhome grava https://example.com --allow-reorganize');
+    console.error('  node scrape_project.js myhome grava https://example.com --no-download');
+    console.error('');
+    console.error('To rebuild JSON from existing files without scraping, use:');
+    console.error('  node build_project_json.js <builderId> <projectId>');
     process.exit(1);
   }
+  
+  console.log(`Builder: ${builderId}`);
+  console.log(`Project: ${projectId}`);
+  console.log(`Website: ${websiteUrl}`);
+  console.log(`File organization mode: ${preserveOrganization ? 'PRESERVE existing organization' : 'ALLOW re-download if changed'}`);
+  console.log(`Download mode: ${noDownload ? 'NO DOWNLOAD (metadata only)' : 'DOWNLOAD enabled'}`);
   // Ensure paths are computed relative to the script location so the script behaves
   // the same regardless of the current working directory when invoked.
   const baseDir = path.join(__dirname, '..', 'data', builderId, projectId);
   const mediaDir = path.join(baseDir, 'media');
+  const locationsPath = path.join(__dirname, '..', 'data', 'locations.json');
+  const buildersPath = path.join(__dirname, '..', 'data', 'builders.json');
+
+  // Get consolidated project data from utility module
+  const projectData = getProjectData(builderId, projectId, locationsPath, buildersPath);
 
   await fs.ensureDir(mediaDir);
   for (const sub of SUBFOLDERS) {
@@ -173,6 +222,7 @@ async function main() {
   });
 
   // Fetch and parse the website
+  console.log(`Fetching website: ${websiteUrl}`);
   const { data: html } = await axios.get(websiteUrl);
   const $ = cheerio.load(html);
 
@@ -224,19 +274,22 @@ async function main() {
 
   const details = {
     builder_id: builderId,
-    builder_name: builderId, // You can customize this if you want a display name
+    builder_name: projectData.builderName, // Single source of truth from builders.json
+    builder_logo: projectData.builderLogo, // Single source of truth from builders.json
     project_id: projectId,
-    project_name: projectId, // You can customize this if you want a display name
-    name: $('h1, .project-title, .title').first().text().trim() || projectId,
+    project_name: projectData.projectName, // Single source of truth from builders.json
+    project_logo: projectData.projectLogo, // Single source of truth from builders.json
+    name: $('h1, .project-title, .title').first().text().trim() || projectData.projectName,
     description: $('meta[name="description"]').attr('content') || $('p, .description').first().text().trim(),
-    location,
-    city,
+    location: projectData.location, // Single source of truth from locations.json
+    city: projectData.city, // Single source of truth from locations.json
     suburb,
     gps,
     url: websiteUrl,
     scrapedAt: new Date().toISOString(),
     videos: [] // will be filled below
   };
+  
   // collect media links discovered on the page (icons, article images, gallery images etc.)
   let mediaLinks = [];
   // map of amenity icon URLs discovered while scraping to the normalized amenity name(s)
@@ -248,6 +301,29 @@ async function main() {
   function pushMediaLink(url) {
     if (!url) return;
     try { url = (new URL(url, websiteUrl)).href; } catch (e) { return; }
+    
+    // Filter out social media platform URLs and images
+    const urlLower = url.toLowerCase();
+    const socialMediaPlatforms = ['twitter', 'facebook', 'instagram', 'youtube', 'linkedin', 'whatsapp', 'telegram'];
+    
+    // Check if URL contains social media platform names
+    for (const platform of socialMediaPlatforms) {
+      if (urlLower.includes(platform)) {
+        console.log(`Skipping social media URL: ${url} (contains "${platform}")`);
+        return;
+      }
+    }
+    
+    // Also check filename/path for social media names
+    const pathname = (new URL(url)).pathname.toLowerCase();
+    const filename = pathname.split('/').pop() || '';
+    for (const platform of socialMediaPlatforms) {
+      if (filename.includes(platform) || pathname.includes(`/${platform}/`) || pathname.includes(`_${platform}_`) || pathname.includes(`-${platform}-`)) {
+        console.log(`Skipping social media file: ${url} (filename/path contains "${platform}")`);
+        return;
+      }
+    }
+    
     if (!mediaLinks.includes(url)) mediaLinks.push(url);
   }
 
@@ -646,6 +722,119 @@ async function main() {
           pushMediaLink((new URL(href, websiteUrl)).href);
         } catch (e) { }
       });
+
+      // Extract video URLs from various sources
+      console.log('Extracting video URLs...');
+      try {
+        const videoUrls = new Set();
+        
+        // 1. HTML5 video elements with src attribute
+        $('video[src]').each((i, el) => {
+          const src = $(el).attr('src');
+          if (src) {
+            try {
+              const absoluteUrl = (new URL(src, websiteUrl)).href;
+              videoUrls.add(absoluteUrl);
+              console.log(`Found video src: ${absoluteUrl}`);
+            } catch (e) {}
+          }
+        });
+
+        // 2. HTML5 video elements with source children
+        $('video source[src]').each((i, el) => {
+          const src = $(el).attr('src');
+          if (src) {
+            try {
+              const absoluteUrl = (new URL(src, websiteUrl)).href;
+              videoUrls.add(absoluteUrl);
+              console.log(`Found video source: ${absoluteUrl}`);
+            } catch (e) {}
+          }
+        });
+
+        // 3. YouTube iframe embeds
+        $('iframe[src*="youtube.com"], iframe[src*="youtu.be"]').each((i, el) => {
+          const src = $(el).attr('src');
+          if (src) {
+            try {
+              const absoluteUrl = (new URL(src, websiteUrl)).href;
+              videoUrls.add(absoluteUrl);
+              console.log(`Found YouTube embed: ${absoluteUrl}`);
+            } catch (e) {}
+          }
+        });
+
+        // 4. Vimeo iframe embeds
+        $('iframe[src*="vimeo.com"]').each((i, el) => {
+          const src = $(el).attr('src');
+          if (src) {
+            try {
+              const absoluteUrl = (new URL(src, websiteUrl)).href;
+              videoUrls.add(absoluteUrl);
+              console.log(`Found Vimeo embed: ${absoluteUrl}`);
+            } catch (e) {}
+          }
+        });
+
+        // 5. Generic iframe embeds that might contain videos
+        $('iframe').each((i, el) => {
+          const src = $(el).attr('src');
+          if (src && /video|player|embed/i.test(src)) {
+            try {
+              const absoluteUrl = (new URL(src, websiteUrl)).href;
+              // Skip already found YouTube/Vimeo to avoid duplicates
+              // Also skip Google Maps and other non-video embeds
+              if (!absoluteUrl.includes('youtube.com') && 
+                  !absoluteUrl.includes('youtu.be') && 
+                  !absoluteUrl.includes('vimeo.com') &&
+                  !absoluteUrl.includes('google.com/maps') &&
+                  !absoluteUrl.includes('maps.google') &&
+                  !absoluteUrl.includes('openstreetmap') &&
+                  !absoluteUrl.includes('mapbox')) {
+                videoUrls.add(absoluteUrl);
+                console.log(`Found generic video embed: ${absoluteUrl}`);
+              }
+            } catch (e) {}
+          }
+        });
+
+        // 6. Links to video files (mp4, webm, etc.)
+        $('a[href]').each((i, el) => {
+          const href = $(el).attr('href');
+          if (href && /\.(mp4|webm|mov|avi|mkv|flv|wmv|m4v)(\?|$)/i.test(href)) {
+            try {
+              const absoluteUrl = (new URL(href, websiteUrl)).href;
+              videoUrls.add(absoluteUrl);
+              console.log(`Found video file link: ${absoluteUrl}`);
+            } catch (e) {}
+          }
+        });
+
+        // 7. Data attributes that might contain video URLs
+        $('[data-video-url], [data-video-src], [data-video]').each((i, el) => {
+          const $el = $(el);
+          const videoUrl = $el.attr('data-video-url') || $el.attr('data-video-src') || $el.attr('data-video');
+          if (videoUrl) {
+            try {
+              const absoluteUrl = (new URL(videoUrl, websiteUrl)).href;
+              videoUrls.add(absoluteUrl);
+              console.log(`Found data-video: ${absoluteUrl}`);
+            } catch (e) {}
+          }
+        });
+
+        // Convert Set to Array and update details
+        details.videos = Array.from(videoUrls);
+        console.log(`Total videos found: ${details.videos.length}`);
+        if (details.videos.length > 0) {
+          details.videos.forEach((url, index) => {
+            console.log(`  ${index + 1}. ${url}`);
+          });
+        }
+      } catch (e) {
+        console.warn('Error extracting videos:', e.message);
+        details.videos = [];
+      }
     } catch (e) {
       // ignore
     }
@@ -722,7 +911,7 @@ async function main() {
   kpd.rera_number = normalizeRera(kpd.rera_number || details.rera_number || null);
 
   // Numeric/summary fields
-  ['total_acres','total_towers','total_floors','units_per_floor','config','unit_sizes','total_units','flats_per_acre','open_space_percent'].forEach(fn => {
+  ['total_acres','total_towers','total_floors','flats_per_floor','flats_config','flat_sizes','total_flats','flats_per_acre','open_space_percent'].forEach(fn => {
     if (typeof details[fn] !== 'undefined' && typeof kpd[fn] === 'undefined') kpd[fn] = details[fn];
   });
 
@@ -815,6 +1004,8 @@ async function main() {
   async function downloadAndAssignMedia() {
     // Prepare collections and seed from existing files on disk so repeated runs preserve earlier downloads
     const mediaCollections = {}; // subfolder -> [relpath]
+    let filesPreserved = 0;
+    let filesDownloaded = 0;
     for (const s of SUBFOLDERS) {
       mediaCollections[s] = [];
       try {
@@ -837,8 +1028,11 @@ async function main() {
     }
 
     // If no discovered media links, we still want to ensure details arrays include existing files
-    if (!mediaLinks || !mediaLinks.length) {
+    if (!mediaLinks || !mediaLinks.length || noDownload) {
       // merge seeded collections into details below
+      if (noDownload && mediaLinks && mediaLinks.length) {
+        console.log(`Found ${mediaLinks.length} media links on webpage, but skipping downloads due to --no-download flag`);
+      }
     } else {
       for (const url of mediaLinks) {
         try {
@@ -867,6 +1061,46 @@ async function main() {
           const nameOnly = basename ? path.parse(basename).name : '';
           // sanitize basename to create a safe, readable suffix
           const safeName = (String(nameOnly || '')).replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '').toLowerCase().slice(0,40);
+          
+          // Check if file already exists in ANY subfolder (preserves manual organization)
+          const existingFile = findExistingFileByHash(hash, mediaDir);
+          if (existingFile && preserveOrganization) {
+            console.log(`File already exists in ${existingFile.subfolder}/, preserving organization: ${existingFile.filename}`);
+            urlToSavedFilename[url] = existingFile.filename;
+            const rel = existingFile.relativePath;
+            if (!mediaCollections[existingFile.subfolder].includes(rel)) {
+              mediaCollections[existingFile.subfolder].push(rel);
+            }
+            filesPreserved++;
+            continue; // Skip download, preserve existing organization
+          } else if (existingFile && !preserveOrganization) {
+            // With --allow-reorganize, check if file has actually changed before re-downloading
+            try {
+              const existingStats = await fs.stat(existingFile.fullPath);
+              const existingSize = existingStats.size;
+              
+              // Check if file size has changed (indicates content change)
+              if (buffer.length !== existingSize) {
+                console.log(`File size changed (${existingSize} -> ${buffer.length}), re-downloading: ${existingFile.filename}`);
+                // Remove old file before downloading new version
+                await fs.remove(existingFile.fullPath);
+              } else {
+                // Same hash and same size = identical file, skip download
+                console.log(`File unchanged in ${existingFile.subfolder}/, skipping duplicate: ${existingFile.filename}`);
+                urlToSavedFilename[url] = existingFile.filename;
+                const rel = existingFile.relativePath;
+                if (!mediaCollections[existingFile.subfolder].includes(rel)) {
+                  mediaCollections[existingFile.subfolder].push(rel);
+                }
+                filesPreserved++;
+                continue;
+              }
+            } catch (e) {
+              console.log(`Could not check existing file stats, re-downloading: ${existingFile.filename}`);
+              // If we can't check the existing file, proceed with download
+            }
+          }
+
           // choose probable subfolder using folder hints or keyword heuristics
           let chosen = 'photos';
           const lower = (pathname + ' ' + basename + ' ' + url).toLowerCase();
@@ -881,29 +1115,62 @@ async function main() {
           else if (/\b(layout|site_layout|site-layout)\b/.test(lower)) chosen = 'layouts';
           else if (/amenit|amenit(y|ies)|icon\b/.test(lower)) chosen = 'amenities';
 
+          // Check if photo name matches any amenity name - if so, move to amenities folder
+          if (chosen === 'photos' && details.amenities && Array.isArray(details.amenities)) {
+            const photoNameLower = (safeName || nameOnly || basename).toLowerCase();
+            for (const amenity of details.amenities) {
+              if (amenity && amenity.name) {
+                const amenityNameLower = amenity.name.toLowerCase()
+                  .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+                  .replace(/\s+/g, '_'); // Replace spaces with underscores
+                
+                // Check if photo name contains amenity name or vice versa
+                if (photoNameLower.includes(amenityNameLower) || 
+                    amenityNameLower.includes(photoNameLower) ||
+                    photoNameLower.replace(/_/g, '').includes(amenityNameLower.replace(/_/g, '')) ||
+                    amenityNameLower.replace(/_/g, '').includes(photoNameLower.replace(/_/g, ''))) {
+                  chosen = 'amenities';
+                  console.log(`Moving photo "${safeName || basename}" to amenities folder (matches amenity: "${amenity.name}")`);
+                  break;
+                }
+              }
+            }
+          }
+
+          // Check if image name contains "logo" - if so, move to logos folder
+          if (chosen === 'photos') {
+            const imageNameLower = (safeName || nameOnly || basename).toLowerCase();
+            if (imageNameLower.includes('logo')) {
+              chosen = 'logos';
+              console.log(`Moving image "${safeName || basename}" to logos folder (contains "logo")`);
+            }
+          }
+
+          // Check if image name contains "banner" - if so, move to banners folder
+          if (chosen === 'photos') {
+            const imageNameLower = (safeName || nameOnly || basename).toLowerCase();
+            if (imageNameLower.includes('banner')) {
+              chosen = 'banners';
+              console.log(`Moving image "${safeName || basename}" to banners folder (contains "banner")`);
+            }
+          }
+
           // Prefer an existing file that starts with the same hash (preserve dedupe across runs)
           let filename = '';
           try {
-            const dir = path.join(mediaDir, chosen);
-            const files = (fs.existsSync(dir) ? await fs.readdir(dir) : []);
-            const existing = files.find(f => f && f.startsWith(hash));
-            if (existing) {
-              filename = existing;
-            } else {
-              filename = safeName ? `${hash}-${safeName}${ext}` : `${hash}${ext}`;
-            }
+            filename = safeName ? `${hash}-${safeName}${ext}` : `${hash}${ext}`;
           } catch (e) {
             filename = safeName ? `${hash}-${safeName}${ext}` : `${hash}${ext}`;
           }
 
           const dest = path.join(mediaDir, chosen, filename);
-          if (!fs.existsSync(dest)) {
-            await fs.ensureDir(path.dirname(dest));
-            await fs.writeFile(dest, buffer);
-          }
+          console.log(`Downloading new file to ${chosen}/${filename}`);
+          await fs.ensureDir(path.dirname(dest));
+          await fs.writeFile(dest, buffer);
           urlToSavedFilename[url] = filename;
           const rel = `${chosen}/${filename}`;
           if (!mediaCollections[chosen].includes(rel)) mediaCollections[chosen].push(rel);
+          filesDownloaded++;
         } catch (e) {
           console.warn('Failed to download media', url, e && e.message);
         }
@@ -933,8 +1200,23 @@ async function main() {
         details[s] = collected.slice();
       }
     }
+    
+    // Display download summary
+    console.log(`\nDownload Summary:`);
+    if (noDownload) {
+      console.log(`  Mode: NO DOWNLOAD (metadata only)`);
+      console.log(`  Media links found on webpage: ${mediaLinks ? mediaLinks.length : 0}`);
+      console.log(`  Existing files preserved: ${Object.values(mediaCollections).flat().length}`);
+      console.log(`  ✓ All existing file organization preserved!`);
+    } else {
+      console.log(`  Files preserved (existing organization): ${filesPreserved}`);
+      console.log(`  Files downloaded (new): ${filesDownloaded}`);
+      console.log(`  Total media files processed: ${filesPreserved + filesDownloaded}`);
+      if (preserveOrganization && filesPreserved > 0) {
+        console.log(`  ✓ Your manual file organization has been preserved!`);
+      }
+    }
   }
-
   await downloadAndAssignMedia();
 
   // Merge amenities_files into amenities objects so we don't keep two separate fields
