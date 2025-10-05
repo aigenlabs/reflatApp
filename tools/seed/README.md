@@ -3,16 +3,16 @@
 This folder contains tools to upload project media and seed sample projects into Firestore.
 
 Files
-- `upload_via_signed_url.js` — Node uploader that uses your backend endpoints:
+- `upload_via_signed_url.js` — Node uploader that uses your backend endpoints (located in tools/scripts/scraping/):
   - `POST /api/create_upload_url` → returns a signed v4 PUT URL
   - `PUT` file bytes to the returned signed URL
   - `POST /api/notify_upload` → write metadata into Firestore
-- `.env.example` — example environment variables for the uploader
+- `.env.example` — example environment variables for the uploader (located in tools/scripts/)
 
 Prerequisites
 - Node 18+ recommended (global `fetch` available). If using Node <18, install `node-fetch`.
 - Your backend Cloud Functions deployed and reachable (API_BASE).
-- `tools/seed/.env` should exist (copy from `.env.example`) and must NOT be committed.
+- `tools/scripts/.env` should exist (copy from `.env.example`) and must NOT be committed.
 
 Environment variables (summary)
 - API_BASE / API_BASE_<ENV> (e.g. API_BASE_STAGING)
@@ -27,23 +27,23 @@ Environment variables (summary)
 Quick start
 1. Copy example env and fill values (DO NOT COMMIT):
 
-   cp tools/seed/.env.example tools/seed/.env
-   # edit tools/seed/.env and set API_BASE (or API_BASE_STAGING/PROD) and SEED_ADMIN_KEY(s)
+   cp tools/scripts/.env.example tools/scripts/.env
+   # edit tools/scripts/.env and set API_BASE (or API_BASE_STAGING/PROD) and SEED_ADMIN_KEY(s)
 
 2. Load env into your shell:
 
-   source tools/seed/.env
+   source tools/scripts/.env
 
 3. Run uploader for one pair (uses BUILDER_ID, PROJECT_ID, MEDIA_ROOT from env if not passed as CLI)
 
    # default (local):
-   node tools/seed/upload_via_signed_url.js
+   node tools/scripts/scraping/upload_via_signed_url.js
 
    # specify environment (prefers API_BASE_<ENV> and SEED_ADMIN_KEY_<ENV>):
-   ENV=staging node tools/seed/upload_via_signed_url.js
+   ENV=staging node tools/scripts/scraping/upload_via_signed_url.js
 
    # override with CLI args:
-   node tools/seed/upload_via_signed_url.js --builderId=builder123 --projectId=projA --root=tools/seed/builder123/projA/media --apiBase=https://... 
+   node tools/scripts/scraping/upload_via_signed_url.js --builderId=builder123 --projectId=projA --root=tools/seed/builder123/projA/media --apiBase=https://... 
 
 Batch uploads
 - Prepare a CSV file (no header), one pair per line. Fields: builderId,projectId,mediaRoot(optional)
@@ -54,31 +54,31 @@ Batch uploads
 
 - Run batch with concurrency across pairs:
 
-    node tools/seed/upload_via_signed_url.js --batch=tools/seed/batch.csv --parallelPairs=3
+    node tools/scripts/scraping/upload_via_signed_url.js --batch=tools/seed/batch.csv --parallelPairs=3
 
 - The script writes per-pair `tools/seed/<builderId>/<projectId>/uploaded_manifest.json` and a batch summary `tools/seed/batch_result_<ts>.json` in the repo.
 
 Notes and tips
 - `DRY_RUN=true` is useful for verifying file discovery and manifest generation without network calls.
 - For many files, increase `CONCURRENCY` but watch memory and network limits.
-- Keep `tools/seed/.env` out of git (already in .gitignore).
+- Keep `tools/scripts/.env` out of git (already in .gitignore).
 - The uploader expects backend endpoints to allow requests from localhost or be authorized with `SEED_ADMIN_KEY`/Bearer token.
 
 Examples
 - Single pair using .env values:
 
-    source tools/seed/.env
-    node tools/seed/upload_via_signed_url.js
+    source tools/scripts/.env
+    node tools/scripts/scraping/upload_via_signed_url.js
 
 - Upload to staging using env-specific vars in .env:
 
-    # set API_BASE_STAGING and SEED_ADMIN_KEY_STAGING in tools/seed/.env
-    ENV=staging source tools/seed/.env
-    ENV=staging node tools/seed/upload_via_signed_url.js
+    # set API_BASE_STAGING and SEED_ADMIN_KEY_STAGING in tools/scripts/.env
+    ENV=staging source tools/scripts/.env
+    ENV=staging node tools/scripts/scraping/upload_via_signed_url.js
 
 - Batch example:
 
-    node tools/seed/upload_via_signed_url.js --batch=tools/seed/batch.csv --parallelPairs=4
+    node tools/scripts/scraping/upload_via_signed_url.js --batch=tools/seed/batch.csv --parallelPairs=4
 
 ---
 
@@ -110,4 +110,4 @@ This command runs the full pipeline for the `myhome/akrida` project against the 
 
 **Direct Usage (without npm script):**
 If you prefer to run the script directly without using the npm script, you can use the following command:
-`node tools/seed/run_pipeline.js <builderId> <projectId> [--env staging|prod] [--bucket my-bucket] [--dry-run]`
+`node tools/scripts/scraping/run_pipeline.js <builderId> <projectId> [--env staging|prod] [--bucket my-bucket] [--dry-run]`

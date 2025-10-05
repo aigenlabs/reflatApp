@@ -154,31 +154,22 @@ async function getBlobFromResponseOrFetch(url) {
       console.debug('imageCache: requesting object via proxy for objectPath', { objectPath: url, proxyUrl });
       const pr = await fetch(proxyUrl, { mode: 'cors' });
       if (!pr.ok) throw new Error(`proxy ${proxyUrl} failed ${pr.status}`);
-      const ct = (pr.headers.get && pr.headers.get('content-type')) || '';
-      // Backend should stream binary with an image/* content-type. If it returns JSON, it's the legacy signed-url response.
-      if (ct.includes('application/json')) {
-        console.error('imageCache: backend /image returned JSON (signed-url). Update backend to stream image bytes to avoid direct browser fetch to GCS.');
-        throw new Error('backend /image returned legacy JSON; update backend to stream bytes');
-      }
       return await pr.blob();
     }
 
-    // If the URL appears to be a storage.googleapis URL for our configured bucket, route via backend proxy
-    const parsed = parseStorageUrl(url);
-    if (parsed) {
-      const objectPath = `${parsed.builderId}/${parsed.projectId}/${parsed.folder}/${parsed.filename}`;
-      if (!FIREBASE_FUNCTIONS_URL) throw new Error('FIREBASE_FUNCTIONS_URL not configured');
-      const proxyBase = FIREBASE_FUNCTIONS_URL.replace(/\/+$/, '');
-      const proxyUrl = `${proxyBase}/image?path=${encodeURIComponent(objectPath)}`;
-      console.debug('imageCache: requesting object via proxy for storage URL', { objectPath, proxyUrl });
-      const pr = await fetch(proxyUrl, { mode: 'cors' });
-      if (!pr.ok) throw new Error(`proxy ${proxyUrl} failed ${pr.status}`);
-      const ct = (pr.headers.get && pr.headers.get('content-type')) || '';
-      if (ct.includes('application/json')) {
-        console.error('imageCache: backend /image returned JSON (signed-url). Update backend to stream image bytes to avoid direct browser fetch to GCS.');
-        throw new Error('backend /image returned legacy JSON; update backend to stream bytes');
+    // If the URL is a Firebase Storage URL (signed or unsigned), always use the backend proxy
+    if (typeof url === 'string' && (url.includes('storage.googleapis.com') || url.includes('firebasestorage.app'))) {
+      const parsed = parseStorageUrl(url);
+      if (parsed) {
+        const objectPath = `${parsed.builderId}/${parsed.projectId}/${parsed.folder}/${parsed.filename}`;
+        if (!FIREBASE_FUNCTIONS_URL) throw new Error('FIREBASE_FUNCTIONS_URL not configured');
+        const proxyBase = FIREBASE_FUNCTIONS_URL.replace(/\/+$/, '');
+        const proxyUrl = `${proxyBase}/image?path=${encodeURIComponent(objectPath)}`;
+        console.debug('imageCache: requesting storage URL via proxy', { objectPath, proxyUrl });
+        const pr = await fetch(proxyUrl, { mode: 'cors' });
+        if (!pr.ok) throw new Error(`proxy ${proxyUrl} failed ${pr.status}`);
+        return await pr.blob();
       }
-      return await pr.blob();
     }
 
     // Otherwise treat as an external http(s) URL and fetch directly

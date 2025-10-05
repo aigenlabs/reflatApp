@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -46,7 +46,7 @@ export default function ProjectDetailView() {
   const pendingSignedFetches = useRef(new Set());
 
   // Control loading of large image groups — only fetch signed URLs when the section is opened
-  const [amenitiesOpen, setAmenitiesOpen] = useState(false);
+  // const [amenitiesOpen, setAmenitiesOpen] = useState(false); // Removed - amenities excluded
   const [layoutsOpen, setLayoutsOpen] = useState(false);
   const [floorPlansOpen, setFloorPlansOpen] = useState(false);
   const [photosOpen, setPhotosOpen] = useState(false);
@@ -68,21 +68,23 @@ export default function ProjectDetailView() {
   const dataSafe = data || {};
 
   // Banner candidates depend on pd/data and must be declared after pd
-  const bannerCandidates = Array.isArray(data?.banners) && data.banners.length
-    ? data.banners.slice()
-    : (pd?.banner ? [pd.banner] : (pd?.banner_image ? [pd.banner_image] : []));
+  // Memoized to prevent recreating the array on every render
+  const bannerCandidates = useMemo(() => {
+    return Array.isArray(data?.banners) && data.banners.length
+      ? data.banners.slice()
+      : (pd?.banner ? [pd.banner] : (pd?.banner_image ? [pd.banner_image] : []));
+  }, [data?.banners, pd?.banner, pd?.banner_image]);
 
   // Prefetch signed URLs for carousel entries
   useEffect(() => {
     if (!bannerCandidates || bannerCandidates.length === 0) return;
-    let alive = true;
     bannerCandidates.forEach((b, i) => {
       // Skip empty banners
       if (!b) return;
-      
+
       let fname = b;
       const parts = (typeof fname === 'string') ? fname.split('/').filter(Boolean) : [];
-      
+
       // If already has builder/project path structure
       if (parts.length >= 4 && parts[0] === builderId && parts[1] === projectId) {
         const folderFromPath = parts[2];
@@ -99,7 +101,7 @@ export default function ProjectDetailView() {
       // Default case - assume it's just the filename
       fetchSignedUrlOnDemand('banners', normalizeFilenameForUrl(String(fname)), `banner_${i}`);
     });
-    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bannerCandidates, builderId, projectId]);
 
   // Auto-advance banner carousel
@@ -108,7 +110,7 @@ export default function ProjectDetailView() {
     if (bannerTimerRef.current) clearInterval(bannerTimerRef.current);
     bannerTimerRef.current = setInterval(() => setBannerIndex((n) => (n + 1) % bannerCandidates.length), 5000);
     return () => { if (bannerTimerRef.current) { clearInterval(bannerTimerRef.current); bannerTimerRef.current = null; } };
-  }, [bannerCandidates.length]);
+  }, [bannerCandidates]);
 
   const handleOpenModal = (imageUrl) => {
     setModalImageUrl(imageUrl);
@@ -154,12 +156,21 @@ export default function ProjectDetailView() {
 
   // Stable callbacks for resolving logos so effects can safely depend on them
   const resolveBuilderLogoCandidate = useCallback(() => {
+    // Check if we have a centralized builder logo from build_project_json.js
+    if (pd?.builder_logo && pd.builder_logo.includes('/')) {
+      // If builder_logo contains a slash, it's likely a centralized path like "myhome/builder_logo.webp"
+      // Return it directly so imageCache.js can proxy it through /api/image
+      return pd.builder_logo;
+    }
+
     if (signedUrls.builder_logo) return signedUrls.builder_logo;
     if (pd?.builder_logo) return resolveFileUrl(pd.builder_logo, 'logos', 'builder_logo');
     if (pd?.logo) return resolveFileUrl(pd.logo, 'logos', 'builder_logo');
     if (Array.isArray(data?.logos) && data.logos.length > 0) return resolveFileUrl(data.logos[0], 'logos');
     if (data?.logo) return data.logo;
     return null;
+  // resolveFileUrl is stable and doesn't need to be a dependency
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pd, data, signedUrls]);
 
   const resolveProjectLogoCandidate = useCallback(() => {
@@ -169,6 +180,8 @@ export default function ProjectDetailView() {
     if (Array.isArray(data?.logos) && data.logos.length > 1) return resolveFileUrl(data.logos[1], 'logos');
     if (Array.isArray(data?.logos) && data.logos.length === 1) return resolveFileUrl(data.logos[0], 'logos');
     return null;
+  // resolveFileUrl is stable and doesn't need to be a dependency
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pd, data, signedUrls]);
 
   // DEBUG: surface the resolved data shape in browser console to help locate description fields
@@ -178,7 +191,7 @@ export default function ProjectDetailView() {
   }
 
   // Amenities source used in multiple places (signed-url fetch, rendering, key lookups)
-  const amenitySrc = (data && (data.amenities)) || [];
+  // const amenitySrc = (data && (data.amenities)) || []; // Removed - amenities excluded
 
   // Heuristic: determine whether a value likely refers to an asset filename/path
   // We only request signed URLs for values that look like file paths or have an image extension.
@@ -284,6 +297,8 @@ export default function ProjectDetailView() {
       (dataSafe.floor_plans || []).forEach((f, i) => addIf(`floor_${i}`, 'floor_plans', f));
     }
     // Add amenities (use the component-scoped amenitySrc) only when opened
+    // Amenities section excluded as per requirements
+    /*
     if (amenitiesOpen) {
       amenitySrc.forEach((a, i) => {
         // amenity may be a string or an object { name, icon }
@@ -294,12 +309,12 @@ export default function ProjectDetailView() {
         if (typeof candidate === 'string' && !looksLikeAssetFilename(candidate)) return;
         addIf(`amenity_${i}`, 'amenities', candidate);
       });
-
     }
+    */
 
     if (toFetch.length === 0) {
       if (process.env.NODE_ENV !== 'production') {
-        console.debug('ProjectDetailView: no assets to fetch for signed URLs', { builderId, projectId, dataFiles: dataSafe.files, photos: dataSafe.photos?.length, layouts: dataSafe.layouts?.length, floor_plans: dataSafe.floor_plans?.length, amenityCount: amenitySrc.length });
+        console.debug('ProjectDetailView: no assets to fetch for signed URLs', { builderId, projectId, dataFiles: dataSafe.files, photos: dataSafe.photos?.length, layouts: dataSafe.layouts?.length, floor_plans: dataSafe.floor_plans?.length });
       }
       return;
     }
@@ -364,7 +379,7 @@ export default function ProjectDetailView() {
         try {
           const rawFileParam = it.filename || '';
           // if filename was accidentally passed with a leading folder segment (e.g. 'photos/7.png'), strip it
-          const requestFile = rawFileParam.replace(new RegExp('^' + it.folder + '\/'), '');
+          const requestFile = rawFileParam.replace(new RegExp('^' + it.folder + '/'), '');
           // Normalize filename to match uploader rules before requesting signed URL
           const requestFileNormalized = normalizeFilenameForUrl(requestFile || rawFileParam || it.filename || '');
           const url = `${FIREBASE_FUNCTIONS_URL}/signed_url?folder=${encodeURIComponent(it.folder)}&builderId=${encodeURIComponent(builderId)}&projectId=${encodeURIComponent(projectId)}&file=${encodeURIComponent(requestFileNormalized)}`;
@@ -400,7 +415,9 @@ export default function ProjectDetailView() {
     })();
 
     return () => { alive = false; };
-  }, [data, builderId, projectId, amenitiesOpen, layoutsOpen, floorPlansOpen, photosOpen, videosOpen]);
+  // fetchSignedUrlOnDemand and data properties are stable, don't need to trigger re-runs
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, builderId, projectId, layoutsOpen, floorPlansOpen, photosOpen, videosOpen]); // Removed amenitiesOpen
 
   // Try to resolve and cache the banner as early as possible to improve LCP.
   useEffect(() => {
@@ -433,6 +450,8 @@ export default function ProjectDetailView() {
       }
     })();
     return () => { alive = false; };
+  // resolveFileUrl and data properties are stable, don't need to trigger re-runs
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, signedUrls]);
 
   // Fetch and cache builder logo for header
@@ -449,6 +468,8 @@ export default function ProjectDetailView() {
       }
     })();
     return () => { alive = false; };
+  // resolveBuilderLogoCandidate is memoized and includes all its dependencies
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, signedUrls]);
 
   // Fetch and cache project logo for title
@@ -544,7 +565,8 @@ export default function ProjectDetailView() {
     const photoIdx = (data?.photos || []).findIndex(p => extractNormalizedBase(p) === baseFilename);
     const layoutIdx = (data?.layouts || []).findIndex(l => extractNormalizedBase(l) === baseFilename);
     const floorIdx = (data?.floor_plans || []).findIndex(f => extractNormalizedBase(f) === baseFilename);
-    const amenityIdx = (amenitySrc || []).findIndex(a => extractNormalizedBase(a) === baseFilename);
+    // Amenities disabled for now - uncomment to enable in future
+    const amenityIdx = -1; // (data?.amenities || []).findIndex(a => extractNormalizedBase(a) === baseFilename);
 
     const keyCandidates = [
       // main file keys
@@ -555,7 +577,7 @@ export default function ProjectDetailView() {
       photoIdx >= 0 && `photo_${photoIdx}`,
       layoutIdx >= 0 && `layout_${layoutIdx}`,
       floorIdx >= 0 && `floor_${floorIdx}`,
-      amenityIdx >= 0 && `amenity_${amenityIdx}`,
+      amenityIdx >= 0 && `amenity_${amenityIdx}`, // Will be -1 until amenities are re-enabled
     ].filter(Boolean);
 
     for (const k of keyCandidates) {
@@ -1124,8 +1146,9 @@ export default function ProjectDetailView() {
             </Grid>
           </Box>
 
-          {/* Amenities */}
-          {/* {Array.isArray(amenitySrc) && amenitySrc.length > 0 && (
+          {/* Amenities section excluded as per requirements */}
+          {/* 
+          {Array.isArray(amenitySrc) && amenitySrc.length > 0 && (
             <Accordion sx={{ mb: 4 }} defaultExpanded={false} expanded={amenitiesOpen} onChange={(e, isExpanded) => { setAmenitiesOpen(isExpanded); if (isExpanded) prefetchGroup('amenities', amenitySrc); }}>
               <AccordionSummary 
                 expandIcon={<ExpandMoreIcon />} 
@@ -1207,7 +1230,8 @@ export default function ProjectDetailView() {
                 ) : null}
               </AccordionDetails>
             </Accordion>
-          )} */}
+          )}
+          */}
 
           {/* Site Plan (Layouts) */}
           {Array.isArray(data.layouts) && data.layouts.length > 0 && (

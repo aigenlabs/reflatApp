@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "reflat"
-  }
+  },
+  "targets": {
+    "reflat": {
+      "hosting": {
+        "reflat-ui-prod": [
+          "reflat-ui"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

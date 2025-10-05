@@ -1,21 +1,17 @@
 {
-  "projects": {
-    "default": "reflat",
-    "staging": "reflat-staging",
-    "prod": "reflat"
-  },
+  "projects": {},
   "targets": {
     "reflat-staging": {
       "hosting": {
         "reflat-ui-staging": [
-          "reflat-ui-staging"
+          "reflat-ui"
         ]
       }
     },
     "reflat": {
       "hosting": {
         "reflat-ui-prod": [
-          "reflat-ui-prod"
+          "reflat-ui"
         ]
       }
     }

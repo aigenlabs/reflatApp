@@ -46,35 +46,71 @@ export default function SearchBar({
   useEffect(() => {
     let cancelled = false;
     async function fetchBuildersForLocation() {
-      if (!tmpCity || !tmpLocation) {
+      if (!tmpCity) {
         setAvailableBuilders([]);
         return;
       }
-      try {
-        const res = await fetch(`${FIREBASE_FUNCTIONS_URL}/location_project_data/${tmpCity}/${tmpLocation}`);
-        if (!res.ok) throw new Error('Failed to fetch builders for location');
-        const { projects: locProjects } = await res.json();
-        if (cancelled) return;
-        
-        // Sanitize the data from the API to prevent runtime errors.
-        const builderIds = (Array.isArray(locProjects) ? locProjects : [])
-          .map(p => p?.builder_id) // 1. Safely get builder_id
-          .filter(id => id)        // 2. Filter out falsy values (null, undefined, '')
-          .map(String);            // 3. Convert all to strings
+      
+      if (tmpLocation === "all-localities") {
+        // For all localities, fetch builders from all locations in the city
+        if (locations.length === 0) {
+          setAvailableBuilders([]);
+          return;
+        }
+        try {
+          const builderPromises = locations.map(async (location) => {
+            try {
+              const res = await fetch(`${FIREBASE_FUNCTIONS_URL}/location_project_data/${tmpCity}/${location}`);
+              if (!res.ok) return [];
+              const { projects: locProjects } = await res.json();
+              return (Array.isArray(locProjects) ? locProjects : [])
+                .map(p => p?.builder_id)
+                .filter(id => id);
+            } catch (err) {
+              console.debug(`fetchBuildersForLocation error for ${location}`, err);
+              return [];
+            }
+          });
+          
+          const allBuildersArrays = await Promise.all(builderPromises);
+          const allBuilders = allBuildersArrays.flat();
+          const uniqueSortedIds = [...new Set(allBuilders.map(String))].sort();
+          
+          if (!cancelled) setAvailableBuilders(uniqueSortedIds);
+        } catch (err) {
+          console.debug('fetchBuildersForLocation error for all-localities', err);
+          if (!cancelled) setAvailableBuilders([]);
+        }
+      } else if (tmpLocation) {
+        // Normal case: fetch builders for specific location
+        try {
+          const res = await fetch(`${FIREBASE_FUNCTIONS_URL}/location_project_data/${tmpCity}/${tmpLocation}`);
+          if (!res.ok) throw new Error('Failed to fetch builders for location');
+          const { projects: locProjects } = await res.json();
+          if (cancelled) return;
+          
+          // Sanitize the data from the API to prevent runtime errors.
+          const builderIds = (Array.isArray(locProjects) ? locProjects : [])
+            .map(p => p?.builder_id) // 1. Safely get builder_id
+            .filter(id => id)        // 2. Filter out falsy values (null, undefined, '')
+            .map(String);            // 3. Convert all to strings
 
-        // 4. Get unique values and sort them.
-        const uniqueSortedIds = [...new Set(builderIds)].sort();
-        
-        setAvailableBuilders(uniqueSortedIds);
+          // 4. Get unique values and sort them.
+          const uniqueSortedIds = [...new Set(builderIds)].sort();
+          
+          setAvailableBuilders(uniqueSortedIds);
 
-      } catch (err) {
-        console.debug('fetchBuildersForLocation error', err);
+        } catch (err) {
+          console.debug('fetchBuildersForLocation error', err);
+          setAvailableBuilders([]);
+        }
+      } else {
         setAvailableBuilders([]);
       }
     }
     fetchBuildersForLocation();
     return () => { cancelled = true; };
-  }, [tmpCity, tmpLocation]);
+  }, [tmpCity, tmpLocation, locations]);
 
   const drawerRef = useRef(null);
 
@@ -102,18 +138,29 @@ export default function SearchBar({
 
   // Apply from drawer
   const applyFilters = () => {
+    // Validation: if All Localities is selected, builder must be chosen
+    if (tmpLocation === "all-localities" && !tmpBuilder) {
+      alert("When 'All Localities' is selected, you must choose a specific builder.");
+      return;
+    }
+
     const cityChanged = tmpCity !== selectedCity;
     const locChanged = tmpLocation !== selectedLocation;
 
     setSelectedCity(tmpCity);
     setSelectedLocation(tmpLocation);
 
-    const builderUnavailable =
-      builderDisabled || builders.length === 0 || !tmpLocation;
-    if (!cityChanged && !locChanged && !builderUnavailable) {
+    // For "all-localities", always set the builder since it's required
+    if (tmpLocation === "all-localities") {
       setSelectedBuilder(tmpBuilder);
     } else {
-      setSelectedBuilder("");
+      const builderUnavailable =
+        builderDisabled || builders.length === 0 || !tmpLocation;
+      if (!cityChanged && !locChanged && !builderUnavailable) {
+        setSelectedBuilder(tmpBuilder);
+      } else {
+        setSelectedBuilder("");
+      }
     }
     setOpen(false);
   };
@@ -127,8 +174,8 @@ export default function SearchBar({
   // Disabled states for drawer selects
   const isCityDisabled = cities.length === 0;
   const isLocationDisabled = !tmpCity || locations.length === 0;
-  const isBuilderSelectDisabled =
-    builderDisabled || (!availableBuilders.length && builders.length === 0) || !tmpLocation;
+  const isBuilderSelectDisabled = !tmpLocation && tmpLocation !== "all-localities";
+  const isBuilderRequired = tmpLocation === "all-localities";
 
   // Shared styles
   const chip = sharedChip;
@@ -168,7 +215,7 @@ export default function SearchBar({
           style={{ ...chip }}
         >
           <span style={chipValue}>
-            {(selectedCity || "City —") + " · " + (selectedLocation || "Locality —") + " · " + (selectedBuilder || "All Builders")}
+            {(selectedCity || "City —") + " · " + (selectedLocation === "all-localities" ? "All Localities" : (selectedLocation || "Locality —")) + " · " + (selectedBuilder || "All Builders")}
           </span>
         </button>
 
@@ -267,6 +314,7 @@ export default function SearchBar({
                 title={isLocationDisabled ? "Select a city to choose localities" : ""}
               >
                 <option value="">Select Locality</option>
+                <option value="all-localities">All Localities</option>
                 {locations.map((loc) => (
                   <option key={loc} value={loc}>{loc}</option>
                 ))}
@@ -275,19 +323,25 @@ export default function SearchBar({
 
             {/* Builder */}
             <div className="form-group" style={{ marginBottom: 16 }}>
-              <label htmlFor="builder-select" style={{ display: 'block', marginBottom: 4, fontSize: 14, color: '#555' }}>Builder</label>
+              <label htmlFor="builder-select" style={{ display: 'block', marginBottom: 4, fontSize: 14, color: '#555' }}>
+                Builder {isBuilderRequired && <span style={{ color: 'red' }}>*</span>}
+              </label>
               <select
                 id="builder-select"
                 value={tmpBuilder}
                 onChange={(e) => setTmpBuilder(e.target.value)}
                 disabled={isBuilderSelectDisabled}
                 style={selectStyle(isBuilderSelectDisabled)}
+                required={isBuilderRequired}
               >
                 <option value="">All Builders</option>
                 {availableBuilders.map((b) => (
                   <option key={b} value={b}>{b.toUpperCase()}</option>
                 ))}
               </select>
+              {isBuilderRequired && !tmpBuilder && (
+                <small style={{ color: 'red', fontSize: 12 }}>Required when All Localities is selected</small>
+              )}
             </div>
 
             {/* Actions */}

@@ -4,7 +4,6 @@ import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 import cors from "cors";
 import { postApiHandler } from "./post_api";
-import * as path from 'path';
 
 
 if (!admin.apps.length) {
@@ -329,6 +328,14 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
         if ((!videos || videos.length === 0) && Array.isArray(projectData?.videos)) {
           videos = ingestArray('videos', 'videos');
         }
+        // Also check key_project_details.videos
+        if ((!videos || videos.length === 0) && Array.isArray(projectData?.key_project_details?.videos)) {
+          const arr = projectData.key_project_details.videos;
+          videos = arr.map((it: any, idx: number) => {
+            const raw = (typeof it === 'string') ? it : (it && typeof it === 'object' ? (it.path || it.file || it.file_name || it.filename) : null);
+            return { id: `kpd-videos-${idx}`, ...(typeof it === 'object' ? it : {}), path: raw };
+          });
+        }
 
         // Amenities may be an array on the project document; normalize similarly and expose top-level `amenities`
         let amenities: any[] = [];
@@ -401,7 +408,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
                 if (typeof a === 'string') {
                   // if string looks like a path, use as icon; otherwise as name
                   const looksLikePath = a.includes('/') || /\.(png|jpg|jpeg|webp|svg|gif)$/i.test(a);
-                  const name = looksLikePath ? path.basename(a).replace(/[-_]+/g, ' ').replace(/\.[^.]+$/, '') : a;
+                  const name = looksLikePath ? a.replace(/[-_]+/g, ' ').replace(/\.[^.]+$/, '') : a;
                   // compute canonical storage path for icon when possible
                   const rawIcon = looksLikePath ? a.replace(/^\/*/, '') : null;
                   const iconPath = rawIcon ? ensureObjectPath('amenities', rawIcon) : null;
@@ -474,7 +481,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
           return;
         }
         const data = snap.data();
-        let projects = (data?.locations || []) as ProjectLocation[];
+        let projects = (data?.projects || []) as ProjectLocation[];
 
         // Filter by city/location if provided
         if (city) {
@@ -494,7 +501,8 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
         const allRefs = projects.flatMap((p) => Array.isArray(p.projects) ? p.projects.map(proj => ({
           ...proj,
           city: p.city,
-          location: p.location
+          location: p.location,
+          status: proj.status || 'active' // Include status field, default to 'active' for backward compatibility
         })) : []);
 
         if (!allRefs.length) {
@@ -510,7 +518,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
               .collection("projects")
               .doc(ref.project_id)
               .get()
-              .then((snap) => snap.exists ? { id: snap.id, ...snap.data() } : null)
+              .then((snap) => snap.exists ? { id: snap.id, ...snap.data(), status: ref.status } : null)
               .catch(() => null)
           )
         );
@@ -535,7 +543,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
           return;
         }
         const data = snap.data();
-        const projects = (data?.locations || []) as ProjectLocation[];
+        const projects = (data?.projects || []) as ProjectLocation[];
 
         const project = projects.find((p) => {
           const cityMatch = !city || p.city?.toLowerCase() === city.toLowerCase();
@@ -595,7 +603,7 @@ export const api = onRequest({ secrets: [ADMIN_API_KEY, OPENAI_API_KEY] }, (req,
     }
 
     const data = snap.data();
-    const locations = (data?.locations || []) as {
+    const locations = (data?.projects || []) as {
       city: string;
       location: string;
       projects: { builder_id: string }[];

@@ -135,54 +135,138 @@ function getProjectData(builderId, projectId, locationsPath, buildersPath) {
 }
 
 /**
- * Check if a file is valid by examining its header bytes
+ * Get builder and project details from builders.json (scraping script structure)
+ * @param {string} builderId
+ * @param {string} projectId
+ * @param {string} buildersPath
+ * @returns {object|null}
+ */
+function getBuilderProjectDetails(builderId, projectId, buildersPath) {
+  try {
+    const buildersData = JSON.parse(fs.readFileSync(buildersPath, 'utf8'));
+    const builders = buildersData.builders || buildersData;
+    const builder = builders.find(b => b.builderId === builderId);
+    if (!builder) return null;
+    const project = builder.projects.find(p => p.projectId === projectId);
+    if (!project) return null;
+    return {
+      builder_id: builder.builderId,
+      builder_name: builder.builderName,
+      builder_logo: builder.builder_logo || '',
+      project_id: project.projectId,
+      project_name: project.projectName,
+      project_logo: project.project_logo || ''
+    };
+  } catch (error) {
+    console.error('Error reading builders.json:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Get location and city from locations.json (scraping script structure)
+ * @param {string} builderId
+ * @param {string} projectId
+ * @param {string} locationsPath
+ * @returns {object|null}
+ */
+function getLocationDetails(builderId, projectId, locationsPath) {
+  try {
+    const locationsData = JSON.parse(fs.readFileSync(locationsPath, 'utf8'));
+    for (const entry of locationsData) {
+      const found = entry.projects.find(p => p.builder_id === builderId && p.project_id === projectId);
+      if (found) {
+        return {
+          city: entry.city,
+          location: entry.location
+        };
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Error reading locations.json:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Unified project metadata for scraping/build scripts
+ * @param {string} builderId
+ * @param {string} projectId
+ * @param {string} locationsPath
+ * @param {string} buildersPath
+ * @returns {object} - { builder_id, builder_name, builder_logo, project_id, project_name, project_logo, city, location }
+ */
+function getUnifiedProjectData(builderId, projectId, locationsPath, buildersPath) {
+  const builderData = getBuilderProjectDetails(builderId, projectId, buildersPath) || {};
+  const locationData = getLocationDetails(builderId, projectId, locationsPath) || {};
+  return {
+    ...builderData,
+    ...locationData
+  };
+}
+
+/**
+ * Validate if a local file is valid (not empty, has proper extension, basic header check)
  * @param {string} filePath - Path to the file to validate
  * @returns {boolean} - True if file appears valid
  */
 function isValidLocalFile(filePath) {
   try {
     if (!fs.existsSync(filePath)) return false;
+
     const stats = fs.statSync(filePath);
-    if (!stats.isFile() || stats.size === 0) return false;
-    
-    const buffer = fs.readFileSync(filePath, { start: 0, end: Math.min(16, stats.size - 1) });
-    if (!buffer || buffer.length === 0) return false;
-    
-    // Check for common file signatures
-    const hex = buffer.toString('hex').toLowerCase();
-    
-    // Image formats
-    if (hex.startsWith('ffd8ff')) return true; // JPEG
-    if (hex.startsWith('89504e47')) return true; // PNG
-    if (hex.startsWith('47494638')) return true; // GIF
-    if (hex.startsWith('52494646') && hex.includes('57454250')) return true; // WebP
-    if (hex.startsWith('3c3f786d6c') || hex.startsWith('3c737667')) return true; // SVG
-    
-    // PDF
-    if (hex.startsWith('25504446')) return true; // PDF
-    
-    // Documents
-    if (hex.startsWith('504b0304')) return true; // ZIP-based (DOCX, PPTX, etc.)
-    if (hex.startsWith('d0cf11e0')) return true; // DOC, XLS, PPT
-    
-    return false;
+    if (!stats.isFile()) return false;
+    if (stats.size === 0) return false;
+
+    // Check file extension
+    const ext = path.extname(filePath).toLowerCase();
+    const validExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif', '.pdf', '.bmp', '.docx', '.doc', '.pptx', '.ppt'];
+    if (!validExtensions.includes(ext)) return false;
+
+    // Basic file header validation for common types
+    try {
+      const buffer = fs.readFileSync(filePath, { encoding: null });
+      if (buffer.length < 4) return false;
+
+      // Check magic numbers for common file types
+      const header = buffer.slice(0, 12);
+
+      if (ext === '.pdf' && header.toString('ascii', 0, 4) !== '%PDF') return false;
+      if ((ext === '.jpg' || ext === '.jpeg') && (header[0] !== 0xFF || header[1] !== 0xD8)) return false;
+      if (ext === '.png' && (header[0] !== 0x89 || header[1] !== 0x50 || header[2] !== 0x4E || header[3] !== 0x47)) return false;
+      if (ext === '.gif' && header.toString('ascii', 0, 3) !== 'GIF') return false;
+      if (ext === '.webp') {
+        const riff = header.toString('ascii', 0, 4);
+        const webp = header.toString('ascii', 8, 12);
+        if (riff !== 'RIFF' || webp !== 'WEBP') return false;
+      }
+
+      return true;
+    } catch (e) {
+      // If we can't read the file, consider it invalid
+      return false;
+    }
   } catch (e) {
     return false;
   }
 }
 
 /**
- * Standardized media subfolders used across all scripts
+ * Standardized media subfolders used across all scripts (minimal approach)
+ * Aligned with scrape_project_minimal.js - excludes amenities, logos, news, documents, banners
  */
 const SUBFOLDERS = [
-  'logos', 'floor_plans', 'brochures', 'banners', 'photos', 
-  'layouts', 'news', 'documents', 'amenities'
+  'floor_plans', 'photos', 'layouts', 'brochures'
 ];
 
 module.exports = {
   findProjectLocation,
   findBuilderProjectNames,
   getProjectData,
+  getBuilderProjectDetails,
+  getLocationDetails,
+  getUnifiedProjectData,
   isValidLocalFile,
   SUBFOLDERS
 };

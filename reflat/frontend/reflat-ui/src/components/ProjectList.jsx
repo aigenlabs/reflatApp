@@ -55,11 +55,6 @@ export default function PrjList() {
     localStorage.setItem("selectedLocation", selectedLocation);
   }, [selectedLocation]);
 
-  // when city or location changes, clear builder selection
-  useEffect(() => {
-    setSelectedBuilder("");
-  }, [selectedCity, selectedLocation]);
-
   /** Fetch location metadata (cities, locations) */
   useEffect(() => {
     async function fetchLocations() {
@@ -89,7 +84,19 @@ export default function PrjList() {
     // 'loadProjects aborted' messages in development (React Strict Mode / quick state updates).
 
     async function loadProjects() {
-      if (!selectedCity || !selectedLocation) {
+      if (!selectedCity || (!selectedLocation && selectedLocation !== "all-localities")) {
+        setProjects([]);
+        return;
+      }
+
+      // For "All Localities", wait until locations are loaded
+      if (selectedLocation === "all-localities" && locations.length === 0) {
+        setProjects([]);
+        return;
+      }
+
+      // When "All Localities" is selected, builder must be specified
+      if (selectedLocation === "all-localities" && !selectedBuilder) {
         setProjects([]);
         return;
       }
@@ -121,18 +128,50 @@ export default function PrjList() {
       }
 
       // Build URL with query params (avoid new URL for relative paths)
-      let url = `${FIREBASE_FUNCTIONS_URL}/location_project_data?city=${encodeURIComponent(selectedCity)}&location=${encodeURIComponent(selectedLocation)}`;
-      if (selectedBuilder) {
-        url += `&builder=${encodeURIComponent(selectedBuilder)}`;
+      let urls = [];
+      if (selectedLocation === "all-localities") {
+        // For all localities, fetch from each location in the city
+        urls = locations.map(location => 
+          `${FIREBASE_FUNCTIONS_URL}/location_project_data?city=${encodeURIComponent(selectedCity)}&location=${encodeURIComponent(location)}&builder=${encodeURIComponent(selectedBuilder)}`
+        );
+      } else {
+        // Normal case: fetch by city, location, and optional builder
+        let url = `${FIREBASE_FUNCTIONS_URL}/location_project_data?city=${encodeURIComponent(selectedCity)}&location=${encodeURIComponent(selectedLocation)}`;
+        if (selectedBuilder) {
+          url += `&builder=${encodeURIComponent(selectedBuilder)}`;
+        }
+        urls = [url];
       }
+
       const request = (async () => {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Failed to fetch projects");
-        // Now expecting a list of full project details
-        const projectsList = await res.json();
-        if (!Array.isArray(projectsList)) throw new Error("Invalid projects response");
+        // Fetch from all URLs and combine results
+        const allProjectsPromises = urls.map(async (url) => {
+          try {
+            const res = await fetch(url);
+            if (!res.ok) return []; // Skip failed requests
+            const projectsList = await res.json();
+            return Array.isArray(projectsList) ? projectsList : [];
+          } catch (err) {
+            console.warn(`Failed to fetch from ${url}:`, err);
+            return [];
+          }
+        });
+
+        const allProjectsArrays = await Promise.all(allProjectsPromises);
+        const projectsList = allProjectsArrays.flat();
+
+        // Remove duplicates based on projectId
+        const seen = new Set();
+        const uniqueProjects = projectsList.filter(project => {
+          const projectId = project.projectId || project.project_id || project.id;
+          if (seen.has(projectId)) return false;
+          seen.add(projectId);
+          return true;
+        });
+
+        if (!Array.isArray(uniqueProjects)) throw new Error("Invalid projects response");
         // Normalize keys for ProjectCard (prefer structured Key_Project_details when available)
-        const normalized = projectsList.map((p) => {
+        const normalized = uniqueProjects.map((p) => {
           const kd = p.key_project_details || p.project || p || {};
           return ({
             ...p,
@@ -156,12 +195,13 @@ export default function PrjList() {
              brochure: p.brochure || (kd.brochures && Array.isArray(kd.brochures) ? kd.brochures[0] : kd.brochures) || '',
              website: p.website || kd.website || '',
              logo: p.logo || p.project_logo || kd.logo || kd.project_logo || '',
+             status: p.status || 'active', // Include status field for filtering
            });
          });
         // Debugging: log API and normalized samples to help trace missing-project rendering issues
         try {
-          console.debug(`ProjectList: loaded ${projectsList.length} items for key=${key}`);
-          console.debug('ProjectList: sample raw', projectsList.slice(0,3));
+          console.debug(`ProjectList: loaded ${uniqueProjects.length} items for key=${key}`);
+          console.debug('ProjectList: sample raw', uniqueProjects.slice(0,3));
           console.debug('ProjectList: sample normalized', normalized.slice(0,3));
         } catch (e) {
           // ignore logging errors
@@ -171,9 +211,6 @@ export default function PrjList() {
            new Set(normalized.map((p) => p.builderId))
          ).sort();
          setBuilderIds(builderOptions);
-         if (selectedBuilder && !builderOptions.includes(selectedBuilder)) {
-           setSelectedBuilder("");
-         }
          projectsCache.set(key, normalized);
          return normalized;
        })();
@@ -195,7 +232,7 @@ export default function PrjList() {
     }
 
     loadProjects();
-  }, [selectedCity, selectedLocation, selectedBuilder]);
+  }, [selectedCity, selectedLocation, selectedBuilder, locations]);
 
   // fetch builder IDs for the current city/location
   useEffect(() => {
@@ -323,7 +360,9 @@ export default function PrjList() {
                      // show project when it has either project id or a name (newly-added projects may lack builderId)
                      const hasProjectId = !!(p.projectId || p.project_id || p.id);
                      const hasName = !!(p.name || p.project_name);
-                     return builderOk && (hasProjectId || hasName);
+                     // only show projects with status "active"
+                     const isActive = (p.status === 'active');
+                     return builderOk && (hasProjectId || hasName) && isActive;
                    })
                     .map((p, idx) => {
                      const builder = p.builderId || p.builder_id;

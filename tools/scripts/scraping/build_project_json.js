@@ -24,7 +24,10 @@
 const fs = require('fs-extra');
 const path = require('path');
 const crypto = require('crypto');
-const { getProjectData, isValidLocalFile, SUBFOLDERS } = require('./project-utils');
+const { getProjectData, getBuilderProjectDetails, isValidLocalFile } = require('../project-utils');
+
+// Use minimal media subfolders like scrape_project_minimal.js
+const SUBFOLDERS = ['floor_plans', 'photos', 'layouts', 'brochures'];
 
 // Note: SUBFOLDERS and isValidLocalFile are now imported from project-utils.js
 
@@ -110,122 +113,14 @@ async function buildMediaCollections(mediaDir) {
 }
 
 /**
- * Merge amenities files with amenities data
+ * Merge media collections into details
  */
-async function mergeAmenitiesFiles(details, mediaCollections) {
-  if (!details.amenities || !Array.isArray(details.amenities)) return;
-  
-  const amenitiesFiles = mediaCollections.amenities || [];
-  if (!amenitiesFiles.length) return;
-  
-  function normText(s) { 
-    return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); 
-  }
-  
-  // Build file metadata
-  const fileMeta = amenitiesFiles.map(f => ({ 
-    file: f, 
-    base: normText(path.parse(f).name) 
-  }));
-  
-  for (const amenity of details.amenities) {
-    // Skip if already has icon/path/filename
-    if (amenity && (amenity.icon || amenity.filename || amenity.path)) continue;
-    
-    const nameNorm = normText(amenity.name || '');
-    const keyNorm = normText(amenity.key || '');
-    let best = null;
-    let bestScore = 0;
-    
-    for (const fm of fileMeta) {
-      if (!fm.base) continue;
-      
-      // Direct match scores highly
-      if (keyNorm && fm.base.includes(keyNorm)) { 
-        best = fm; 
-        bestScore = 100; 
-        break; 
-      }
-      if (nameNorm && fm.base.includes(nameNorm)) { 
-        best = fm; 
-        bestScore = 90; 
-        break; 
-      }
-      
-      // Token intersection fallback
-      const aTokens = new Set((nameNorm + ' ' + keyNorm).split(' ').filter(Boolean));
-      const fTokens = new Set(fm.base.split(' ').filter(Boolean));
-      let common = 0;
-      for (const t of aTokens) if (fTokens.has(t)) common++;
-      if (common > bestScore) { 
-        bestScore = common; 
-        best = fm; 
-      }
-    }
-    
-    if (best && best.file) {
-      amenity.filename = path.basename(best.file);
-      amenity.path = best.file;
-      amenity.icon = best.file;
-    }
+function mergeMediaCollections(details, mediaCollections) {
+  for (const subfolder of SUBFOLDERS) {
+    // Always overwrite with fresh scan results
+    details[subfolder] = Array.isArray(mediaCollections[subfolder]) ? [...mediaCollections[subfolder]] : [];
   }
 }
-
-/**
- * Simplify amenities to clean format
- */
-function simplifyAmenities(details, builderId, projectId) {
-  try {
-    if (!details.amenities || !Array.isArray(details.amenities)) return;
-    
-    function escRx(s) { 
-      return String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
-    }
-    
-    const bn = String(builderId || '').toLowerCase();
-    const pn = String(projectId || '').toLowerCase();
-    const bname = String((details.builder_name || details.builder_id || '')).toLowerCase();
-    const pname = String((details.project_name || details.project_id || '')).toLowerCase();
-    const patterns = [bn, pn, bname, pname].filter(Boolean).map(escRx);
-    const stripRe = patterns.length ? new RegExp('\\b(' + patterns.join('|') + ')\\b', 'ig') : null;
-    
-    details.amenities = details.amenities.map(a => {
-      let name = a && (a.name || a.key) ? String(a.name || a.key).trim() : null;
-      if (name && stripRe) {
-        name = name.replace(stripRe, '');
-      }
-      
-      // Cleanup
-      if (name) {
-        name = name.replace(/[-_\/:]+/g, ' ')
-                   .replace(/[()\[\]\{\}\.|,]/g, ' ')
-                   .replace(/\s+/g, ' ')
-                   .trim();
-        
-        // Remove noise tokens
-        name = name.replace(/\b(area|areas|img|image|images|cotta|terra|lobby|hall|saloon|salon|clubhouse|club)\b/ig, '')
-                   .replace(/\s+/g, ' ')
-                   .trim();
-        
-        // Remove trailing connectors
-        name = name.replace(/[\-:\/]$/g, '').trim();
-        
-        // Title case
-        name = name.split(' ')
-                   .filter(Boolean)
-                   .map(w => w.length > 1 ? (w[0].toUpperCase() + w.slice(1).toLowerCase()) : w.toUpperCase())
-                   .join(' ');
-      }
-      
-      const icon = a && (a.icon || a.path || a.filename) ? (a.icon || a.path || a.filename) : null;
-      return { name: name || null, icon: icon || null };
-    }).filter(x => x && (x.name || x.icon));
-  } catch (e) {
-    console.warn('Failed to simplify amenities:', e.message);
-  }
-}
-
-// Note: Location and builder name lookup functions are now imported from project-utils.js
 
 /**
  * Main function
@@ -293,34 +188,47 @@ async function main() {
     }
   }
   
+  // Get builder/project details from builders.json
+  const builderProjectDetails = getBuilderProjectDetails(builderId, projectId, buildersPath);
+  if (!builderProjectDetails) {
+    console.error('Builder/project not found in builders.json');
+    process.exit(1);
+  }
+
   // Ensure key_project_details exists
   if (!details.key_project_details) {
     details.key_project_details = {};
   }
-  
-  // Ensure basic fields are set
   const kpd = details.key_project_details;
-  kpd.builder_id = kpd.builder_id || builderId;
-  kpd.builder_name = projectData.builderName; // Single source of truth from builders.json
-  kpd.builder_logo = projectData.builderLogo; // Single source of truth from builders.json
-  kpd.project_id = kpd.project_id || projectId;
-  kpd.project_name = projectData.projectName; // Single source of truth from builders.json
-  kpd.project_logo = projectData.projectLogo; // Single source of truth from builders.json
-  
-  // Set location data from locations.json (single source of truth)
-  kpd.project_city = projectData.city || '';
-  kpd.project_location = projectData.location || '';
-  
+  kpd.builder_id = builderProjectDetails.builder_id;
+  kpd.builder_name = builderProjectDetails.builder_name;
+  kpd.project_id = builderProjectDetails.project_id;
+  kpd.project_name = builderProjectDetails.project_name;
+  kpd.builder_logo = builderProjectDetails.builder_logo;
+  kpd.project_logo = builderProjectDetails.project_logo;
+  kpd.scrapedAt = new Date().toISOString();
+
   // Ensure all standard metadata fields exist (preserve existing values or set to empty)
   if (!kpd.hasOwnProperty('flats_per_floor')) kpd.flats_per_floor = "";
   if (!kpd.hasOwnProperty('config')) kpd.config = "";
   if (!kpd.hasOwnProperty('flat_sizes')) kpd.flat_sizes = "";
   if (!kpd.hasOwnProperty('total_flats')) kpd.total_flats = "";
   if (!kpd.hasOwnProperty('flats_per_acre')) kpd.flats_per_acre = "";
-  
-  kpd.scrapedAt = new Date().toISOString();
-  
-  if (!kpd.videos) kpd.videos = [];
+
+  // Add location fields to key_project_details
+  if (projectData.location && !kpd.project_location) kpd.project_location = projectData.location;
+  if (projectData.city && !kpd.project_city) kpd.project_city = projectData.city;
+
+  // Ensure other fields exist with empty defaults to match minimal script structure
+  if (!kpd.hasOwnProperty('rera_number')) kpd.rera_number = "";
+  if (!kpd.hasOwnProperty('total_acres')) kpd.total_acres = "";
+  if (!kpd.hasOwnProperty('total_towers')) kpd.total_towers = null;
+  if (!kpd.hasOwnProperty('total_floors')) kpd.total_floors = "";
+  if (!kpd.hasOwnProperty('total_flats')) kpd.total_flats = "";
+  if (!kpd.hasOwnProperty('open_space_percent')) kpd.open_space_percent = "";
+  if (!kpd.hasOwnProperty('gps')) kpd.gps = { lat: null, lng: null };
+  if (!kpd.hasOwnProperty('url')) kpd.url = "";
+  if (!kpd.hasOwnProperty('videos')) kpd.videos = [];
   
   // Build media collections from existing files
   console.log('Scanning media folders...');
@@ -334,60 +242,56 @@ async function main() {
   }
   
   // Merge media collections into details
-  for (const subfolder of SUBFOLDERS) {
-    const collected = (mediaCollections[subfolder] || []).filter(p => {
-      const b = path.basename(p || '');
-      return b && !b.startsWith('.') && b.toLowerCase() !== '.ds_store';
-    });
-    
-    // Handle amenities specially (preserve object structure)
-    if (subfolder === 'amenities') {
-      if (details.amenities && Array.isArray(details.amenities)) {
-        // Merge files with existing amenity objects
-        await mergeAmenitiesFiles(details, mediaCollections);
-      }
-      // Also store as amenities_files for reference
-      details.amenities_files = collected;
-    } else {
-      // For other subfolders, just store the file list
-      details[subfolder] = collected;
-    }
-  }
+  mergeMediaCollections(details, mediaCollections);
   
-  // Simplify amenities
-  simplifyAmenities(details, builderId, projectId);
-  
-  // Remove amenities_files after merging
-  if (details.amenities_files) {
-    delete details.amenities_files;
-  }
-  
-  // Set logo references in key_project_details
+  // Set logo references to match minimal script approach (use defaults from builders.json)
   try {
-    const logosArr = Array.isArray(details.logos) ? details.logos : [];
-    if (logosArr.length) {
-      kpd.builder_logo = kpd.builder_logo || logosArr[0];
-      kpd.project_logo = kpd.project_logo || (logosArr[1] || logosArr[0]);
+    // Use logos from builders.json or set defaults like minimal script
+    if (!kpd.builder_logo) {
+      kpd.builder_logo = builderProjectDetails.builder_logo || `${builderId}/${builderId}_logo.webp`;
+    }
+    if (!kpd.project_logo) {
+      kpd.project_logo = builderProjectDetails.project_logo || `logos/${projectId}_logo.webp`;
     }
   } catch (e) {
     console.warn('Failed to set logo references:', e.message);
   }
   
-  // Build final output structure
+  // Build final output structure to match scraping script format
   const finalOutput = {
     scrapedAt: new Date().toISOString(),
     key_project_details: kpd
   };
-  
-  // Add media arrays
+
+  // Add media arrays for all subfolders
   for (const subfolder of SUBFOLDERS) {
     finalOutput[subfolder] = details[subfolder] || [];
   }
-  
-  // Add amenities if they exist
-  if (details.amenities) {
+
+  // Add amenities array if it exists (preserve existing structure)
+  // NOTE: Commented out as scraping script doesn't handle amenities - keeping for future use
+  /*
+  if (details.amenities && Array.isArray(details.amenities)) {
     finalOutput.amenities = details.amenities;
+  } else {
+    finalOutput.amenities = [];
   }
+
+  // Handle any existing amenities from previous runs
+  if (preserveDetails && !finalOutput.amenities.length) {
+    const detailsPath = path.join(baseDir, `${projectId}-details.json`);
+    try {
+      if (fs.existsSync(detailsPath)) {
+        const existingData = JSON.parse(await fs.readFile(detailsPath, 'utf8'));
+        if (existingData.amenities && Array.isArray(existingData.amenities)) {
+          finalOutput.amenities = existingData.amenities;
+        }
+      }
+    } catch (e) {
+      // Ignore errors, amenities will remain empty array
+    }
+  }
+  */
   
   // Save the JSON file
   const detailsJsonPath = path.join(baseDir, `${projectId}-details.json`);
@@ -400,6 +304,11 @@ async function main() {
     console.log(`Location: ${kpd.project_location}, ${kpd.project_city}`);
   }
   console.log(`Saved to: ${detailsJsonPath}`);
+
+  // Display amenities count if present (commented out - amenities not handled)
+  // if (finalOutput.amenities && finalOutput.amenities.length > 0) {
+  //   console.log(`Amenities: ${finalOutput.amenities.length} items`);
+  // }
   
   // Summary
   let totalFiles = 0;
@@ -410,12 +319,9 @@ async function main() {
       totalFiles += count;
     }
   }
-  
-  if (finalOutput.amenities && finalOutput.amenities.length > 0) {
-    console.log(`  amenities: ${finalOutput.amenities.length} items`);
-  }
-  
-  console.log(`\nTotal files: ${totalFiles}`);
+
+  console.log(`\nTotal media files: ${totalFiles}`);
+  console.log(`Project structure aligned with scraping script format.`);
 }
 
 // Run the script

@@ -5,7 +5,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 
 // Load .env from the current scripts folder so tools/scripts/.env is used.
-const scriptEnvDir = path.join(__dirname);
+const scriptEnvDir = path.join(__dirname, '..');
 dotenv.config({ path: path.join(scriptEnvDir, '.env') });
 
 // Allow optional CLI args. Expected common usage from npm script:
@@ -34,8 +34,8 @@ const env = process.env.SEED_ENV || 'staging';
 // Auto-detect environment if SEED_ENV not set
 let detectedEnv = env;
 // Allow SERVICE_ACCOUNT_STAGING / SERVICE_ACCOUNT_PROD (or alternative names) from env file. If not present, fall back to repo data files.
-const defaultStagingKey = path.join(__dirname, '../data/reflat-staging-firebase-adminsdk.json');
-const defaultProdKey = path.join(__dirname, '../data/reflat-prod-firebase-adminsdk.json');
+const defaultStagingKey = path.join(__dirname, '../../data/reflat-staging-firebase-adminsdk.json');
+const defaultProdKey = path.join(__dirname, '../../data/reflat-prod-firebase-adminsdk.json');
 function resolveKeyPath(envVal, fallback) {
   if (!envVal) return fallback;
   const v = String(envVal).trim();
@@ -80,11 +80,11 @@ console.log(`[Update Firestore] scriptEnvDir: ${scriptEnvDir}`);
 console.log(`[Update Firestore] Detected env: ${detectedEnv}`);
 console.log(`[Update Firestore] stagingKey: ${stagingKey} exists=${fs.existsSync(stagingKey)}`);
 console.log(`[Update Firestore] prodKey: ${prodKey} exists=${fs.existsSync(prodKey)}`);
-console.log(`[Update Firestore] locationsPath candidate: ${path.join(__dirname, '../data/locations.json')} exists=${fs.existsSync(path.join(__dirname, '../data/locations.json'))}`);
+console.log(`[Update Firestore] locationsPath candidate: ${path.join(__dirname, '../../data/locations.json')} exists=${fs.existsSync(path.join(__dirname, '../../data/locations.json'))}`);
 console.log(`[Update Firestore] Relevant env vars: SEED_ENV=${process.env.SEED_ENV || '<unset>'}, STORAGE_BUCKET=${process.env.STORAGE_BUCKET || '<unset>'}, GS_BUCKET_STAGING=${process.env.GS_BUCKET_STAGING || '<unset>'}, GS_BUCKET_PROD=${process.env.GS_BUCKET_PROD || '<unset>'}`);
 
 const serviceAccountPath = detectedEnv === 'staging' ? stagingKey : prodKey;
-const locationsPath = path.join(__dirname, '../data/locations.json');
+const locationsPath = path.join(__dirname, '../../data/locations.json');
 
 if (!fs.existsSync(serviceAccountPath)) {
   console.error('Service account key not found:', serviceAccountPath);
@@ -188,7 +188,7 @@ async function uploadLocations() {
   }
 
   try {
-    const detailsPath = path.join(__dirname, '../data', builderId, projectId, `${projectId}-details.json`);
+    const detailsPath = path.join(__dirname, '../../data', builderId, projectId, `${projectId}-details.json`);
     if (!fs.existsSync(detailsPath)) {
       console.error(`Details JSON not found for ${builderId}/${projectId}: ${detailsPath}`);
       process.exit(1);
@@ -201,7 +201,7 @@ async function uploadLocations() {
     await projDocRef.set(toWrite, { merge: true });
     console.log(`Wrote project details to Firestore: builders/${builderId}/projects/${projectId}`);
 
-    // Also merge the repo locations.json into Firestore at locations/prj_locations -> { projects: [...] }
+    // Also merge the repo locations.json into Firestore under builders collection
     try {
       const locationsRaw = fs.readFileSync(locationsPath, 'utf8');
       const locationsJson = JSON.parse(locationsRaw);
@@ -212,18 +212,28 @@ async function uploadLocations() {
         console.log('locations.json contains placeholder/invalid entries. Will upload a cleaned view to Firestore but will NOT overwrite the local file. Please edit tools/data/locations.json manually to persist changes.');
       }
 
-      // Prefer updating the existing 'locations/projects' document instead of creating a new one.
-      const targetDocRef = db.collection('locations').doc('projects');
+      // Store locations document independently under builders collection: builders/locations
+      const targetDocRef = db.collection('builders').doc('locations');
       try {
         const snap = await targetDocRef.get();
         if (snap.exists) {
-          await targetDocRef.update({ projects: cleanedLocations });
-          console.log('Updated existing Firestore document: locations/projects (field: projects)');
+          await targetDocRef.update({ 
+            projects: cleanedLocations,
+            _updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+          console.log('Updated existing Firestore document: builders/locations (independent of specific builder)');
         } else {
-          console.error('Firestore document locations/projects does not exist. Skipping update to avoid creating a new document. Create the document manually if you want to store locations.');
+          // Create the document with initial data
+          await targetDocRef.set({ 
+            projects: cleanedLocations, 
+            _createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            _updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            _description: 'All project locations from all builders - independent shared document'
+          });
+          console.log('Created new Firestore document: builders/locations with all project data');
         }
       } catch (updateErr) {
-        console.error('Failed to update locations/projects document in Firestore:', updateErr && updateErr.message ? updateErr.message : updateErr);
+        console.error('Failed to update/create builders/locations document in Firestore:', updateErr && updateErr.message ? updateErr.message : updateErr);
       }
     } catch (locErr) {
       console.error('Failed to merge locations.json into Firestore:', locErr && locErr.message ? locErr.message : locErr);

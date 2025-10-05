@@ -18,7 +18,7 @@ function walkDir(dir) {
     const stat = fs.statSync(p);
     if (stat.isDirectory()) {
       out.push(...walkDir(p));
-    } else if (stat.isFile()) {
+    } else if (stat.isFile() && !path.basename(it).startsWith('.')) {
       out.push(p);
     }
   }
@@ -40,7 +40,7 @@ async function main() {
   }
   const builderId = argv[0];
   const projectId = argv[1];
-  const repoRoot = path.resolve(__dirname, '../../'); // resolve from tools/seed
+  const repoRoot = path.resolve(__dirname, '../../../'); // resolve from tools/scripts/scraping
 
   // Try tools/seed first, then tools/data
   let mediaRoot = path.join(repoRoot, 'tools', 'seed', builderId, projectId, 'media');

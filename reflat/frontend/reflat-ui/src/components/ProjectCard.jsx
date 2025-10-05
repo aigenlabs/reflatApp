@@ -118,26 +118,54 @@ export default function ProjectCard({ project }) {
           gap: 0.5,
           mb: 0.25,
           boxSizing: 'border-box',
-          minWidth: 0,
+          // Fixed width for consistent alignment
+          minWidth: '120px',
+          maxWidth: '120px',
         }}
       >
-        <Box component="span" sx={{ flex: '0 0 auto', minWidth: 0, mr: 0.5, display: 'inline-flex', alignItems: 'center' }}>
-          <i className={`fa-solid ${icon}`} aria-hidden="true" />
-        </Box>
-        <Box
-          component="span"
-          sx={{
-            typography: 'body2',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            minWidth: 0,
-            flex: 1,
-          }}
-          title={`${label}: ${value}`}
-        >
-          {label}: {value}
-        </Box>
+        {(label === 'Towers' || label === '/acre') ? (
+          <>
+            <Box
+              component="span"
+              sx={{
+                typography: 'body2',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                minWidth: 0,
+                flex: 1,
+                textAlign: 'right',
+              }}
+              title={`${label}: ${value}`}
+            >
+              {label}: {value}
+            </Box>
+            <Box component="span" sx={{ flex: '0 0 auto', minWidth: 0, ml: 0.5, display: 'inline-flex', alignItems: 'center' }}>
+              <i className={`fa-solid ${icon}`} aria-hidden="true" />
+            </Box>
+          </>
+        ) : (
+          <>
+            <Box component="span" sx={{ flex: '0 0 auto', minWidth: 0, mr: 0.5, display: 'inline-flex', alignItems: 'center' }}>
+              <i className={`fa-solid ${icon}`} aria-hidden="true" />
+            </Box>
+            <Box
+              component="span"
+              sx={{
+                typography: 'body2',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                minWidth: 0,
+                flex: 1,
+                textAlign: 'left',
+              }}
+              title={`${label}: ${value}`}
+            >
+              {label}: {value}
+            </Box>
+          </>
+        )}
       </Box>
     ) : null;
 
@@ -443,7 +471,7 @@ export default function ProjectCard({ project }) {
               <StatItem icon={ICONS.units} label="Units" value={totalUnits} />
               <StatItem
                 icon={ICONS.density}
-                label="Flats / acre"
+                label="/acre"
                 value={densityPerAcre}
               />
             </Box>
